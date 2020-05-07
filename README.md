@@ -10,13 +10,13 @@
 - Research (both systems)
 - Automatic snob creation
 - Report management
-- ReCaptcha bypass by using browser cookiestring (bot works if browser session is valid)
+- ReCaptcha bypass by using browser cookie string (bot works if browser session is valid)
 
 There is a lot of unfinished code which somewhat works but is not yet implemented.
 
 *How To:*
 - Install Python 2.x or Python 3.x
-- Install the requests library (pip install requests)
+- Install the requests library (pip install requests selenium)
 - Edit config.json
 	- add at least the username, password, endpoint, world and server
 	- In the village config set the VillageID (from the village overview page)

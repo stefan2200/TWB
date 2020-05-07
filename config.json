@@ -1,0 +1,68 @@
+{
+  "build": {
+    "name": "tw_bot",
+    "version": "1.0",
+    "author": "stefan2200"
+  },
+  "server": {
+    "username": "{your tw username}",
+    "password": "{your tw password}",
+    "server": "nlc1",
+    "endpoint": "https://nlc1.tribalwars.nl/game.php",
+    "has_recaptcha": true,
+    "world": "nlc1"
+  },
+  "bot": {
+    "active_hours": "6-23",
+    "active_delay": 500,
+    "inactive_still_active": true,
+    "inactive_delay": 2000
+  },
+  "building": {
+    "manage_buildings": true,
+    "default": "purple_predator",
+    "max_lookahead": 3,
+    "max_queued_items": 2
+  },
+  "units": {
+    "recruit": true,
+    "upgrade": true,
+    "default": "basic",
+    "batch_size": 25
+  },
+  "farms": {
+    "farm": true,
+    "min_points": 26,
+    "max_points": 1080,
+    "find_player_owned": false,
+    "search_radius": 100,
+    "default_away_time": 3600,
+    "full_loot_away_time": 1800,
+    "max_farms": 25
+  },
+  "market": {
+    "auto_trade": true,
+    "max_trade_duration": 1,
+    "auto_remove": true,
+    "trade_multiplier": true,
+    "trade_multiplier_value": 0.9,
+    "trade_max_per_hour": 1
+  },
+  "world": {
+    "knight_enabled": false,
+    "flags_enabled": false,
+    "farm_limit": true,
+    "quests_enabled": false
+  },
+  "villages": {
+    "{your village id}": {
+      "building": "purple_predator",
+      "units": "basic_into_def",
+      "managed": true,
+      "additional_farms": [],
+      "prioritize_building": true,
+      "prioritize_snob": false,
+      "snobs": 4
+    }
+  }
+}

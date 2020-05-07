@@ -1,0 +1,116 @@
+import re
+import json
+
+
+class Extractor:
+
+    @staticmethod
+    def game_state(res):
+        if type(res) != str:
+            res = res.text
+        grabber = re.search(r'TribalWars\.updateGameData\((.+?)\);', res)
+        if grabber:
+            data = grabber.group(1)
+            return json.loads(data, strict=False)
+
+    @staticmethod
+    def building_data(res):
+        if type(res) != str:
+            res = res.text
+        dre = re.search(r'(?s)BuildingMain.buildings = (\{.+?\});', res)
+        if dre:
+            return json.loads(dre.group(1), strict=False)
+
+        return None
+
+    @staticmethod
+    def get_quests(res):
+        if type(res) != str:
+            res = res.text
+        get_quests = re.search(r'Quests.setQuestData\((\{.+?\})\);', res)
+        if get_quests:
+            result = json.loads(get_quests.group(1), strict=False)
+            for quest in result:
+                data = result[quest]
+                if data['goals_completed'] == data['goals_total']:
+                    return quest
+        return None
+
+    @staticmethod
+    def map_data(res):
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'(?s)TWMap.sectorPrefech = (\[(.+?)\]);', res)
+        if data:
+            result = json.loads(data.group(1), strict=False)
+            return result
+
+    @staticmethod
+    def smith_data(res):
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'(?s)BuildingSmith.techs = (\{.+?\});', res)
+        if data:
+            result = json.loads(data.group(1), strict=False)
+            return result
+        return None
+
+    @staticmethod
+    def recruit_data(res):
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'(?s)unit_managers.units = (\{.+?\});', res)
+        if data:
+            raw = data.group(1)
+            quote_keys_regex = r'([\{\s,])(\w+)(:)'
+            processed = re.sub(quote_keys_regex, r'\1"\2"\3', raw)
+            result = json.loads(processed, strict=False)
+            return result
+
+    @staticmethod
+    def units_in_village(res):
+        if type(res) != str:
+            res = res.text
+        res = re.sub('(?s)<table id="units_home".+?</table>', '', res)
+        data = re.findall(r'(?s)<a href="#" class="unit_link" data-unit="(\w+)".+?(\d+)</strong>', res)
+        return data
+
+    @staticmethod
+    def active_building_queue(res):
+        if type(res) != str:
+            res = res.text
+        builder = re.search('(?s)<table id="build_queue"(.+?)</table>', res)
+        if not builder:
+            return 0
+
+        return builder.group(1).count('<a class="btn btn-cancel"')
+
+    @staticmethod
+    def units_in_total(res):
+        if type(res) != str:
+            res = res.text
+        data = re.findall(r'(?s)class=\Wunit-item unit-item-([a-z]+)\W.+?(\d+)</td>', res)
+        return data
+
+    @staticmethod
+    def attack_form(res):
+        if type(res) != str:
+            res = res.text
+        data = re.findall(r'(?s)<input.+?name="(.+?)".+?value="(.*?)"', res)
+        return data
+
+    @staticmethod
+    def attack_duration(res):
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'<span class="relative_time" data-duration="(\d+)"', res)
+        if data:
+            return int(data.group(1))
+        return 0
+
+    @staticmethod
+    def report_table(res):
+        if type(res) != str:
+            res = res.text
+        data = re.findall(r'(?s)class="report-link" data-id="(\d+)"', res)
+        return data
