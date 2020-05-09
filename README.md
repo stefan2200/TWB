@@ -15,8 +15,8 @@
 There is a lot of unfinished code which somewhat works but is not yet implemented.
 
 *How To:*
-- Install Python 2.x or Python 3.x
-- Install the requests library (pip install requests selenium)
+- Install Python 3.x
+- Install the requirements (pip install -r requirements.txt)
 - Edit config.json
 	- add at least the username, password, endpoint, world and server
 	- In the village config set the VillageID (from the village overview page)

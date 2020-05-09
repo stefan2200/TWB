@@ -4,20 +4,21 @@ import datetime
 import sys
 import random
 import coloredlogs
-from core.request import WebWrapper
-from core.driver import GameDriver
-from game.village import Village
 import sys
 import json
 import copy
 import os
+
+from core.request import WebWrapper
+from core.driver import GameDriver
+from game.village import Village
 
 coloredlogs.install(level=logging.INFO if "-d" in sys.argv else logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.ERROR)
 
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 
 class TWB:
