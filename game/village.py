@@ -60,8 +60,8 @@ class Village:
 
         if str(self.village_id) not in self.config['villages']:
             return False
-
-        self.twp.run(world=self.config['server']['world'])
+        if config['server']['server_on_twplus']:
+            self.twp.run(world=self.config['server']['world'])
 
         vdata = self.config['villages'][str(self.village_id)]
         if not vdata['managed']:

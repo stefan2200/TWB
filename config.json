@@ -10,7 +10,8 @@
     "server": "nlc1",
     "endpoint": "https://nlc1.tribalwars.nl/game.php",
     "has_recaptcha": true,
-    "world": "nlc1"
+    "world": "nlc1",
+    "server_on_twplus": true
   },
   "bot": {
     "active_hours": "6-23",

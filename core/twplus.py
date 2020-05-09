@@ -44,7 +44,8 @@ class TwPlus:
             res = requests.get(geturl, params=out_params)
             bdata = re.search('(?s)<form.+?id="buildingform">(.+?)</form>', res.text)
             if not bdata:
-                print("Error!!!!")
+                print("Error reading twplus information for world: %s!!!!" % world)
+                return
 
             table = bdata.group(1)
             body = table.split('<tbody>')[1].split('</tbody>')[0].strip()

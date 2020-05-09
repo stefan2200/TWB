@@ -17,7 +17,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.ERROR)
 
-sys.path.insert(0, os.path.dirname(__file__))
+os.chdir(os.path.dirname(__file__))
 
 
 class TWB:
