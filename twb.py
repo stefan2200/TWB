@@ -10,11 +10,14 @@ from game.village import Village
 import sys
 import json
 import copy
+import os
 
 coloredlogs.install(level=logging.INFO if "-d" in sys.argv else logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.ERROR)
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 
 class TWB:
@@ -73,6 +76,13 @@ class TWB:
             self.gd.close()
 
     def start(self):
+        if not os.path.exists("cache"):
+            os.mkdir("cache")
+            os.mkdir(os.path.join("cache", "attacks"))
+            os.mkdir(os.path.join("cache", "reports"))
+            os.mkdir(os.path.join("cache", "villages"))
+            os.mkdir(os.path.join("cache", "world"))
+
         self.daemon = True
         if self.daemon:
             print("Running in daemon mode")
