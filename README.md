@@ -15,8 +15,8 @@
 There is a lot of unfinished code which somewhat works but is not yet implemented.
 
 *How To:*
-- Install Python 2.x or Python 3.x
-- Install the requests library (pip install requests selenium)
+- Install Python 3.x
+- Install the requirements (pip install -r requirements.txt)
 - Edit config.json
 	- add at least the username, password, endpoint, world and server
 	- In the village config set the VillageID (from the village overview page)
@@ -24,5 +24,7 @@ There is a lot of unfinished code which somewhat works but is not yet implemente
 - Start the bot by running python twb.py and supply the cookie string from your browser
 - If login works you can adjust the config.json to your needs, it will automatically reload on change.
 - Additional properties can be tweaked by running the manager.py script
+
+More information about configuring the bot can be found in the readme directory!
 
 

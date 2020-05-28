@@ -1,12 +1,12 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.0",
+    "version": "1.1",
     "author": "stefan2200"
   },
   "server": {
-    "username": "{your tw username}",
-    "password": "{your tw password}",
+    "username": "your tw username",
+    "password": "your tw password",
     "server": "nlc1",
     "endpoint": "https://nlc1.tribalwars.nl/game.php",
     "has_recaptcha": true,
@@ -56,7 +56,7 @@
     "quests_enabled": false
   },
   "villages": {
-    "{your village id}": {
+    "your village id": {
       "building": "purple_predator",
       "units": "basic_into_def",
       "managed": true,
