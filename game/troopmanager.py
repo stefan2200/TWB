@@ -213,12 +213,15 @@ class TroopManager:
         self.recruit_data = Extractor.recruit_data(data)
         self.game_data = Extractor.game_state(data)
         self.logger.info("Attempting recruitment of %d %s" % (amount, unit_type))
+
+        if amount > self.max_batch_size:
+            amount = self.max_batch_size
+
         if unit_type not in self.recruit_data:
             self.logger.warning("Recruitment of %d %s failed because it is not researched" % (amount, unit_type))
             self.attempt_research(unit_type)
             return False
-        if amount > self.max_batch_size:
-            amount = self.max_batch_size
+
         resources = self.recruit_data[unit_type]
         if not resources:
             self.logger.warning("Recruitment of %d %s failed because invalid identifier" % (amount, unit_type))

@@ -19,6 +19,10 @@ class AttackManager:
     }
     extra_farm = []
     repman = None
+    target_high_points = False
+    farm_minpoints = 0
+    farm_maxpoints = 1000
+    ignored = []
 
     def __init__(self, wrapper=None, village_id=None, troopmanager=None, map=None):
         self.wrapper = wrapper
@@ -51,7 +55,7 @@ class AttackManager:
             else:
                 out_res = self.send_farm(target, self.template)
                 if not out_res:
-                    continue
+                    break
 
     def send_farm(self, target, template):
         target, distance = target
@@ -76,11 +80,31 @@ class AttackManager:
 
     def get_targets(self):
         output = []
+        my_village = self.map.villages[self.village_id] if self.village_id in self.map.villages else None
         for vid in self.map.villages:
             village = self.map.villages[vid]
             if village['owner'] != "0" and vid not in self.extra_farm:
+                if vid not in self.ignored:
+                    self.logger.debug("Ignoring village %s because player owned, add to additional_farms to auto attack" % vid)
+                    self.ignored.append(vid)
                 continue
-            if vid in self.extra_farm:
+            if my_village and 'points' in my_village and 'points' in village:
+                if village['points'] > self.farm_maxpoints:
+                    if vid not in self.ignored:
+                        self.logger.debug("Ignoring village %s because points %d below limit %d" % (vid, village['points'], self.farm_minpoints))
+                        self.ignored.append(vid)
+                    continue
+                if village['points'] < self.farm_minpoints:
+                    if vid not in self.ignored:
+                        self.logger.debug("Ignoring village %s because points %d exceed limit %d" % (vid, village['points'], self.farm_maxpoints))
+                        self.ignored.append(vid)
+                    continue
+                if village['points'] > my_village['points'] and not self.target_high_points:
+                    if vid not in self.ignored:
+                        self.logger.debug("Ignoring village %s because of higher points %d -> %d" % (vid, my_village['points'], village['points']))
+                        self.ignored.append(vid)
+                    continue
+            if village['owner'] != "0":
                 get_h = time.localtime().tm_hour
                 if get_h in range(0, 8) or get_h == 23:
                     self.logger.debug("Village %s will be ignored because it is player owned and attack between 23h-8h" % vid)

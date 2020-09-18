@@ -39,8 +39,8 @@ class TWB:
         config = self.config()
         self.wrapper = WebWrapper(config['server']['endpoint'], server=config['server']['server'], endpoint=config['server']['endpoint'])
 
-        self.wrapper.start(username=config['server']['username'],
-                           password=config['server']['password'], keep_session=True)
+        self.wrapper.start(username="dontcare",
+                           password="dontcare", keep_session=True)
 
         for vid in config['villages']:
             v = Village(wrapper=self.wrapper, village_id=vid)
@@ -79,9 +79,13 @@ class TWB:
     def start(self):
         if not os.path.exists("cache"):
             os.mkdir("cache")
+        if not os.path.exists(os.path.join("cache", "attacks")):
             os.mkdir(os.path.join("cache", "attacks"))
+        if not os.path.exists(os.path.join("cache", "reports")):
             os.mkdir(os.path.join("cache", "reports"))
+        if not os.path.exists(os.path.join("cache", "villages")):
             os.mkdir(os.path.join("cache", "villages"))
+        if not os.path.exists(os.path.join("cache", "world")):
             os.mkdir(os.path.join("cache", "world"))
 
         self.daemon = True

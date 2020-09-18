@@ -90,7 +90,7 @@ class Village:
         if self.config['world']['quests_enabled']:
             if self.get_quests():
                 self.logger.info("There where completed quests, re-running function")
-                return self.run()
+                return self.run(config=config)
 
         if not self.builder:
             self.builder = BuildingManager(wrapper=self.wrapper, village_id=self.village_id)
@@ -156,7 +156,7 @@ class Village:
         if self.units.can_attack:
             if not self.area:
                 self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
-                self.area.get_map()
+            self.area.get_map()
             if self.area.villages:
                 self.logger.info("%d villages from map cache, (your location: %s)" % (
                 len(self.area.villages), ':'.join([str(x) for x in self.area.my_location])))
@@ -164,6 +164,9 @@ class Village:
                     self.attack = AttackManager(wrapper=self.wrapper, village_id=self.village_id,
                                                 troopmanager=self.units, map=self.area)
                     self.attack.repman = self.rep_man
+                    self.attack.target_high_points = config['farms']['attack_higher_points']
+                    self.attack.farm_minpoints = config['farms']['min_points']
+                    self.attack.farm_maxpoints = config['farms']['max_points']
                 if entry:
                     self.attack.template = entry['farm']
                 if self.config['farms']['farm']:

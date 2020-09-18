@@ -37,7 +37,7 @@ class Map:
                             entry = data['villages'][lon][lat]
                             if entry[0] == str(self.village_id):
                                 self.my_location = coords
-                                continue
+
                             self.build_cache_entry(location=coords, entry=entry)
                     except:
                         continue
@@ -45,7 +45,7 @@ class Map:
     def build_cache_entry(self, location, entry):
         vid = entry[0]
         name = entry[2]
-        points = entry[3]
+        points = int(entry[3].replace('.', ''))
         player = entry[4]
         bonus = entry[6]
         clan = entry[11]
@@ -54,6 +54,7 @@ class Map:
             'name': name,
             'location': location,
             'bonus': bonus,
+            'points': points,
             'safe': False,
             'scout': False,
             'owner': player,
@@ -69,7 +70,7 @@ class Map:
         cached = self.in_cache(vid)
         if not cached:
             MapCache.set_cache(village_id=vid, entry=structure)
-        if cached and cached['owner'] != player:
+        if cached and cached != structure:
             MapCache.set_cache(village_id=vid, entry=structure)
         self.villages[vid] = structure
 

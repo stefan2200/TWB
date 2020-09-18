@@ -1,4 +1,7 @@
-# Warning: this code works with the current version (07-05-2020) but will not be maintained by me any further!
+# ~~Warning: this code works with the current version (07-05-2020) but will not be maintained by me any further!~~
+# ok maybe just a few little updates :)
+
+_When migrating from v1.1 please delete the cache/villages folder_
 
 *Features:*
 
@@ -17,9 +20,10 @@ There is a lot of unfinished code which somewhat works but is not yet implemente
 *How To:*
 - Install Python 3.x
 - Install the requirements (pip install -r requirements.txt)
-- Edit config.json
-	- add at least the username, password, endpoint, world and server
+- Rename config.example.json to config.json and edit the following things:
+	- add at least the endpoint, world and server
 	- In the village config set the VillageID (from the village overview page)
+	- Add additional villages in JSON dictionary format
 
 - Start the bot by running python twb.py and supply the cookie string from your browser
 - If login works you can adjust the config.json to your needs, it will automatically reload on change.
