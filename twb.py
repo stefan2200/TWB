@@ -55,6 +55,7 @@ class TWB:
                              base=self.wrapper.auth_endpoint)
         # setup additional builder
         rm = None
+        defense_states = {}
         while self.should_run:
             config = self.config()
             for vil in self.villages:
@@ -63,6 +64,14 @@ class TWB:
                 else:
                     vil.rep_man = rm
                 vil.run(config=config)
+                if vil.get_config(section="units", parameter="manage_defence", default=False):
+                    defense_states[vil.village_id] = vil.def_man.under_attack if vil.def_man.allow_support_recv else False
+
+            if len(defense_states):
+                for vil in self.villages:
+                    print("Syncing attack states")
+                    vil.def_man.my_other_villages = defense_states
+
             sleep = 0
             active_h = [int(x) for x in config['bot']['active_hours'].split('-')]
             get_h = time.localtime().tm_hour

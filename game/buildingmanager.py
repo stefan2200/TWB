@@ -117,6 +117,11 @@ class BuildingManager:
             r = False
         return r
 
+    def get_level(self, building):
+        if building not in self.levels:
+            return 0
+        return self.levels[building]
+
     def readable_ts(self, seconds):
         seconds -= time.time()
         seconds = seconds % (24 * 3600)

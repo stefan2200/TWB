@@ -22,7 +22,7 @@ class SnobManager:
         self.logger = logging.getLogger("Snob:%s" % self.village_id)
 
     def need_reserve(self, text):
-        need_amount = re.search(r'(?s)<th colspan="3">nog nodig</th>.+?data-unit="snob">.+?<td.+?>\s*(\d+)\sx', text)
+        need_amount = re.search(r'(?s)<th colspan="3">[\w\s]+</th>.+?data-unit="snob">.+?<td.+?>\s*(\d+)\sx', text)
         if need_amount:
             return int(need_amount.group(1))
         return 0

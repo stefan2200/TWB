@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.3",
+    "version": "1.4",
     "author": "stefan2200"
   },
   "server": {
@@ -31,7 +31,8 @@
     "recruit": true,
     "upgrade": true,
     "default": "basic",
-    "batch_size": 25
+    "batch_size": 25,
+    "manage_defence": false
   },
   "farms": {
     "farm": true,
@@ -71,7 +72,10 @@
       "trade_for_premium": false,
       "gather_enabled": false,
       "gather_selection": 1,
-      "snobs": 0
+      "snobs": 0,
+      "evacuate_fragile_units_on_attack": false,
+      "support_others": false,
+      "request_support_on_attack": false
     }
   }
 }

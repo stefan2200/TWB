@@ -1,3 +1,11 @@
+### New in v1.4
+- Reworked config methods so the bot works with all config versions (with warnings tho)
+- Automatic requesting and sending support
+- Attack / resource flag management
+- Automatic evacuation of high-profile units (snob, axe)
+- Found out why snob recruiting was not working (fix in progress)
+- Minor bug-fixes
+
 
 ### New in v1.3
 - Implemented better farm management
