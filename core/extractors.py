@@ -56,6 +56,16 @@ class Extractor:
         return None
 
     @staticmethod
+    def premium_data(res):
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'(?s)PremiumExchange.receiveData\((.+?)\);', res)
+        if data:
+            result = json.loads(data.group(1), strict=False)
+            return result
+        return None
+
+    @staticmethod
     def recruit_data(res):
         if type(res) != str:
             res = res.text

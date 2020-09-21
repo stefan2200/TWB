@@ -1,4 +1,5 @@
 import logging
+import json
 
 from game.buildingmanager import BuildingManager
 from game.troopmanager import TroopManager
@@ -57,6 +58,7 @@ class Village:
                 self.game_data = Extractor.game_state(data)
                 self.logger = logging.getLogger("Village %s" % self.game_data['village']['name'])
                 self.logger.info("Read game state for village")
+                self.wrapper.reporter.report(self.village_id, "TWB_START", "Starting run for village: %s" % self.game_data['village']['name'])
 
         if str(self.village_id) not in self.config['villages']:
             return False
@@ -74,6 +76,7 @@ class Village:
             self.resman = ResourceManager(wrapper=self.wrapper, village_id=self.village_id)
 
         self.resman.update(self.game_data)
+        self.wrapper.reporter.report(self.village_id, "TWB_PRE_RESOURCE", str(self.resman.actual))
 
         if not self.rep_man:
             self.rep_man = ReportManager(wrapper=self.wrapper, village_id=self.village_id)
@@ -81,15 +84,20 @@ class Village:
 
         if not self.def_man:
             self.def_man = DefenceManager(wrapper=self.wrapper, village_id=self.village_id)
-
+        last_attack = self.def_man.under_attack
+        self.def_man.manage_flags_enabled = config['world']['flags_enabled']
         self.def_man.update(data.text)
-        if self.def_man.under_attack:
+        if self.def_man.under_attack and not last_attack:
             self.logger.warning("Village under attack!")
+            self.wrapper.reporter.report(self.village_id, "TWB_ATTACK",
+                                 "Village: %s under attack" % self.game_data['village']['name'])
 
         # setup and check if village still exists / is accessible
         if self.config['world']['quests_enabled']:
             if self.get_quests():
                 self.logger.info("There where completed quests, re-running function")
+                self.wrapper.reporter.report(self.village_id, "TWB_QUEST",
+                                     "Completed quest")
                 return self.run(config=config)
 
         if not self.builder:
@@ -136,6 +144,7 @@ class Village:
             self.snobman.building_level = self.builder.levels['snob']
             self.snobman.run()
 
+        # recruitment management
         if self.config['units']['recruit']:
             # prioritize_building: will only recruit when builder has sufficient funds for queue items
             if vdata['prioritize_building'] and not self.resman.can_recruit():
@@ -152,12 +161,13 @@ class Village:
 
         self.logger.debug("Current resources: %s" % str(self.resman.actual))
         self.logger.debug("Requested resources: %s" % str(self.resman.requested))
-
+        # attack management
         if self.units.can_attack:
             if not self.area:
                 self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
             self.area.get_map()
             if self.area.villages:
+                self.units.can_scout = config['farms']['force_scout_if_available']
                 self.logger.info("%d villages from map cache, (your location: %s)" % (
                 len(self.area.villages), ':'.join([str(x) for x in self.area.my_location])))
                 if not self.attack:
@@ -169,12 +179,15 @@ class Village:
                     self.attack.farm_maxpoints = config['farms']['max_points']
                 if entry:
                     self.attack.template = entry['farm']
-                if self.config['farms']['farm']:
+                if self.config['farms']['farm'] and not self.def_man.under_attack:
                     self.attack.extra_farm = vdata['additional_farms']
                     self.attack.max_farms = self.config['farms']['max_farms']
                     self.attack.run()
+
+        self.units.can_gather = vdata['gather_enabled']
         if not self.def_man.under_attack:
-            self.units.gather()
+            self.units.gather(selection=vdata['gather_selection'])
+        # market management
         if self.config['market']['auto_trade'] and "market" in self.builder.levels and self.builder.levels["market"] > 0:
             self.logger.info("Managing market")
             self.resman.trade_max_per_hour = self.config['market']['trade_max_per_hour']
@@ -182,10 +195,19 @@ class Village:
             if self.config['market']['trade_multiplier']:
                 self.resman.trade_bias = self.config['market']['trade_multiplier_value']
             self.resman.manage_market(drop_existing=self.config['market']['auto_remove'])
-        self.logger.info("Village cycle done, returning to overview")
+
         res = self.wrapper.get_action(village_id=self.village_id, action="overview")
         self.game_data = Extractor.game_state(res)
         self.resman.update(self.game_data)
+        if config['world']['trade_for_premium'] and vdata['trade_for_premium']:
+            self.resman.do_premium_trade()
+
+        self.logger.info("Village cycle done, returning to overview")
+        self.wrapper.reporter.report(self.village_id, "TWB_POST_RESOURCE", str(self.resman.actual))
+        self.wrapper.reporter.add_data(self.village_id, data_type="village.resources", data=json.dumps(self.resman.actual))
+        self.wrapper.reporter.add_data(self.village_id, data_type="village.buildings", data=json.dumps(self.builder.levels))
+        self.wrapper.reporter.add_data(self.village_id, data_type="village.troops", data=json.dumps(self.units.total_troops))
+        self.wrapper.reporter.add_data(self.village_id, data_type="village.config", data=json.dumps(vdata))
 
     def get_quests(self):
         result = Extractor.get_quests(self.wrapper.last_response)

@@ -39,7 +39,7 @@ for farm in attacks:
         for k in loot:
             total += loot[k]
         if len(num_attack) > 3:
-            if total / len(num_attack) < 50 and ('low_profile' not in data or not data['low_profile']):
+            if total / len(num_attack) < 100 and ('low_profile' not in data or not data['low_profile']):
                 print("Farm %s has very low resources (%d avg total), extending farm time" % (farm, total / len(num_attack)))
                 data['low_profile'] = True
                 AttackCache.set_cache(farm, data)

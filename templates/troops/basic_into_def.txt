@@ -21,9 +21,11 @@
         "spear": 60
       }
     },
-    "farm": {
-      "spear": 20
-    }
+    "farm": [
+        {"spear": 30, "knight": 1},
+        {"spear": 30},
+        {"spear": 15, "sword": 20}
+    ]
   },
   {
     "building": "smith",
@@ -37,9 +39,11 @@
         "sword": 30
       }
     },
-    "farm": {
-      "spear": 15
-    }
+    "farm": [
+        {"spear": 30, "knight": 1},
+        {"spear": 30},
+        {"spear": 15, "sword": 20}
+    ]
   },
   {
     "building": "stable",
@@ -50,16 +54,18 @@
         "sword": 50
       }
     },
-    "farm": {
-      "spear": 15
-    }
+    "farm": [
+        {"spear": 30, "knight": 1},
+        {"spear": 30},
+        {"spear": 15, "sword": 20}
+    ]
   },
   {
     "building": "stable",
     "level": 3,
     "build": {
       "barracks": {
-        "spear": 100,
+        "spear": 120,
         "sword": 50
       },
       "stable": {
@@ -68,13 +74,13 @@
       }
     },
     "farm": [
-        {"spear": 15},
+        {"spear": 35},
         {"light": 5}
     ]
   },
   {
     "building": "barracks",
-    "level": 7,
+    "level": 8,
     "upgrades": {
         "spear": 2,
         "sword": 2
@@ -90,7 +96,7 @@
       }
     },
     "farm": [
-        {"spear": 15},
+        {"spear": 50},
         {"light": 5}
     ]
   },

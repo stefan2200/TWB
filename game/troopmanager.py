@@ -1,16 +1,17 @@
-from core.extractors import Extractor
 import logging
 import math
 import time
+
+from core.extractors import Extractor
 
 
 class TroopManager:
     can_recruit = True
     can_attack = True
     can_dodge = False
-    can_scout = False
+    can_scout = True
     can_farm = True
-    can_gather = False
+    can_gather = True
 
     queue = []
     troops = {
@@ -143,6 +144,8 @@ class TroopManager:
                 attempt = self.attempt_research(unit_type, smith_data=smith_data)
                 if attempt:
                     self.logger.info("Started smith upgrade of %s %d -> %d" % (unit_type, current_level, current_level+1))
+                    self.wrapper.reporter.report(self.village_id, "TWB_UPGRADE",
+                                         "Started smith upgrade of %s %d -> %d" % (unit_type, current_level, current_level+1))
                     return True
         return False
 
@@ -173,7 +176,7 @@ class TroopManager:
                 return True
         self.logger.info("Research of %s not yet possible" % unit_type)
 
-    def gather(self):
+    def gather(self, selection=1):
         if not self.can_gather:
             return False
         url = "game.php?village=%s&screen=place&mode=scavenge" % self.village_id
@@ -186,7 +189,7 @@ class TroopManager:
         can_use = ["spear:25", "sword:15", "axe:10", "archer:10", "light:80", "marcher:50", "heavy:50", "knight:100"]
         payload = {
             'squad_requests[0][village_id]': self.village_id,
-            'squad_requests[0][option_id]': '1',
+            'squad_requests[0][option_id]': str(selection),
             'squad_requests[0][use_premium]': 'false'
         }
 
@@ -250,6 +253,9 @@ class TroopManager:
             self.wait_for[building] = int(time.time()) + (amount * int(resources['build_time']))
             # self.troops[unit_type] = str((int(self.troops[unit_type]) if unit_type in self.troops else 0) + amount)
             self.logger.info("Recruitment of %d %s started (%s idle till %d)" %
+                              (amount, unit_type, building, self.wait_for[building]))
+            self.wrapper.reporter.report(self.village_id, "TWB_RECRUIT",
+                                 "Recruitment of %d %s started (%s idle till %d)" %
                               (amount, unit_type, building, self.wait_for[building]))
             return True
         return False

@@ -12,6 +12,7 @@ import os
 from core.request import WebWrapper
 from core.driver import GameDriver
 from game.village import Village
+from core.reporter import MySQLReporter as Reporter
 
 coloredlogs.install(level=logging.INFO if "-d" in sys.argv else logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -37,7 +38,11 @@ class TWB:
 
     def run(self):
         config = self.config()
-        self.wrapper = WebWrapper(config['server']['endpoint'], server=config['server']['server'], endpoint=config['server']['endpoint'])
+        self.wrapper = WebWrapper(config['server']['endpoint'],
+                                  server=config['server']['server'],
+                                  endpoint=config['server']['endpoint'],
+                                  reporter_enabled=config['reporting']['enabled'],
+                                  reporter_constr=config['reporting']['connection_string'])
 
         self.wrapper.start(username="dontcare",
                            password="dontcare", keep_session=True)
@@ -87,6 +92,8 @@ class TWB:
             os.mkdir(os.path.join("cache", "villages"))
         if not os.path.exists(os.path.join("cache", "world")):
             os.mkdir(os.path.join("cache", "world"))
+        if not os.path.exists(os.path.join("cache", "logs")):
+            os.mkdir(os.path.join("cache", "logs"))
 
         self.daemon = True
         if self.daemon:
@@ -100,5 +107,11 @@ class TWB:
             self.run()
 
 
-t = TWB()
-t.start()
+for x in range(3):
+    try:
+        t = TWB()
+        t.start()
+    except Exception as e:
+        t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
+        print("I crashed :(   %s" % str(e))
+        pass

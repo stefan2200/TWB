@@ -24,6 +24,7 @@ class Map:
             return
         self.last_fetch = time.time()
         res = self.wrapper.get_action(village_id=self.village_id, action="map")
+        game_state = Extractor.game_state(res)
         self.map_data = Extractor.map_data(res)
         if self.map_data:
             for tile in self.map_data:
@@ -41,6 +42,8 @@ class Map:
                             self.build_cache_entry(location=coords, entry=entry)
                     except:
                         continue
+                if not self.my_location:
+                    self.my_location = [game_state['village']['x'], game_state['village']['y']]
 
     def build_cache_entry(self, location, entry):
         vid = entry[0]

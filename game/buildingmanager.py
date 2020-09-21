@@ -35,6 +35,9 @@ class BuildingManager:
         self.game_state = Extractor.game_state(main_data)
         if self.resman:
             self.resman.update(self.game_state)
+            if 'building' in self.resman.requested:
+                # new run, remove request
+                self.resman.requested['building'] = {}
         if not self.logger:
             self.logger = logging.getLogger("Builder: %s" % self.game_state['village']['name'])
         self.logger.debug("Updating building levels")
@@ -156,6 +159,8 @@ class BuildingManager:
             if check['can_build'] and self.has_enough(check) and 'build_link' in check:
                 queue = self.put_wait(check['build_time'])
                 self.logger.info("Building %s %d -> %d (finishes: %s)" % (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
+                self.wrapper.reporter.report(self.village_id, "TWB_BUILD",
+                                     "Building %s %d -> %d (finishes: %s)" % (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
                 self.levels[entry] += 1
                 result = self.wrapper.get_url(check['build_link'].replace('amp;', ''))
                 self.game_state = Extractor.game_state(result)

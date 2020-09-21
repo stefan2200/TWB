@@ -11,6 +11,10 @@
     "world": "nlc1",
     "server_on_twplus": false
   },
+  "reporting": {
+    "enabled": false,
+    "connection_string": "file://cache/logs/twb_{ts}.log"
+  },
   "bot": {
     "active_hours": "6-23",
     "active_delay": 200,
@@ -31,14 +35,15 @@
   },
   "farms": {
     "farm": true,
-    "min_points": 26,
-    "max_points": 1080,
+    "min_points": 0,
+    "max_points": 50,
     "find_player_owned": false,
     "search_radius": 100,
     "default_away_time": 3600,
     "full_loot_away_time": 1800,
     "max_farms": 25,
-    "attack_higher_points": false
+    "attack_higher_points": false,
+    "force_scout_if_available": true
   },
   "market": {
     "auto_trade": true,
@@ -50,16 +55,22 @@
   },
   "world": {
     "knight_enabled": false,
-    "quests_enabled": true
+    "flags_enabled": false,
+    "quests_enabled": false,
+    "trade_for_premium": false
   },
   "villages": {
     "enter_village_id_here_between_these_quotes": {
       "building": "purple_predator",
       "units": "basic_into_def",
       "managed": true,
+      "scout_first": false,
       "additional_farms": [],
-      "prioritize_building": true,
+      "prioritize_building": false,
       "prioritize_snob": false,
+      "trade_for_premium": false,
+      "gather_enabled": false,
+      "gather_selection": 1,
       "snobs": 0
     }
   }

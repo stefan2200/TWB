@@ -1,6 +1,7 @@
 import logging
 import time
 import re
+from core.extractors import Extractor
 
 
 class ResourceManager:
@@ -23,6 +24,7 @@ class ResourceManager:
     trade_max_duration = 2
     wrapper = None
     village_id = None
+    do_premium_trade = False
 
     def __init__(self, wrapper=None, village_id=None):
         self.wrapper = wrapper
@@ -36,6 +38,25 @@ class ResourceManager:
         self.storage = game_state['village']['storage_max']
         self.check_state()
         self.logger = logging.getLogger("Resource Manager: %s" % game_state['village']['name'])
+
+    def do_premium_stuff(self):
+        gpl = self.get_plenty_off()
+        if gpl and self.do_premium_trade:
+            url = "game.php?village=%s&screen=market&mode=exchange" % self.village_id
+            res = self.wrapper.get_url(url=url)
+            data = Extractor.premium_data(res.text)
+            if not data:
+                self.logger.warning("Error reading premium data!")
+            price_fetch = ["wood", "stone", "iron"]
+            prices = {}
+            for p in price_fetch:
+                prices[p] = data['stock'] * data['rates']
+            self.logger.info("Actual premium prices: %s" % prices)
+
+            if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
+                self.logger.info("Attempting trade of %d %s for premium point" % (prices[gpl], gpl))
+                self.wrapper.get_api_action(self.village_id, action="exchange_begin",
+                                            params={'screen': "market"}, data={"sell_%s" % gpl: "1"})
 
     def check_state(self):
         for source in self.requested:
@@ -59,6 +80,12 @@ class ResourceManager:
 
     def get_plenty_off(self):
         for sub in self.actual:
+            f = 1
+            for sr in self.requested:
+                if sub in self.requested[sr] and self.requested[sr][sub] > 0:
+                    f = 0
+            if not f:
+                continue
             if sub == "pop":
                 continue
             if self.actual[sub] > int(self.storage / self.ratio):
@@ -140,8 +167,11 @@ class ResourceManager:
                     how_many = self.max_trade_amount
                     self.logger.debug("Lowering trade amount of %d to %d because of limitation" % (how_many, self.max_trade_amount))
                 biased = int(how_many * self.trade_bias)
-                self.logger.info("Adding market trade of %d %s -> %d %s" % (how_many, item, biased, plenty))
                 if self.actual[plenty] < biased:
                     self.logger.debug("Cannot trade because insufficient resources")
                     return
+                self.logger.info("Adding market trade of %d %s -> %d %s" % (how_many, item, biased, plenty))
+                self.wrapper.reporter.report(self.village_id, "TWB_MARKET",
+                                     "Adding market trade of %d %s -> %d %s" % (how_many, item, biased, plenty))
+
                 self.trade(plenty, biased, item, how_many)

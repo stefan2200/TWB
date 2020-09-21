@@ -24,6 +24,10 @@ class AttackManager:
     farm_maxpoints = 1000
     ignored = []
 
+    farm_high_prio_wait = 1200
+    farm_default_wait = 3600
+    farm_low_prio_wait = 7200
+
     def __init__(self, wrapper=None, village_id=None, troopmanager=None, map=None):
         self.wrapper = wrapper
         self.village_id = village_id
@@ -42,19 +46,24 @@ class AttackManager:
         if not self.troopmanager.can_attack or self.troopmanager.troops == {}:
             return False
         self.get_targets()
+        ignored = []
         for target in self.targets[0:self.max_farms]:
             if type(self.template) == list:
                 f = False
                 for template in self.template:
+                    if template in ignored:
+                        continue
                     out_res = self.send_farm(target, template)
-                    if out_res:
+                    if out_res == 1:
                         f = True
                         break
+                    elif out_res == -1:
+                        ignored.append(template)
                 if not f:
                     continue
             else:
                 out_res = self.send_farm(target, self.template)
-                if not out_res:
+                if out_res == -1:
                     break
 
     def send_farm(self, target, template):
@@ -65,6 +74,8 @@ class AttackManager:
             if cached:
                 attack_result = self.attack(target['id'], troops=template)
                 self.logger.info("Attacking %s -> %s (%s)" % (self.village_id, target['id'], str(template)))
+                self.wrapper.reporter.report(self.village_id, "TWB_FARM",
+                                     "Attacking %s -> %s (%s)" % (self.village_id, target['id'], str(template)))
                 if attack_result:
                     for u in template:
                         self.troopmanager.troops[u] = str(int(self.troopmanager.troops[u]) - template[u])
@@ -73,10 +84,11 @@ class AttackManager:
                                   safe=True,
                                   high_profile=cached['high_profile'] if type(cached) == dict else False,
                                   low_profile=cached['low_profile'] if type(cached) == dict and 'low_profile' in cached else False)
-                    return True
+                    return 1
         else:
             self.logger.debug("Not sending additional farm because not enough units: %s" % missing)
-        return False
+            return -1
+        return 0
 
     def get_targets(self):
         output = []
@@ -89,17 +101,17 @@ class AttackManager:
                     self.ignored.append(vid)
                 continue
             if my_village and 'points' in my_village and 'points' in village:
-                if village['points'] > self.farm_maxpoints:
+                if village['points'] >= self.farm_maxpoints:
                     if vid not in self.ignored:
                         self.logger.debug("Ignoring village %s because points %d below limit %d" % (vid, village['points'], self.farm_minpoints))
                         self.ignored.append(vid)
                     continue
-                if village['points'] < self.farm_minpoints:
+                if village['points'] <= self.farm_minpoints:
                     if vid not in self.ignored:
                         self.logger.debug("Ignoring village %s because points %d exceed limit %d" % (vid, village['points'], self.farm_maxpoints))
                         self.ignored.append(vid)
                     continue
-                if village['points'] > my_village['points'] and not self.target_high_points:
+                if village['points'] >= my_village['points'] and not self.target_high_points:
                     if vid not in self.ignored:
                         self.logger.debug("Ignoring village %s because of higher points %d -> %d" % (vid, my_village['points'], village['points']))
                         self.ignored.append(vid)
@@ -110,9 +122,13 @@ class AttackManager:
                     self.logger.debug("Village %s will be ignored because it is player owned and attack between 23h-8h" % vid)
                     continue
 
+            if vid in self.ignored:
+                self.logger.debug("Removed %s from farm ignore list" % vid)
+                self.ignored.remove(vid)
+
             distance = self.map.get_dist(village['location'])
             output.append([village, distance])
-
+        self.logger.info("Farm targets: %d Ignored targets: %d" % (len(output), len(self.ignored)))
         self.targets = sorted(output, key=lambda x: x[1])
 
     def attacked(self, vid, scout=False, high_profile=False, safe=True, low_profile=False):
@@ -164,11 +180,11 @@ class AttackManager:
         if not cache_entry['scout'] and self.troopmanager.can_scout:
             self.scout(vid)
             return False
-        min_time = 7200
+        min_time = self.farm_default_wait
         if cache_entry['high_profile']:
-            min_time = 3600
+            min_time = self.farm_high_prio_wait
         if 'low_profile' in cache_entry and cache_entry['low_profile']:
-            min_time = 14400
+            min_time = self.farm_low_prio_wait
 
         if cache_entry['last_attack'] + min_time > int(time.time()):
             self.logger.debug(

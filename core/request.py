@@ -9,6 +9,7 @@ import time
 import random
 import json
 import os
+from core.reporter import ReporterObject
 
 
 class WebWrapper:
@@ -22,12 +23,14 @@ class WebWrapper:
     priority_mode = False
     auth_endpoint = None
     driver_sync = None
+    reporter = None
 
-    def __init__(self, url, server=None, endpoint=None):
+    def __init__(self, url, server=None, endpoint=None, reporter_enabled=False, reporter_constr=None):
         self.web = requests.session()
         self.auth_endpoint = url
         self.server = server
         self.endpoint = endpoint
+        self.reporter = ReporterObject(enabled=reporter_enabled, connection_string=reporter_constr)
 
     def post_process(self, response):
         xsrf = re.search('<meta content="(.+?)" name="csrf-token"', response.text)
@@ -143,7 +146,7 @@ class WebWrapper:
         req.update(params)
         payload = "game.php?%s" % urlencode(req)
         url = urljoin(self.endpoint, payload)
-        if not 'h' in data:
+        if 'h' not in data:
             data['h'] = self.last_h
         res = self.post_url(url, data=data, headers=custom)
         if res.status_code == 200:

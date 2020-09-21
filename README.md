@@ -1,5 +1,19 @@
-# ~~Warning: this code works with the current version (07-05-2020) but will not be maintained by me any further!~~
-# ok maybe just a few little updates :)
+
+### New in v1.3
+- Implemented better farm management
+- Added remote / file logging (with MySQL support)
+- Implemented automatic flag upgrading
+- Implemented premium exchange
+- More undocumented config parameters
+- Fixed bugs and removed some too-verbose log messages
+- Some template improvements
+- Fixed bugs introduced in v1.2
+
+### New in v1.2
+- Actually implemented farm point limits
+- A few bug fixes
+- Made quests work again
+- Login credentials not required anymore
 
 _When migrating from v1.1 please delete the cache/villages folder_
 
@@ -8,14 +22,13 @@ _When migrating from v1.1 please delete the cache/villages folder_
 - Basic build queue
 - Automatic troop management
 - Automatic scouting (and attack if empty)
+- Flag management
 - Automatic farming (based on range) also very configurable
-- Market management
+- Market management (also exchange leftovers for premium points)
 - Research (both systems)
 - Automatic snob creation
 - Report management
 - ReCaptcha bypass by using browser cookie string (bot works if browser session is valid)
-
-There is a lot of unfinished code which somewhat works but is not yet implemented.
 
 *How To:*
 - Install Python 3.x

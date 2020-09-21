@@ -4,7 +4,7 @@
 Help file for defining your custom configuration file.
 ## Server
 **Username and password** 
-Can be supplied for auto login, not required if has_recaptcha is enabled or a cookie string is supplied.
+As of v1.2 this is no longer required since login is protected by a captcha
 
 **Endpoint & Server & World**
 These are the first parts of the URL your TW game is located at. Endpoint should start with "https://" and end at "game.php". Server and world is the server you are currently playing at, in most cases (if not all) this is the first part of the endpoint URL after "https://".
@@ -14,6 +14,13 @@ This has nothing to do with the in-game bot protection, it just tells the script
 
 **Server on TWPlus**
 If your game world is not (yet) available on [http://twplus.org/](http://twplus.org/) set to false. This will automatically fetch world-related data like the population required for certain buildings.
+
+## Remote logging
+The bot has a feature for remote logging using MySQL and files.
+By default every start (running twb.py) creates a new log-file based on the current timestamp.
+If you want the bot to log to MySQL it is required to supply a connection string like this:
+`mysql://username:password@hostname:3306/database_name`
+It should automatically create the required tables if they don't exist yet. 
 
 ## Bot
 This will configure non game-related related features.
@@ -81,3 +88,7 @@ The amount of snobs that can be created in a village can be configured with the 
 **Custom farms**
 Each village can have a list of custom farms in the "additional_farms" parameter, the village ID's should be added as strings. 
 *Note: This option can be very dangerous! if the village gets captured by you or some other player the bot will still keep attacking until troops die or the entry gets disabled in the village cache file.*
+
+**Gathering**
+If troops are not used for farming and there is no incoming attack the village will automatically attempt to start a gather operation.
+You can enable/disable this using the gather parameter and set the default gather operation using the "gather_selection" option.
