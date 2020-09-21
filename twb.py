@@ -108,8 +108,8 @@ class TWB:
 
 
 for x in range(3):
+    t = TWB()
     try:
-        t = TWB()
         t.start()
     except Exception as e:
         t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))

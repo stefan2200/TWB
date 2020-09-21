@@ -151,11 +151,11 @@ class ReporterObject:
 
     def add_data(self, village_id, data_type, data):
         if self.enabled:
-            return self.object.report(self.connection, village_id, data_type, data)
+            return self.object.add_data(self.connection, village_id, data_type, data)
         return
 
     def get_config(self, village_id, action, data):
         if self.enabled:
-            return self.object.report(self.connection, village_id, action, data)
+            return self.object.get_config(self.connection, village_id, action, data)
         return
 
