@@ -39,6 +39,9 @@ class DefenceManager:
     runs = 0
     logger = None
     manage_flags_enabled = False
+    support_factor = 0.25
+    support_max_villages = 2
+
     # flag_index, flag_level
     current_flag = []
 
@@ -58,13 +61,14 @@ class DefenceManager:
         self.wrapper = wrapper
         self.logger = logging.getLogger("Defence Manager")
 
-    def support_other(self, requesting_village, factor=0.25):
+    def support_other(self, requesting_village):
+
         if self.under_attack or not self.allow_support_send:
             return False
         send_support = {}
         for u in self.defensive_units:
             if u in self.units.troops and int(self.units.troops[u]) > 0:
-                send_support[u] = int(int(self.units.troops[u]) * factor)
+                send_support[u] = int(int(self.units.troops[u]) * self.support_factor)
 
         self.logger.info("Sending requested support to village %s: %s" % (requesting_village, str(send_support)))
         return self.support(requesting_village, troops=send_support)
@@ -80,12 +84,13 @@ class DefenceManager:
             if self.auto_evacuate:
                 self.evacuate()
         else:
+            self.under_attack = False
             self.flag_logic(self.set_flag_not_under_attack)
             index = 0
             for vil in self.my_other_villages:
                 if vil != self.village_id:
                     continue
-                if len(self.supported) >= 2:
+                if len(self.supported) >= self.support_max_villages:
                     self.logger.debug("Already supported 2 villages, ignoring")
                     break
                 if not self.under_attack and self.my_other_villages[vil] and self.allow_support_send:
@@ -158,7 +163,7 @@ class DefenceManager:
         url = "game.php?village=%s&screen=flags" % self.village_id
         result = self.wrapper.get_url(url=url)
 
-        self._can_change_flag = '<div id="cooldown_container">' not in result.text
+        self._can_change_flag = '<span class="timer cooldown">' not in result.text
 
         get_flag_data = re.search(r"FlagsScreen\.setFlagCounts\((.+?)\);", result.text)
         if not get_flag_data:

@@ -22,7 +22,6 @@ class WebWrapper:
     last_h = None
     priority_mode = False
     auth_endpoint = None
-    driver_sync = None
     reporter = None
 
     def __init__(self, url, server=None, endpoint=None, reporter_enabled=False, reporter_constr=None):
@@ -50,8 +49,6 @@ class WebWrapper:
         if not self.priority_mode:
             time.sleep(random.randint(3, 7))
         url = urljoin(self.endpoint if self.endpoint else self.auth_endpoint, url)
-        if self.driver_sync:
-            self.driver_sync.driver.get(url)
         if not headers:
             headers = self.headers
         try:
@@ -107,6 +104,7 @@ class WebWrapper:
         self.web.cookies.clear()
         cinp = input("Enter browser cookie string> ")
         cookies = {}
+        cinp = cinp.strip()
         for itt in cinp.split(';'):
             itt = itt.strip()
             kvs = itt.split("=")

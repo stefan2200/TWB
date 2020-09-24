@@ -70,7 +70,7 @@
       },
       "stable": {
         "spy": 10,
-        "light": 15
+        "light": 20
       }
     },
     "farm": [
@@ -87,16 +87,16 @@
     },
     "build": {
       "barracks": {
-        "spear": 150,
-        "sword": 60
+        "spear": 200,
+        "sword": 100,
+        "archer": 50
       },
       "stable": {
         "spy": 15,
-        "light": 25
+        "light": 50
       }
     },
     "farm": [
-        {"spear": 50},
         {"light": 5}
     ]
   },
@@ -106,7 +106,8 @@
     "build": {
       "barracks": {
         "spear": 250,
-        "sword": 100
+        "sword": 100,
+        "archer": 100
       },
       "stable": {
         "spy": 25,

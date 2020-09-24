@@ -79,6 +79,8 @@ class ResourceManager:
         return True
 
     def get_plenty_off(self):
+        most_of = 0
+        most = None
         for sub in self.actual:
             f = 1
             for sr in self.requested:
@@ -89,8 +91,10 @@ class ResourceManager:
             if sub == "pop":
                 continue
             if self.actual[sub] > int(self.storage / self.ratio):
-                return sub
-        return None
+                if self.actual[sub] > most_of:
+                    most = sub
+                    most_of = self.actual[sub]
+        return most
 
     def in_need_of(self, obj_type):
         for x in self.requested:

@@ -13,6 +13,7 @@ class BuildingManager:
 
     queue = []
     waits = []
+    waits_building = []
 
     costs = {
 
@@ -48,6 +49,7 @@ class BuildingManager:
         existing_queue = self.get_existing_items(main_data)
         if existing_queue == 0:
             self.waits = []
+            self.waits_building = []
         if self.is_queued():
             self.logger.info("No build operation was executed: queue full, %d left" % len(self.queue))
         if not build:

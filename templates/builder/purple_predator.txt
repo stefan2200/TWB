@@ -8,6 +8,7 @@ wood:3
 main:2
 main:3
 barracks:2
+statue:1
 iron:2
 storage:2
 stone:4
@@ -65,9 +66,9 @@ stable:2
 stable:3
 barracks:6
 wall:5
-wood:18
-stone:18
-iron:17
+iron:15
+wood:15
+stone:15
 storage:8
 farm:9
 market:5
@@ -80,7 +81,7 @@ main:13
 stable:8
 wood:16
 stone:16
-iron:15
+iron:16
 farm:15
 barracks:10
 storage:13

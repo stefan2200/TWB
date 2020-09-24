@@ -24,6 +24,9 @@ class AttackManager:
     farm_maxpoints = 1000
     ignored = []
 
+    # blocks villages which cannot be attacked at the moment (too low points, beginners protection etc..)
+    _unknown_ignored = []
+
     farm_high_prio_wait = 1200
     farm_default_wait = 3600
     farm_low_prio_wait = 7200
@@ -85,6 +88,9 @@ class AttackManager:
                                   high_profile=cached['high_profile'] if type(cached) == dict else False,
                                   low_profile=cached['low_profile'] if type(cached) == dict and 'low_profile' in cached else False)
                     return 1
+                else:
+                    self.logger.debug("Ignoring target %s because unable to attack" % target['id'])
+                    self._unknown_ignored.append(target['id'])
         else:
             self.logger.debug("Not sending additional farm because not enough units: %s" % missing)
             return -1
@@ -103,18 +109,20 @@ class AttackManager:
             if my_village and 'points' in my_village and 'points' in village:
                 if village['points'] >= self.farm_maxpoints:
                     if vid not in self.ignored:
-                        self.logger.debug("Ignoring village %s because points %d below limit %d" % (vid, village['points'], self.farm_minpoints))
+                        self.logger.debug("Ignoring village %s because points %d exceeds limit %d" % (vid, village['points'], self.farm_maxpoints))
                         self.ignored.append(vid)
                     continue
                 if village['points'] <= self.farm_minpoints:
                     if vid not in self.ignored:
-                        self.logger.debug("Ignoring village %s because points %d exceed limit %d" % (vid, village['points'], self.farm_maxpoints))
+                        self.logger.debug("Ignoring village %s because points %d below limit %d" % (vid, village['points'], self.farm_minpoints))
                         self.ignored.append(vid)
                     continue
                 if village['points'] >= my_village['points'] and not self.target_high_points:
                     if vid not in self.ignored:
                         self.logger.debug("Ignoring village %s because of higher points %d -> %d" % (vid, my_village['points'], village['points']))
                         self.ignored.append(vid)
+                    continue
+                if vid in self._unknown_ignored:
                     continue
             if village['owner'] != "0":
                 get_h = time.localtime().tm_hour

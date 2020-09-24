@@ -12,6 +12,7 @@ class TroopManager:
     can_scout = True
     can_farm = True
     can_gather = True
+    can_fix_queue = True
 
     queue = []
     troops = {
@@ -140,12 +141,16 @@ class TroopManager:
                 continue
             wanted_level = unit_levels[unit_type]
             current_level = int(smith_data['available'][unit_type]['level'])
+            max_level = smith_data['available'][unit_type]['level_highest']
+            if wanted_level > max_level:
+                wanted_level = max_level
             if current_level < wanted_level:
                 attempt = self.attempt_research(unit_type, smith_data=smith_data)
                 if attempt:
                     self.logger.info("Started smith upgrade of %s %d -> %d" % (unit_type, current_level, current_level+1))
                     self.wrapper.reporter.report(self.village_id, "TWB_UPGRADE",
-                                         "Started smith upgrade of %s %d -> %d" % (unit_type, current_level, current_level+1))
+                                                 "Started smith upgrade of %s %d -> %d" %
+                                                 (unit_type, current_level, current_level+1))
                     return True
         return False
 
@@ -161,6 +166,8 @@ class TroopManager:
             if 'research_error' in data and data['research_error']:
                 return False
             if 'error_buildings' in data and data['error_buildings']:
+                return False
+            if 'level' in data and 'level_highest' in data and data['level'] == data['level_highest']:
                 return False
             res = self.wrapper.get_api_action(village_id=self.village_id,
                                               action="research",
@@ -211,8 +218,23 @@ class TroopManager:
             self.logger.info("Using troops for gather operation: 1")
             return True
 
+    def cancel(self, building, id):
+        self.wrapper.get_api_action(action="cancel", params={'screen': building}, data={'id': id},
+                                    village_id=self.village_id)
+
     def recruit(self, unit_type, amount=10, wait_for=False, building="barracks"):
         data = self.wrapper.get_action(action=building, village_id=self.village_id)
+
+        existing = Extractor.active_recruit_queue(data)
+        if existing:
+            self.logger.warning("Building Village %s %s recruitment queue out-of-sync" % (self.village_id, building))
+            if not self.can_fix_queue:
+                return False
+            for entry in existing:
+                self.cancel(building=building, id=entry)
+                self.logger.info("Canceled recruit item %s on building %s" % (entry, building))
+            return self.recruit(unit_type, amount, wait_for, building)
+
         self.recruit_data = Extractor.recruit_data(data)
         self.game_data = Extractor.game_state(data)
         self.logger.info("Attempting recruitment of %d %s" % (amount, unit_type))

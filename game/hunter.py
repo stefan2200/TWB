@@ -43,7 +43,7 @@ class Hunter:
             if v.attack.has_troops_available(troops):
                 return v
 
-    def send_attack_chain(self, source, item, exact_send_time=0):
+    def send_attack_chain(self, source, item, exact_send_time=0, min_sleep_amount_millis=100):
         data = self.schedule[item]
         attack_set = []
         self.logger.info("Nearing timing window, preparing %d attacks" % len(data))
@@ -55,6 +55,7 @@ class Hunter:
             time.sleep(0.001)
         a = datetime.datetime.now()
         for attk in attack_set:
+            time.sleep(1000 / min_sleep_amount_millis)
             self.send_attack(source, attk)
         b = datetime.datetime.now()
         diff = b - a

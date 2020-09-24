@@ -96,6 +96,13 @@ class Extractor:
         return builder.group(1).count('<a class="btn btn-cancel"')
 
     @staticmethod
+    def active_recruit_queue(res):
+        if type(res) != str:
+            res = res.text
+        builder = re.findall(r'(?s)TrainOverview\.cancelOrder\((\d+)\)', res)
+        return builder
+
+    @staticmethod
     def units_in_total(res):
         if type(res) != str:
             res = res.text

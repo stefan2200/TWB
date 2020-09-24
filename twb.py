@@ -1,20 +1,18 @@
 import logging
 import time
 import datetime
-import sys
 import random
 import coloredlogs
 import sys
 import json
 import copy
 import os
+import collections
 
 from core.request import WebWrapper
-from core.driver import GameDriver
 from game.village import Village
-from core.reporter import MySQLReporter as Reporter
 
-coloredlogs.install(level=logging.INFO if "-d" in sys.argv else logging.DEBUG)
+coloredlogs.install(level=logging.DEBUG, fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.ERROR)
@@ -33,8 +31,44 @@ class TWB:
     daemon = "-d" in sys.argv
 
     def config(self):
+        template = None
+        if os.path.exists('config.example.json'):
+            with open('config.example.json', 'r') as template_file:
+                template = json.load(template_file, object_pairs_hook=collections.OrderedDict)
+        if not os.path.exists('config.json'):
+            print("No configuration file found. Stopping!")
+            sys.exit(1)
+        config = None
         with open('config.json', 'r') as f:
-            return json.load(f)
+            config = json.load(f, object_pairs_hook=collections.OrderedDict)
+        if template and config['build']['version'] != template['build']['version']:
+            print("Outdated config file found, merging (old copy saved as config.bak)\n"
+                  "Remove config.example.json to disable this behaviour")
+            with open('config.bak', 'w') as backup:
+                json.dump(config, backup, indent=2, sort_keys=False)
+            config = self.merge_configs(config, template)
+            with open('config.json', 'w') as newcf:
+                json.dump(config, newcf, indent=2, sort_keys=False)
+                print("Deployed new configuration file")
+        return config
+
+    def merge_configs(self, old_config, new_config):
+        to_ignore = ["villages", "build"]
+        for section in old_config:
+            if section not in to_ignore:
+                for entry in old_config[section]:
+                    if entry in new_config[section]:
+                        new_config[section][entry] = old_config[section][entry]
+        villages = collections.OrderedDict()
+        for v in old_config['villages']:
+            nc = new_config["villages"]["enter_village_id_here_between_these_quotes"]
+            vdata = old_config['villages'][v]
+            for entry in nc:
+                if entry not in vdata:
+                    vdata[entry] = nc[entry]
+            villages[v] = vdata
+        new_config['villages'] = villages
+        return new_config
 
     def run(self):
         config = self.config()
@@ -50,9 +84,6 @@ class TWB:
         for vid in config['villages']:
             v = Village(wrapper=self.wrapper, village_id=vid)
             self.villages.append(copy.deepcopy(v))
-        self.gd = GameDriver(url=self.wrapper.endpoint + "?screen=overview&intro",
-                             cookies=self.wrapper.web.cookies,
-                             base=self.wrapper.auth_endpoint)
         # setup additional builder
         rm = None
         defense_states = {}
@@ -103,6 +134,8 @@ class TWB:
             os.mkdir(os.path.join("cache", "world"))
         if not os.path.exists(os.path.join("cache", "logs")):
             os.mkdir(os.path.join("cache", "logs"))
+        if not os.path.exists(os.path.join("cache", "managed")):
+            os.mkdir(os.path.join("cache", "managed"))
 
         self.daemon = True
         if self.daemon:

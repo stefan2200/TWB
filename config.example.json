@@ -1,14 +1,12 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.4",
+    "version": "1.4.1",
     "author": "stefan2200"
   },
   "server": {
     "server": "nlc1",
     "endpoint": "https://nlc1.tribalwars.nl/game.php",
-    "has_recaptcha": true,
-    "world": "nlc1",
     "server_on_twplus": false
   },
   "reporting": {
@@ -32,7 +30,8 @@
     "upgrade": true,
     "default": "basic",
     "batch_size": 25,
-    "manage_defence": false
+    "manage_defence": false,
+    "remove_manual_queued": false
   },
   "farms": {
     "farm": true,
@@ -42,6 +41,7 @@
     "search_radius": 100,
     "default_away_time": 3600,
     "full_loot_away_time": 1800,
+    "low_loot_away_time": 7200,
     "max_farms": 25,
     "attack_higher_points": false,
     "force_scout_if_available": true

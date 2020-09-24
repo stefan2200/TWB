@@ -1,5 +1,7 @@
 import logging
 import json
+import os
+import time
 
 from game.buildingmanager import BuildingManager
 from game.troopmanager import TroopManager
@@ -107,6 +109,7 @@ class Village:
 
         last_attack = self.def_man.under_attack
         self.def_man.manage_flags_enabled = self.get_config(section="world", parameter="flags_enabled", default=False)
+        self.def_man.support_factor = self.get_village_config(self.village_id, "support_others_factor", default=0.25)
 
         self.def_man.allow_support_send = self.get_village_config(self.village_id,
                                                                   parameter="support_others", default=False)
@@ -139,6 +142,8 @@ class Village:
                 build_config = self.get_config(section="building", parameter="default", default="purple_predator")
 
             self.builder.queue = TemplateManager.get_template(category="builder", template=build_config)
+            if not self.get_config(section="world", parameter="knight_enabled", default=False):
+                self.builder.queue = [x for x in self.builder.queue if "statue" not in x]
         self.builder.max_lookahead = self.get_config(section="building", parameter="max_lookahead", default=2)
         self.builder.max_queue_len = self.get_config(section="building", parameter="max_queued_items", default=2)
         self.builder.start_update(build=self.get_config(section="building", parameter="manage_buildings", default=True))
@@ -181,6 +186,7 @@ class Village:
 
         # recruitment management
         if self.get_config(section="units", parameter="recruit", default=False):
+            self.units.can_fix_queue = self.get_config(section="units", parameter="remove_manual_queued", default=False)
             # prioritize_building: will only recruit when builder has sufficient funds for queue items
             if self.get_village_config(self.village_id, parameter="prioritize_building", default=False) and not self.resman.can_recruit():
                 self.logger.info("Not recruiting because builder has insufficient funds")
@@ -240,7 +246,7 @@ class Village:
         self.resman.update(self.game_data)
         if self.get_config(section="world", parameter="trade_for_premium", default=False) and self.get_village_config(self.village_id, parameter="trade_for_premium", default=False):
             self.resman.do_premium_trade()
-
+        self.set_cache_vars()
         self.logger.info("Village cycle done, returning to overview")
         self.wrapper.reporter.report(self.village_id, "TWB_POST_RESOURCE", str(self.resman.actual))
         self.wrapper.reporter.add_data(self.village_id, data_type="village.resources", data=json.dumps(self.resman.actual))
@@ -257,3 +263,23 @@ class Village:
                 return True
         self.logger.debug("There where no completed quests")
         return False
+
+    def set_cache_vars(self):
+        village_entry = {
+            "name": self.game_data['village']['name'],
+            "public": self.area.in_cache(self.village_id) if self.area else None,
+            "resources": self.resman.actual,
+            "required_resources": self.resman.requested,
+            "available_troops": self.units.troops,
+            "buidling_levels": self.builder.levels,
+            "building_queue": self.builder.queue,
+            "troops": self.units.total_troops,
+            "under_attack": self.def_man.under_attack,
+            "last_run": int(time.time())
+        }
+        self.set_cache(self.village_id, entry=village_entry)
+
+    def set_cache(self, village_id, entry):
+        t_path = os.path.join("cache", "managed", village_id + ".json")
+        with open(t_path, 'w') as f:
+            return json.dump(entry, f)

@@ -2,10 +2,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# Actual files to hide
 config.json
+cache/**
+config.bak
 # C extensions
 *.so
-cache/**
 # Distribution / packaging
 .Python
 build/
