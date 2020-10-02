@@ -65,6 +65,8 @@ class DefenceManager:
 
         if self.under_attack or not self.allow_support_send:
             return False
+        if not self.units:
+            return False
         send_support = {}
         for u in self.defensive_units:
             if u in self.units.troops and int(self.units.troops[u]) > 0:
@@ -73,7 +75,7 @@ class DefenceManager:
         self.logger.info("Sending requested support to village %s: %s" % (requesting_village, str(send_support)))
         return self.support(requesting_village, troops=send_support)
 
-    def update(self, main):
+    def update(self, main, with_defence=False):
         ok = True
         self.manage_flags()
         self.runs += 1
@@ -81,12 +83,16 @@ class DefenceManager:
             self.under_attack = True
             ok = False
             self.flag_logic(self.set_flag_under_attack)
-            if self.auto_evacuate:
+            if self.auto_evacuate and with_defence:
                 self.evacuate()
         else:
+            if not with_defence:
+                self.under_attack = False
+                return False
             self.under_attack = False
             self.flag_logic(self.set_flag_not_under_attack)
             index = 0
+
             for vil in self.my_other_villages:
                 if vil != self.village_id:
                     continue
@@ -106,13 +112,15 @@ class DefenceManager:
             self.logger.info("Area OK for village %s, nice and quiet" % self.village_id)
 
     def evacuate(self):
+        if not self.units:
+            return False
         to_hide = {}
         for u in self.hide_units:
             if u in self.units.troops and int(self.units.troops[u]) > 0:
                 to_hide[u] = int(self.units.troops[u])
         if to_hide and len(self.my_other_villages) == 1:
             # good luck ;)
-            return
+            return False
         for v_obj in self.my_other_villages:
             vid, attack_state = v_obj
             if vid == self.village_id:
@@ -120,7 +128,7 @@ class DefenceManager:
             if not attack_state:
                 self.logger.info("Evacuating troops from village %s: %s" % (vid, str(to_hide)))
                 self.support(vid, troops=to_hide)
-                return
+                return True
 
     def flag_logic(self, set_flag):
         if not self.manage_flags_enabled:

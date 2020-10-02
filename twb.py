@@ -8,9 +8,12 @@ import json
 import copy
 import os
 import collections
+import traceback
 
+from core.extractors import Extractor
 from core.request import WebWrapper
 from game.village import Village
+from manager import VillageManager
 
 coloredlogs.install(level=logging.DEBUG, fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -29,6 +32,34 @@ class TWB:
     should_run = True
     gd = None
     daemon = "-d" in sys.argv
+    runs = 0
+
+    def manual_config(self):
+        print("Hello and welcome, it looks like you don't have a config file (yet)")
+        if not os.path.exists('config.example.json'):
+            print("Oh now, config.example.json and config.json do not exist. You broke something didn't you?")
+            return False
+        print("Please enter the current (logged-in) URL of the world you are playing on (or q to exit)")
+        input_url = input("URL: ")
+        if input_url.strip() == "q":
+            return False
+        server = input_url.split('://')[1].split("/")[0]
+        game_endpoint = input_url.split("?")[0]
+        sub_parts = server.split(".")[0]
+        print("Game endpoint: %s" % game_endpoint)
+        print("World: %s" % sub_parts.upper())
+        check = input("Does this look correct? [nY]")
+        if "y" in check.lower():
+            with open('config.example.json', 'r') as template_file:
+                template = json.load(template_file, object_pairs_hook=collections.OrderedDict)
+                template['server']['endpoint'] = game_endpoint
+                template['server']['server'] = sub_parts.lower()
+                with open('config.json', 'w') as newcf:
+                    json.dump(template, newcf, indent=2, sort_keys=False)
+                    print("Deployed new configuration file")
+                    return True
+        print("Make sure your url starts with https:// and contains the game.php? part")
+        return self.manual_config()
 
     def config(self):
         template = None
@@ -36,8 +67,11 @@ class TWB:
             with open('config.example.json', 'r') as template_file:
                 template = json.load(template_file, object_pairs_hook=collections.OrderedDict)
         if not os.path.exists('config.json'):
-            print("No configuration file found. Stopping!")
-            sys.exit(1)
+            if self.manual_config():
+                return self.config()
+            else:
+                print("Unable to start without a valid config file")
+                sys.exit(1)
         config = None
         with open('config.json', 'r') as f:
             config = json.load(f, object_pairs_hook=collections.OrderedDict)
@@ -61,7 +95,7 @@ class TWB:
                         new_config[section][entry] = old_config[section][entry]
         villages = collections.OrderedDict()
         for v in old_config['villages']:
-            nc = new_config["villages"]["enter_village_id_here_between_these_quotes"]
+            nc = new_config["village_template"]
             vdata = old_config['villages'][v]
             for entry in nc:
                 if entry not in vdata:
@@ -69,6 +103,18 @@ class TWB:
             villages[v] = vdata
         new_config['villages'] = villages
         return new_config
+
+    def add_village(self, vid, template=None):
+        original = self.config()
+        with open('config.bak', 'w') as backup:
+            json.dump(original, backup, indent=2, sort_keys=False)
+        if not template and 'village_template' not in original:
+            print("Village entry %s could not be added to the config file!" % vid)
+            return
+        original['villages'][vid] = template if template else original['village_template']
+        with open('config.json', 'w') as newcf:
+            json.dump(original, newcf, indent=2, sort_keys=False)
+            print("Deployed new configuration file")
 
     def run(self):
         config = self.config()
@@ -80,6 +126,18 @@ class TWB:
 
         self.wrapper.start(username="dontcare",
                            password="dontcare", keep_session=True)
+        result_villages = None
+        if 'add_new_villages' in config['bot'] and config['bot']['add_new_villages']:
+            result_villages = self.wrapper.get_url("game.php?screen=overview_villages")
+            result_villages = Extractor.village_ids_from_overview(result_villages)
+            needs_reset = False
+            for found_vid in result_villages:
+                if found_vid not in config['villages']:
+                    print("Village %s was found but no config entry was found. Adding automatically" % found_vid)
+                    self.add_village(vid=found_vid)
+                    needs_reset = True
+            if needs_reset:
+                return self.run()
 
         for vid in config['villages']:
             v = Village(wrapper=self.wrapper, village_id=vid)
@@ -89,16 +147,28 @@ class TWB:
         defense_states = {}
         while self.should_run:
             config = self.config()
+            vnum = 1
             for vil in self.villages:
+                if result_villages and vil.village_id not in result_villages:
+                    print("Village %s will be ignored because it is not available anymore" % vil.village_id)
+                    continue
                 if not rm:
                     rm = vil.rep_man
                 else:
                     vil.rep_man = rm
-                vil.run(config=config)
-                if vil.get_config(section="units", parameter="manage_defence", default=False):
-                    defense_states[vil.village_id] = vil.def_man.under_attack if vil.def_man.allow_support_recv else False
+                if 'auto_set_village_names' in config['bot'] and config['bot']['auto_set_village_names']:
+                    template = config['bot']['village_name_template']
+                    fs = '%0'+str(config['bot']['village_name_number_length'])+'d'
+                    num_pad = fs % vnum
+                    template = template.replace('{num}', num_pad)
+                    vil.village_set_name = template
 
-            if len(defense_states):
+                vil.run(config=config, first_run=vnum == 1)
+                if vil.get_config(section="units", parameter="manage_defence", default=False) and vil.def_man:
+                    defense_states[vil.village_id] = vil.def_man.under_attack if vil.def_man.allow_support_recv else False
+                vnum += 1
+
+            if len(defense_states) and config['farms']['farm']:
                 for vil in self.villages:
                     print("Syncing attack states")
                     vil.def_man.my_other_villages = defense_states
@@ -115,11 +185,12 @@ class TWB:
             sleep += random.randint(20, 120)
             dtn = datetime.datetime.now()
             dt_next = dtn + datetime.timedelta(0, sleep)
+            self.runs += 1
+            if self.runs % 5 == 0:
+                print("Optimizing farms")
+                VillageManager.farm_manager()
             print("Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time()))
             time.sleep(sleep)
-
-        if self.gd:
-            self.gd.close()
 
     def start(self):
         if not os.path.exists("cache"):
@@ -136,6 +207,8 @@ class TWB:
             os.mkdir(os.path.join("cache", "logs"))
         if not os.path.exists(os.path.join("cache", "managed")):
             os.mkdir(os.path.join("cache", "managed"))
+        if not os.path.exists(os.path.join("cache", "hunter")):
+            os.mkdir(os.path.join("cache", "hunter"))
 
         self.daemon = True
         if self.daemon:
@@ -156,4 +229,5 @@ for x in range(3):
     except Exception as e:
         t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
         print("I crashed :(   %s" % str(e))
+        traceback.print_exc()
         pass

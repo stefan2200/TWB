@@ -32,8 +32,7 @@ class FileReporter:
         return
 
     def add_data(self, connection, village_id, data_type, data):
-        with open(connection, 'a') as f:
-            f.write("%d - %s - %s - %s\n" % (time.time(), village_id, data_type, data))
+        return
 
     def get_config(self, connection, village_id, action, data):
         return

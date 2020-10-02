@@ -66,9 +66,9 @@ stable:2
 stable:3
 barracks:6
 wall:5
-iron:15
 wood:15
 stone:15
+iron:15
 storage:8
 farm:9
 market:5

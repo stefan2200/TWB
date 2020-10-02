@@ -3,6 +3,7 @@ import re
 import json
 from core.extractors import Extractor
 
+
 class SnobManager:
     wrapper = None
     village_id = None

@@ -29,7 +29,7 @@ class BuildingManager:
         self.wrapper = wrapper
         self.village_id = village_id
 
-    def start_update(self, build=False):
+    def start_update(self, build=False, set_village_name=None):
 
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
         self.costs = Extractor.building_data(main_data)
@@ -39,8 +39,15 @@ class BuildingManager:
             if 'building' in self.resman.requested:
                 # new run, remove request
                 self.resman.requested['building'] = {}
+        vname = self.game_state['village']['name']
+        if set_village_name and vname != set_village_name:
+            self.wrapper.post_url(
+                url="game.php?village=%s&screen=main&action=change_name" % self.village_id,
+                data={"name": set_village_name, "h": self.wrapper.last_h}
+            )
+
         if not self.logger:
-            self.logger = logging.getLogger("Builder: %s" % self.game_state['village']['name'])
+            self.logger = logging.getLogger("Builder: %s" % vname)
         self.logger.debug("Updating building levels")
         tmp = self.game_state['village']['buildings']
         for e in tmp:
@@ -57,12 +64,12 @@ class BuildingManager:
 
         if existing_queue != 0 and existing_queue != len(self.waits):
             self.logger.warning("Building queue out of sync, waiting until %d manual actions are finished!" % existing_queue)
-            return False
+            return True
 
-        for x in range(self.max_queue_len):
+        for x in range(self.max_queue_len - len(self.waits)):
             result = self.get_next_building_action()
             if not result:
-                self.logger.info("No build operation was executed %d left" % len(self.queue))
+                self.logger.info("No build more operations where executed (%d current, %d left)" % (len(self.waits), len(self.queue)))
                 return False
         return True
 

@@ -37,6 +37,8 @@ class Village:
     def_man = None
     rep_man = None
     config = None
+    village_set_name = None
+
     twp = TwPlus()
 
     def __init__(self, village_id=None, wrapper=None):
@@ -61,7 +63,7 @@ class Village:
             return default
         return vdata[parameter]
 
-    def run(self, config=None):
+    def run(self, config=None, first_run=False):
         # setup and check if village still exists / is accessible
         self.config = config
         if not self.village_id:
@@ -80,6 +82,10 @@ class Village:
                 self.logger.info("Read game state for village")
                 self.wrapper.reporter.report(self.village_id, "TWB_START", "Starting run for village: %s" % self.game_data['village']['name'])
 
+        if self.village_set_name and self.game_data['village']['name'] != self.village_set_name:
+
+            self.logger.name = "Village %s" % self.village_set_name
+
         if not self.get_config(section="villages", parameter=self.village_id):
             return None
         if self.get_config(section="server", parameter="server_on_twplus", default=False):
@@ -90,8 +96,6 @@ class Village:
             return False
         if not self.game_data:
             return False
-
-        # setup modules
         if not self.resman:
             self.resman = ResourceManager(wrapper=self.wrapper, village_id=self.village_id)
 
@@ -104,8 +108,10 @@ class Village:
 
         if not self.def_man:
             self.def_man = DefenceManager(wrapper=self.wrapper, village_id=self.village_id)
-            self.def_man.units = self.units
             self.def_man.map = self.area
+
+        if not self.def_man.units:
+            self.def_man.units = self.units
 
         last_attack = self.def_man.under_attack
         self.def_man.manage_flags_enabled = self.get_config(section="world", parameter="flags_enabled", default=False)
@@ -117,7 +123,7 @@ class Village:
                                                                   default=False)
         self.def_man.auto_evacuate = self.get_village_config(self.village_id, parameter="evacuate_fragile_units_on_attack",
                                                              default=False)
-        self.def_man.update(data.text)
+        self.def_man.update(data.text, with_defence=self.get_config(section="units", parameter="manage_defence", default=False))
 
         if self.def_man.under_attack and not last_attack:
             self.logger.warning("Village under attack!")
@@ -146,7 +152,7 @@ class Village:
                 self.builder.queue = [x for x in self.builder.queue if "statue" not in x]
         self.builder.max_lookahead = self.get_config(section="building", parameter="max_lookahead", default=2)
         self.builder.max_queue_len = self.get_config(section="building", parameter="max_queued_items", default=2)
-        self.builder.start_update(build=self.get_config(section="building", parameter="manage_buildings", default=True))
+        self.builder.start_update(build=self.get_config(section="building", parameter="manage_buildings", default=True), set_village_name=self.village_set_name)
 
         if not self.units:
             self.units = TroopManager(wrapper=self.wrapper, village_id=self.village_id)
@@ -166,14 +172,13 @@ class Village:
             self.logger.info("%s as wanted units for current village" % (str(entry["build"])))
             self.units.wanted = entry["build"]
 
-        if entry and 'upgrades' in entry and self.units.wanted_levels != entry['upgrades']:
-            self.logger.info("%s as wanted upgrades for current village" % (str(entry["upgrades"])))
-            self.units.wanted_levels = entry['upgrades']
+        if self.units.wanted_levels != {}:
+            self.logger.info("%s as wanted upgrades for current village" % (str(self.units.wanted_levels)))
 
         # get total amount of troops in village
         self.units.update_totals()
         if self.get_config(section="units", parameter="upgrade", default=False) and self.units.wanted_levels != {}:
-            self.units.attempt_upgrade(self.units.wanted_levels)
+            self.units.attempt_upgrade()
 
         if self.get_village_config(self.village_id, parameter="snobs", default=None) and self.builder.levels['snob'] > 0:
             if not self.snobman:

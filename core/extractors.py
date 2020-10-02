@@ -103,9 +103,18 @@ class Extractor:
         return builder
 
     @staticmethod
+    def village_ids_from_overview(res):
+        if type(res) != str:
+            res = res.text
+        villages = re.findall(r'<span class="quickedit-vn" data-id="(\d+)"', res)
+        return list(set(villages))
+
+    @staticmethod
     def units_in_total(res):
         if type(res) != str:
             res = res.text
+        # hide units from other villages
+        res = re.sub(r'(?s)<span class="village_anchor.+?</tr>', '', res)
         data = re.findall(r'(?s)class=\Wunit-item unit-item-([a-z]+)\W.+?(\d+)</td>', res)
         return data
 

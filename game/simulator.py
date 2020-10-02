@@ -1,6 +1,9 @@
 import math
+import os
+import json
 
 
+# Tribalwars simulator class, based on real math stuff I guess
 class Simulator:
 
     pool = {
@@ -245,6 +248,14 @@ class Simulator:
             total[self.attack_pool[unit]] += self.pool[unit]["attack"] * units[unit]
         return total
 
+    def update_with_real_levels(self, levels):
+        if not levels:
+            return
+        for unit in levels:
+            if unit in self.pool:
+                for item in levels[unit]:
+                    self.pool[unit][item] = levels[unit][item]
+
     def attack_sum_food(self, units):
         total = {
             "attack": 0,
@@ -379,16 +390,35 @@ class Simulator:
             "wall_after": self.post_wall(attacker, defender, wall),
         }
 
-attacker = {
-    "ram": 100,
-    "light": 2000,
-    "axe": 7500
-}
 
-defender = {
-    "sword": 2000,
-    "spear": 1500
-}
+class SimCache:
+    @staticmethod
+    def get_cache(world):
+        t_path = os.path.join("cache", "stats_%s.json" % world)
+        if os.path.exists(t_path):
+            with open(t_path, 'r') as f:
+                return json.load(f)
+        return None
 
-res = Simulator().simulate(attacker, defender, wall=10, nightbonus=False, moral=None, luck=None)
-print(res)
+    @staticmethod
+    def set_cache(world, entry):
+        t_path = os.path.join("cache", "stats_%s.json" % world)
+        with open(t_path, 'w') as f:
+            return json.dump(entry, f)
+
+    @staticmethod
+    def grab_cache(world, session, village_id):
+        current = SimCache.get_cache(world)
+        if current:
+            return current
+        result = session.get_action(village_id=village_id, action="unit_info&ajax=data")
+        if result:
+            SimCache.set_cache(world=world, entry=result.json())
+
+    @staticmethod
+    def cache_customize(entry):
+        if not entry:
+            return {}
+
+        for unit in entry['response']['unit_data']:
+            return

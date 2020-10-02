@@ -23,6 +23,8 @@ class TroopManager:
 
     }
 
+    _research_wait = 0
+
     wrapper = None
     village_id = None
     recruit_data = {}
@@ -30,10 +32,10 @@ class TroopManager:
     logger = None
     max_batch_size = 50
     wait_for = {
-        'barracks': 0,
-        'stable': 0,
-        'garage': 0
+
     }
+
+    _waits = {}
 
     wanted = {
         'barracks': {
@@ -64,6 +66,11 @@ class TroopManager:
     def __init__(self, wrapper=None, village_id=None):
         self.wrapper = wrapper
         self.village_id = village_id
+        self.wait_for[village_id] = {
+            'barracks': 0,
+            'stable': 0,
+            'garage': 0
+        }
 
     def update_totals(self):
         main_data = self.wrapper.get_action(action="overview", village_id=self.village_id)
@@ -93,8 +100,8 @@ class TroopManager:
 
     def start_update(self, building="barracks"):
 
-        if self.wait_for[building] > time.time():
-            self.logger.info("%s still busy for %d seconds" % (building, self.wait_for[building] - time.time()))
+        if self.wait_for[self.village_id][building] > time.time():
+            self.logger.info("%s still busy for %d seconds" % (building, self.wait_for[self.village_id][building] - time.time()))
             return False
 
         if True:
@@ -121,6 +128,7 @@ class TroopManager:
 
     def get_template_action(self, levels):
         last = None
+        wanted_upgrades = {}
         for x in self.template:
             if x['building'] not in levels:
                 return last
@@ -129,22 +137,48 @@ class TroopManager:
                 return last
 
             last = x
+            if 'upgrades' in x:
+                for unit in x['upgrades']:
+                    if unit not in wanted_upgrades or x['upgrades'][unit] > wanted_upgrades[unit]:
+                        wanted_upgrades[unit] = x['upgrades'][unit]
+
+            self.wanted_levels = wanted_upgrades
         return last
 
-    def attempt_upgrade(self, unit_levels):
+    def research_time(self, time_str):
+        parts = [int(x) for x in time_str.split(':')]
+        return parts[2]+(parts[1]*60)+(parts[0]*60*60)
+
+    def attempt_upgrade(self):
         self.logger.debug("Managing Upgrades")
+        if self._research_wait > time.time():
+            self.logger.debug("Smith still busy for %d seconds" % int(self._research_wait - time.time()))
+            return
+        unit_levels = self.wanted_levels
+        if not unit_levels:
+            self.logger.debug("Not upgrading because nothing is requested")
+            return
         result = self.wrapper.get_action(village_id=self.village_id, action="smith")
         smith_data = Extractor.smith_data(result)
+        if not smith_data:
+            self.logger.debug("Error reading smith data")
+            return False
         for unit_type in unit_levels:
             if not smith_data or unit_type not in smith_data['available']:
                 self.logger.warning("Unit %s does not appear to be available or smith not built yet" % unit_type)
                 continue
             wanted_level = unit_levels[unit_type]
             current_level = int(smith_data['available'][unit_type]['level'])
-            max_level = smith_data['available'][unit_type]['level_highest']
-            if wanted_level > max_level:
-                wanted_level = max_level
-            if current_level < wanted_level:
+            data = smith_data['available'][unit_type]
+
+            if current_level < wanted_level and 'can_research' in data and data['can_research']:
+                if 'research_error' in data and data['research_error']:
+                    self.logger.debug("Skipping research of %s because of research error" % unit_type)
+                    continue
+                if 'error_buildings' in data and data['error_buildings']:
+                    self.logger.debug("Skipping research of %s because of building error" % unit_type)
+                    continue
+
                 attempt = self.attempt_research(unit_type, smith_data=smith_data)
                 if attempt:
                     self.logger.info("Started smith upgrade of %s %d -> %d" % (unit_type, current_level, current_level+1))
@@ -178,6 +212,8 @@ class TroopManager:
                                                   'h': self.wrapper.last_h
                                               })
             if res:
+                if 'research_time' in data:
+                    self._research_wait = time.time()+self.research_time(data['research_time'])
                 self.logger.info("Started research of %s" % unit_type)
                 self.resman.update(res['game_data'])
                 return True
@@ -272,13 +308,13 @@ class TroopManager:
                                            data={"units[%s]" % unit_type: str(amount)})
         if 'game_data' in result:
             self.resman.update(result['game_data'])
-            self.wait_for[building] = int(time.time()) + (amount * int(resources['build_time']))
+            self.wait_for[self.village_id][building] = int(time.time()) + (amount * int(resources['build_time']))
             # self.troops[unit_type] = str((int(self.troops[unit_type]) if unit_type in self.troops else 0) + amount)
             self.logger.info("Recruitment of %d %s started (%s idle till %d)" %
-                              (amount, unit_type, building, self.wait_for[building]))
+                              (amount, unit_type, building, self.wait_for[self.village_id][building]))
             self.wrapper.reporter.report(self.village_id, "TWB_RECRUIT",
                                  "Recruitment of %d %s started (%s idle till %d)" %
-                              (amount, unit_type, building, self.wait_for[building]))
+                              (amount, unit_type, building, self.wait_for[self.village_id][building]))
             return True
         return False
 

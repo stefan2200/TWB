@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "author": "stefan2200"
   },
   "server": {
@@ -17,7 +17,11 @@
     "active_hours": "6-23",
     "active_delay": 200,
     "inactive_still_active": true,
-    "inactive_delay": 2000
+    "inactive_delay": 2000,
+    "add_new_villages": false,
+    "village_name_template": "Village {num}",
+    "village_name_number_length": 3,
+    "auto_set_village_names": false
   },
   "building": {
     "manage_buildings": true,
@@ -32,6 +36,24 @@
     "batch_size": 25,
     "manage_defence": false,
     "remove_manual_queued": false
+  },
+  "village_template": {
+    "building": "purple_predator",
+    "units": "basic",
+    "managed": true,
+    "scout_first": false,
+    "additional_farms": [],
+    "prioritize_building": false,
+    "prioritize_snob": false,
+    "trade_for_premium": false,
+    "gather_enabled": false,
+    "gather_selection": 1,
+    "snobs": 0,
+    "evacuate_fragile_units_on_attack": false,
+    "support_others": false,
+    "support_others_factor": 0.25,
+    "support_others_max_villages": 2,
+    "request_support_on_attack": false
   },
   "farms": {
     "farm": true,
@@ -61,21 +83,6 @@
     "trade_for_premium": false
   },
   "villages": {
-    "enter_village_id_here_between_these_quotes": {
-      "building": "purple_predator",
-      "units": "basic_into_def",
-      "managed": true,
-      "scout_first": false,
-      "additional_farms": [],
-      "prioritize_building": false,
-      "prioritize_snob": false,
-      "trade_for_premium": false,
-      "gather_enabled": false,
-      "gather_selection": 1,
-      "snobs": 0,
-      "evacuate_fragile_units_on_attack": false,
-      "support_others": false,
-      "request_support_on_attack": false
-    }
+
   }
 }

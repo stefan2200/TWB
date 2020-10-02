@@ -104,11 +104,16 @@ class ResourceManager:
         return False
 
     def get_needs(self):
+        needed_the_most = None
+        needed_amount = 0
         for x in self.requested:
             types = self.requested[x]
             for obj_type in types:
-                if self.requested[x][obj_type] > 0:
-                    return obj_type, self.requested[x][obj_type]
+                if self.requested[x][obj_type] > 0 and self.requested[x][obj_type] > needed_amount:
+                    needed_amount = self.requested[x][obj_type]
+                    needed_the_most = obj_type
+        if needed_the_most:
+            return needed_the_most, needed_amount
         return None
 
     def trade(self, me_item, me_amount, get_item, get_amount):
