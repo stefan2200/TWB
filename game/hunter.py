@@ -1,7 +1,9 @@
 import time
-from core.extractors import Extractor
 import logging
 import datetime
+
+from core.extractors import Extractor
+from game.simulator import Simulator
 
 
 class Hunter:
@@ -10,19 +12,15 @@ class Hunter:
 
     }
     target_villages = {
-        "4491": [
-            {'axe': 50, 'spear': 50},
-            {'axe': 50, 'spear': 50},
-            {'axe': 50, 'spear': 50},
-            {'axe': 50, 'spear': 50}
-        ]
+
     }
     villages = []
+    sim = Simulator()
 
     wrapper = None
     targets = {}
-    # start timing 10m before attack start
-    window = 10
+    # start timing 2m before attack start
+    window = 120
     logger = logging.getLogger("Hunter")
     """
     attack 1: village 2: {axe: 12500, light: 1250, ram:100} 2000 sec
@@ -34,6 +32,15 @@ class Hunter:
             wait = time.time() - item
             if wait < self.window:
                 return item
+
+    def nearing_window_in_sleep(self, sleep):
+        lowest = None
+        for item in self.schedule:
+            wait = time.time() + sleep
+            if item - self.window < wait:
+                if not lowest or item < lowest:
+                    lowest = item
+        return lowest
 
     def troops_in_village(self, source=None, troops={}):
         if source:

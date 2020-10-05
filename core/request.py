@@ -23,6 +23,7 @@ class WebWrapper:
     priority_mode = False
     auth_endpoint = None
     reporter = None
+    delay = 1.0
 
     def __init__(self, url, server=None, endpoint=None, reporter_enabled=False, reporter_constr=None):
         self.web = requests.session()
@@ -47,7 +48,7 @@ class WebWrapper:
     def get_url(self, url, headers=None):
         self.headers['Origin'] = (self.endpoint if self.endpoint else self.auth_endpoint).rstrip('/')
         if not self.priority_mode:
-            time.sleep(random.randint(3, 7))
+            time.sleep(random.randint(int(3 * self.delay), int(7 * self.delay)))
         url = urljoin(self.endpoint if self.endpoint else self.auth_endpoint, url)
         if not headers:
             headers = self.headers
@@ -55,6 +56,11 @@ class WebWrapper:
             res = self.web.get(url=url, headers=headers)
             self.logger.debug("GET %s [%d]" % (url, res.status_code))
             self.post_process(res)
+            if '<div id="bot_check">' in res.text:
+                self.logger.warning("Bot protection hit! cannot continue")
+                self.reporter.report(0, "TWB_RECAPTCHA", "Stopping bot, press any key once captcha has been solved")
+                input("Press any key...")
+                return self.get_url(url, headers)
             return res
         except Exception as e:
             self.logger.warning("GET %s: %s" % (url, str(e)))
@@ -62,7 +68,7 @@ class WebWrapper:
 
     def post_url(self, url, data, headers=None):
         if not self.priority_mode:
-            time.sleep(random.randint(3, 7))
+            time.sleep(random.randint(int(3 * self.delay), int(7 * self.delay)))
         self.headers['Origin'] = (self.endpoint if self.endpoint else self.auth_endpoint).rstrip('/')
         url = urljoin(self.endpoint if self.endpoint else self.auth_endpoint, url)
         enc = urlencode(data)
@@ -77,22 +83,8 @@ class WebWrapper:
             self.logger.warning("POST %s %s: %s" % (url, enc, str(e)))
             return None
 
-    def attempt_login(self, username, password):
-        payload = {
-            'username': username,
-            'clear': 'true',
-            'password': password,
-            'token': '03AOLTBLRabZE2hQv8NPD11xEiNE-OKzn3dVoCE6WkTSPQ3W53D6aVjPTGcq2z7qPcSpSIp5Wz52H4xOepSOB5nZBd8Jc2vn_tZVz27nqN23_O62NTjJZzMUyCALNP45m6ziEbEZ9KBhDiHDHBEsdJOXOfXGFEy82rO5WaKYBjCVy6gDMFWZqDA-JkQYUtt5JnAKcRq_U7_uaAelIjMPZezSvDqfLswjuJa1NAVuy4OgqyC7krFNndFfv__xOSwygIaiGg_r1Tdh2jbD4fQOqPkWbTnwSWDQKjLoNriWaxbdJPjwsjrmIBExHD1jZhSGY-8KPCmjLX1c7Dh0CRqipZbGBSA63rXYligJ9x2RN8HPkFAdZc1V8ivI50s6Oy9YFuUM7TMF42dd69Kf9bqTq0Yif7xK_JGG_rNPm5Ztb_66UhjIgJ0xP6oTUNenNvNBh0zaud1Tu0k8V7lD3y2gmrjzzpDydb7-bgIyQxEWzwLrajFBBmxZU6SfjIRKdhUiRDjk3IGgJZ81iS'
-        }
-        custom = dict(self.headers)
-        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
-        custom['x-requested-with'] = "XMLHttpRequest"
-
-        res = self.post_url("/page/auth", data=payload, headers=custom)
-        return res.status_code == 200
-
-    def start(self, username, password, keep_session=True):
-        if os.path.exists('cache/session.json') and keep_session:
+    def start(self, ):
+        if os.path.exists('cache/session.json'):
             with open('cache/session.json') as f:
                 session_data = json.load(f)
                 self.web.cookies.update(session_data['cookies'])

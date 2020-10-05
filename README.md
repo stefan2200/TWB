@@ -1,3 +1,8 @@
+### New in 1.4.4
+- Fixed snob (both systems working again)
+- Fixed various crashes and bugs
+- Configurable delay between requests (0.3 for very fast, 2.0 for very slow)
+
 ### New in 1.4.2
 - Automatically add new villages once conquered
 - Working attack simulator (partially)
