@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.4.2",
+    "version": "1.4.4",
     "author": "stefan2200"
   },
   "server": {
@@ -15,6 +15,7 @@
   },
   "bot": {
     "active_hours": "6-23",
+    "delay_factor": 1.0,
     "active_delay": 200,
     "inactive_still_active": true,
     "inactive_delay": 2000,

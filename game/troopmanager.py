@@ -198,10 +198,12 @@ class TroopManager:
         data = smith_data['available'][unit_type]
         if 'can_research' in data and data['can_research']:
             if 'research_error' in data and data['research_error']:
+                self.logger.debug("Ignoring research of %s because of resource error %s" % unit_type)
                 return False
             if 'error_buildings' in data and data['error_buildings']:
+                self.logger.debug("Ignoring research of %s because of building error %s" % (unit_type, str(data['error_buildings'])))
                 return False
-            if 'level' in data and 'level_highest' in data and data['level'] == data['level_highest']:
+            if 'level' in data and 'level_highest' in data and data['level_highest'] != 0 and data['level'] == data['level_highest']:
                 return False
             res = self.wrapper.get_api_action(village_id=self.village_id,
                                               action="research",

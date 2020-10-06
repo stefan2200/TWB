@@ -66,6 +66,7 @@ class Village:
     def run(self, config=None, first_run=False):
         # setup and check if village still exists / is accessible
         self.config = config
+        self.wrapper.delay = self.get_config(section="bot", parameter="delay_factor", default=1.0)
         if not self.village_id:
             data = self.wrapper.get_url("game.php?screen=overview&intro")
             if data:
@@ -82,8 +83,11 @@ class Village:
                 self.logger.info("Read game state for village")
                 self.wrapper.reporter.report(self.village_id, "TWB_START", "Starting run for village: %s" % self.game_data['village']['name'])
 
-        if self.village_set_name and self.game_data['village']['name'] != self.village_set_name:
+        if not self.game_data:
+            self.logger.error("Error reading game data for village %s" % self.village_id)
+            return None
 
+        if self.village_set_name and self.game_data['village']['name'] != self.village_set_name:
             self.logger.name = "Village %s" % self.village_set_name
 
         if not self.get_config(section="villages", parameter=self.village_id):

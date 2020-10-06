@@ -15,7 +15,7 @@ from core.request import WebWrapper
 from game.village import Village
 from manager import VillageManager
 
-coloredlogs.install(level=logging.DEBUG, fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+coloredlogs.install(level=logging.DEBUG if "-d" in sys.argv else logging.INFO, fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("selenium").setLevel(logging.ERROR)
@@ -30,8 +30,6 @@ class TWB:
     ]
     wrapper = None
     should_run = True
-    gd = None
-    daemon = "-d" in sys.argv
     runs = 0
 
     def manual_config(self):
@@ -124,8 +122,7 @@ class TWB:
                                   reporter_enabled=config['reporting']['enabled'],
                                   reporter_constr=config['reporting']['connection_string'])
 
-        self.wrapper.start(username="dontcare",
-                           password="dontcare", keep_session=True)
+        self.wrapper.start()
         result_villages = None
         if 'add_new_villages' in config['bot'] and config['bot']['add_new_villages']:
             result_villages = self.wrapper.get_url("game.php?screen=overview_villages")
@@ -209,17 +206,8 @@ class TWB:
             os.mkdir(os.path.join("cache", "managed"))
         if not os.path.exists(os.path.join("cache", "hunter")):
             os.mkdir(os.path.join("cache", "hunter"))
-
-        self.daemon = True
-        if self.daemon:
-            print("Running in daemon mode")
-            self.run()
-            while 1:
-                self.should_run = True
-                self.wrapper.endpoint = None
-                self.run()
-        else:
-            self.run()
+			
+        self.run()
 
 
 for x in range(3):
