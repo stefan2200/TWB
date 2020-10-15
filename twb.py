@@ -15,10 +15,13 @@ from core.request import WebWrapper
 from game.village import Village
 from manager import VillageManager
 
-coloredlogs.install(level=logging.DEBUG if "-d" in sys.argv else logging.INFO, fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+coloredlogs.install(
+    level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
+    fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("selenium").setLevel(logging.ERROR)
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
@@ -48,10 +51,30 @@ class TWB:
         print("World: %s" % sub_parts.upper())
         check = input("Does this look correct? [nY]")
         if "y" in check.lower():
+            browser_ua = input("Enter your browser user agent "
+                               "(to lower detection rates). Just google what is my user agent> ")
+            if browser_ua and len(browser_ua) < 10:
+                print("It should start with Chrome, Firefox or something. Please try again")
+                return self.manual_config()
+
+            disclaimer = """
+            Read carefully: Please note the use of this bot can cause bans, kicks, annoyances and other stuff.
+            I do my best to make the bot as undetectable as possible but most issues / bans are config related.
+            Make sure you keep your bot sleeps at a reasonable numbers and please don't blame me if your account gets banned ;) 
+            PS. make sure to regularly (1-2 per day) logout/login using the browser session and supply the new cookie string. 
+            Using a single session for 24h straight will probably result in a ban
+            """
+            print(disclaimer)
+            final_check = input("Do you understand this and still wish to continue, please type: yes and press enter> ")
+            if "yes" not in final_check.lower():
+                print("Goodbye :)")
+                sys.exit(0)
+
             with open('config.example.json', 'r') as template_file:
                 template = json.load(template_file, object_pairs_hook=collections.OrderedDict)
                 template['server']['endpoint'] = game_endpoint
                 template['server']['server'] = sub_parts.lower()
+                template['bot']['user_agent'] = browser_ua
                 with open('config.json', 'w') as newcf:
                     json.dump(template, newcf, indent=2, sort_keys=False)
                     print("Deployed new configuration file")
@@ -102,6 +125,18 @@ class TWB:
         new_config['villages'] = villages
         return new_config
 
+    def get_overview(self, config):
+        result_villages = None
+        if 'add_new_villages' in config['bot'] and config['bot']['add_new_villages']:
+            result_villages = self.wrapper.get_url("game.php?screen=overview_villages")
+            result_villages = Extractor.village_ids_from_overview(result_villages)
+            for found_vid in result_villages:
+                if found_vid not in config['villages']:
+                    print("Village %s was found but no config entry was found. Adding automatically" % found_vid)
+                    self.add_village(vid=found_vid)
+                    return self.get_overview(self.config())
+        return result_villages
+
     def add_village(self, vid, template=None):
         original = self.config()
         with open('config.bak', 'w') as backup:
@@ -123,19 +158,12 @@ class TWB:
                                   reporter_constr=config['reporting']['connection_string'])
 
         self.wrapper.start()
-        result_villages = None
-        if 'add_new_villages' in config['bot'] and config['bot']['add_new_villages']:
-            result_villages = self.wrapper.get_url("game.php?screen=overview_villages")
-            result_villages = Extractor.village_ids_from_overview(result_villages)
-            needs_reset = False
-            for found_vid in result_villages:
-                if found_vid not in config['villages']:
-                    print("Village %s was found but no config entry was found. Adding automatically" % found_vid)
-                    self.add_village(vid=found_vid)
-                    needs_reset = True
-            if needs_reset:
-                return self.run()
-
+        if 'user_agent' not in config['bot']:
+            print("No custom user agent was supplied, this will likely get you banned."
+                  "Please set the bot -> user_agent parameter to your browsers one. "
+                  "Just google what is my user agent")
+            return
+        self.wrapper.headers['user-agent'] = config['bot']['user_agent']
         for vid in config['villages']:
             v = Village(wrapper=self.wrapper, village_id=vid)
             self.villages.append(copy.deepcopy(v))
@@ -144,6 +172,8 @@ class TWB:
         defense_states = {}
         while self.should_run:
             config = self.config()
+            result_villages = self.get_overview(config)
+
             vnum = 1
             for vil in self.villages:
                 if result_villages and vil.village_id not in result_villages:
@@ -206,7 +236,7 @@ class TWB:
             os.mkdir(os.path.join("cache", "managed"))
         if not os.path.exists(os.path.join("cache", "hunter")):
             os.mkdir(os.path.join("cache", "hunter"))
-			
+
         self.run()
 
 

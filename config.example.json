@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "author": "stefan2200"
   },
   "server": {
@@ -19,10 +19,11 @@
     "active_delay": 200,
     "inactive_still_active": true,
     "inactive_delay": 2000,
-    "add_new_villages": false,
+    "add_new_villages": true,
     "village_name_template": "Village {num}",
     "village_name_number_length": 3,
-    "auto_set_village_names": false
+    "auto_set_village_names": false,
+    "user_agent": null
   },
   "building": {
     "manage_buildings": true,

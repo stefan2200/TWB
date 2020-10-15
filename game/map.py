@@ -60,6 +60,7 @@ class Map:
             'points': points,
             'safe': False,
             'scout': False,
+            'tribe': clan,
             'owner': player,
             'buildings': {
 
