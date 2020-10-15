@@ -1,6 +1,7 @@
 from core.extractors import Extractor
 import time
 import logging
+import re
 
 
 class BuildingManager:
@@ -32,6 +33,8 @@ class BuildingManager:
     def start_update(self, build=False, set_village_name=None):
 
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
+        if self.complete_actions(main_data.text):
+            return self.start_update(build=build, set_village_name=set_village_name)
         self.costs = Extractor.building_data(main_data)
         self.game_state = Extractor.game_state(main_data)
         if self.resman:
@@ -72,6 +75,15 @@ class BuildingManager:
                 self.logger.info("No build more operations where executed (%d current, %d left)" % (len(self.waits), len(self.queue)))
                 return False
         return True
+
+    def complete_actions(self, text):
+        res = re.search(r'change_order\((\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text)
+        if res and int(res.group(2)) <= time.time():
+            self.wrapper.get_url("game.php?village=%s&screen=main&ajaxaction=build_order_reduce&h=%s&id=%s&destroy=0" %
+                                 (self.village_id, self.wrapper.last_h, res.group(1)))
+            self.logger.debug("Quick build action %s was completed, re-running function" % res.group(1))
+            return True
+        return False
 
     def put_wait(self, wait_time):
         self.is_queued()
