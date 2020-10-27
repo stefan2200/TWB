@@ -150,11 +150,11 @@
       },
       "stable": {
         "spy": 1000,
-        "light": 250
+        "light": 1000
       }
     },
     "farm": [
-        {"light": 5}
+        {"light": 10}
     ]
   }
 ]

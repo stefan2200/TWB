@@ -1,0 +1,32 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="row">
+	<ul class="nav nav-tabs">
+		{% for section in config %}
+		  <li class="nav-item">
+			<a class="nav-link" role="tab" data-toggle="tab" href="#{{section}}">{{section}}</a>
+		  </li>
+		{% endfor %}
+	</ul>
+	 <a id="save_config" class="btn btn-success disabled">Save</a>
+</div>
+
+<div class="row border">
+	<div class="tab-content">
+		{% for section in config %}
+		<div role="tabpanel" class="tab-pane container fade" id="{{section}}">
+			<h4>{{section}}</h4>
+			{% if section in helpfile %}
+				<i>{{helpfile[section]}}</i>
+			{% endif %}
+
+			<div class="form-vertical">
+				{{ config[section]|safe }}
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+</div>
+
+{% endblock %}

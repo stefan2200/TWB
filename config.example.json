@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.4.5",
+    "version": "1.5.0",
     "author": "stefan2200"
   },
   "server": {
@@ -82,7 +82,9 @@
     "knight_enabled": false,
     "flags_enabled": false,
     "quests_enabled": false,
-    "trade_for_premium": false
+    "trade_for_premium": false,
+    "archers_enabled": true,
+    "building_destruction_enabled": true
   },
   "villages": {
 

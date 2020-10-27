@@ -1,3 +1,7 @@
+### New in 1.5
+- Nice configuration dashboard
+- Various bug fixes
+
 ### New in 1.4.4
 - Fixed snob (both systems working again)
 - Fixed various crashes and bugs
@@ -54,6 +58,12 @@ _When migrating from v1.1 please delete the cache/villages folder_
 - Your villages will be added to the config automatically, disable the "managed" parameter to make the bot skip the village
 - Additional properties can be tweaked by running the manager.py script
 - You might want to set the bot user-agent in core/request.py to your own user agent. They probably wont notice but just in case :)
+
+You can find the cookie string in the following location (Chrome):
+
+![Screenshot](readme/network.JPG)
+
+You need to use the cookie: header value
 
 More information about configuring the bot can be found in the readme directory!
 

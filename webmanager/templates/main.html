@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>TWB - Management Interface</title>
+  </head>
+  <body>
+  <div class="wrapper">
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Bot configuration</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/villages">Village configuration</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/map">World map</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link disabled" href="/attacks">Attack planner (alpha)</a>
+        </li>
+      </ul>
+    </nav>
+    <div class="container-fluid">
+
+        {% block content %}{% endblock %}
+    </div>
+  </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+    var set_values = {};
+	function set_config(parameter, value) {
+		$.getJSON("/app/config/set?parameter="+encodeURIComponent(parameter)+"&value="+encodeURIComponent(value), function(data){
+			console.log("Set values", parameter, value);
+		});
+	}
+
+	function set_toggle_value(target, value) {
+		if(!value) {
+			target.removeClass("btn-success");
+			target.addClass("btn-danger");
+			target.text("Disabled");
+		} else {
+			target.addClass("btn-success");
+			target.removeClass("btn-danger");
+			target.text("Enabled");
+		}
+	}
+
+	function toggle_event(event) {
+		var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		var current_value = target.hasClass("btn-success");
+		var next_value = !current_value;
+		set_config(name, next_value);
+		set_toggle_value(target, next_value);
+	}
+
+	function select_event(event) {
+	  var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		set_config(name, target.val());
+	}
+
+	function num_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = parseInt(target.val());
+      $('#save_config').removeClass('disabled');
+	}
+
+	function text_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = target.val();
+      $('#save_config').removeClass('disabled');
+	}
+
+	$( document ).ready(function() {
+		$( "[data-type=toggle]" ).click(function(e) {
+		  toggle_event(e);
+		});
+
+		$( "[data-type=select]" ).change(function(e) {
+		  select_event(e);
+		});
+
+		$( "[data-type=number]" ).change(function(e) {
+		  num_event(e);
+		});
+
+		$( "[data-type=text]" ).change(function(e) {
+		  text_event(e);
+		});
+
+		$('#save_config').click(function(){
+		  $.each(set_values, function(set_key, set_value){
+		    set_config(set_key, set_value);
+		  });
+		  setTimeout(function(){location.reload()}, 500);
+		});
+	});
+</script>
+  </body>
+</html>

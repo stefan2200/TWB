@@ -44,6 +44,34 @@ class Map:
                         continue
                 if not self.my_location:
                     self.my_location = [game_state['village']['x'], game_state['village']['y']]
+        if not self.map_data or not self.villages:
+            return self.get_map_old(game_state=game_state)
+        return True
+
+    def get_map_old(self, game_state):
+        if self.map_data:
+            for tile in self.map_data:
+                data = tile['data']
+                x = int(data['x'])
+                y = int(data['y'])
+                vdata = data['villages']
+                for lon, lon_val in enumerate(vdata):
+                    try:
+                        for lat in vdata[lon]:
+                            coords = [x + int(lon), y + int(lat)]
+                            entry = vdata[lon][lat]
+                            if entry[0] == str(self.village_id):
+                                self.my_location = coords
+
+                            self.build_cache_entry(location=coords, entry=entry)
+                    except:
+                        raise
+            if not self.my_location:
+                self.my_location = [game_state['village']['x'], game_state['village']['y']]
+        if not self.map_data or not self.villages:
+            print("Error reading map state for village %s, farming might not work properly" % self.village_id)
+            return False
+        return True
 
     def build_cache_entry(self, location, entry):
         vid = entry[0]

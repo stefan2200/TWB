@@ -129,17 +129,23 @@ class Village:
                                                              default=False)
         self.def_man.update(data.text, with_defence=self.get_config(section="units", parameter="manage_defence", default=False))
 
+        disabled_units = []
+        if not self.get_config(section="world", parameter="archers_enabled", default=True):
+            disabled_units.extend(["archer", "marcher"])
+
+        if not self.get_config(section="world", parameter="building_destruction_enabled", default=True):
+            disabled_units.extend(["ram", "catapult"])
+
         if self.def_man.under_attack and not last_attack:
             self.logger.warning("Village under attack!")
             self.wrapper.reporter.report(self.village_id, "TWB_ATTACK",
-                                 "Village: %s under attack" % self.game_data['village']['name'])
+                                         "Village: %s under attack" % self.game_data['village']['name'])
 
         # setup and check if village still exists / is accessible
         if self.get_config(section="world", parameter="quests_enabled", default=False):
             if self.get_quests():
                 self.logger.info("There where completed quests, re-running function")
-                self.wrapper.reporter.report(self.village_id, "TWB_QUEST",
-                                     "Completed quest")
+                self.wrapper.reporter.report(self.village_id, "TWB_QUEST", "Completed quest")
                 return self.run(config=config)
 
         if not self.builder:
@@ -239,8 +245,8 @@ class Village:
                     self.attack.run()
 
         self.units.can_gather = self.get_village_config(self.village_id, parameter="gather_enabled", default=False)
-        if not self.def_man.under_attack:
-            self.units.gather(selection=self.get_village_config(self.village_id, parameter="gather_selection", default=1))
+        if not self.def_man or not self.def_man.under_attack:
+            self.units.gather(selection=self.get_village_config(self.village_id, parameter="gather_selection", default=1), disabled_units=disabled_units)
         # market management
         if self.get_config(section="market", parameter="auto_trade", default=False) and self.builder.get_level("market"):
             self.logger.info("Managing market")
@@ -254,7 +260,7 @@ class Village:
         self.game_data = Extractor.game_state(res)
         self.resman.update(self.game_data)
         if self.get_config(section="world", parameter="trade_for_premium", default=False) and self.get_village_config(self.village_id, parameter="trade_for_premium", default=False):
-            self.resman.do_premium_trade()
+            self.resman.do_premium_stuff()
         self.set_cache_vars()
         self.logger.info("Village cycle done, returning to overview")
         self.wrapper.reporter.report(self.village_id, "TWB_POST_RESOURCE", str(self.resman.actual))

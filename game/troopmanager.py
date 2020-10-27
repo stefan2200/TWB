@@ -221,7 +221,7 @@ class TroopManager:
                 return True
         self.logger.info("Research of %s not yet possible" % unit_type)
 
-    def gather(self, selection=1):
+    def gather(self, selection=1, disabled_units=[]):
         if not self.can_gather:
             return False
         url = "game.php?village=%s&screen=place&mode=scavenge" % self.village_id
@@ -242,6 +242,8 @@ class TroopManager:
         for item in can_use:
             item, carry = item.split(':')
             if item == "knight":
+                continue
+            if item in disabled_units:
                 continue
             if item in troops and int(troops[item]) > 0:
                 payload["squad_requests[0][candidate_squad][unit_counts][%s]" % item] = troops[item]
@@ -267,7 +269,7 @@ class TroopManager:
         if existing:
             self.logger.warning("Building Village %s %s recruitment queue out-of-sync" % (self.village_id, building))
             if not self.can_fix_queue:
-                return False
+                return True
             for entry in existing:
                 self.cancel(building=building, id=entry)
                 self.logger.info("Canceled recruit item %s on building %s" % (entry, building))

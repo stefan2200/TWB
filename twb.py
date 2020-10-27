@@ -38,7 +38,7 @@ class TWB:
     def manual_config(self):
         print("Hello and welcome, it looks like you don't have a config file (yet)")
         if not os.path.exists('config.example.json'):
-            print("Oh now, config.example.json and config.json do not exist. You broke something didn't you?")
+            print("Oh no, config.example.json and config.json do not exist. You broke something didn't you?")
             return False
         print("Please enter the current (logged-in) URL of the world you are playing on (or q to exit)")
         input_url = input("URL: ")
