@@ -13,13 +13,13 @@ app.config["DEBUG"] = True
 def pre_process_bool(key, value, village_id=None):
     if village_id:
         if value:
-            return '<button class="btn btn-sm btn-block btn-success" data-village-id="%s" data-type-option="%s" data-type="toggle">Yes</button>' % (village_id, key)
+            return '<button class="btn btn-sm btn-block btn-success" data-village-id="%s" data-type-option="%s" data-type="toggle">Enabled</button>' % (village_id, key)
         else:
-            return '<button class="btn btn-sm btn-block btn-danger" data-village-id="%s" data-type-option="%s" data-type="toggle">No</button>' % (village_id, key)
+            return '<button class="btn btn-sm btn-block btn-danger" data-village-id="%s" data-type-option="%s" data-type="toggle">Disabled</button>' % (village_id, key)
     if value:
-        return '<button class="btn btn-sm btn-block btn-success" data-type-option="%s" data-type="toggle">Yes</button>' % key
+        return '<button class="btn btn-sm btn-block btn-success" data-type-option="%s" data-type="toggle">Enabled</button>' % key
     else:
-        return '<button class="btn btn-sm btn-block btn-danger" data-type-option="%s" data-type="toggle">No</button>' % key
+        return '<button class="btn btn-sm btn-block btn-danger" data-type-option="%s" data-type="toggle">Disabled</button>' % key
 
 
 def preprocess_select(key, value, templates, village_id=None):
@@ -189,7 +189,10 @@ def config_set():
     if not vid:
         DataReader.config_set(parameter=request.args.get("parameter"), value=request.args.get("value", None))
     else:
-        DataReader.village_config_set(village_id=vid, parameter=request.args.get("parameter"), value=request.args.get("value", None))
+        param = request.args.get("parameter")
+        if param.startswith("village."):
+            param = param.replace("village.", "")
+        DataReader.village_config_set(village_id=vid, parameter=param, value=request.args.get("value", None))
 
     return jsonify(sync())
 
