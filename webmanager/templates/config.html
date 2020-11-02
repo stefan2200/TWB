@@ -1,0 +1,113 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="row">
+	<ul class="nav nav-tabs">
+		{% for section in config %}
+		  <li class="nav-item">
+			<a class="nav-link" role="tab" data-toggle="tab" href="#{{section}}">{{section}}</a>
+		  </li>
+		{% endfor %}
+	</ul>
+	 <a id="save_config" class="btn btn-success disabled">Save</a>
+</div>
+
+<div class="row border">
+	<div class="tab-content">
+		{% for section in config %}
+		<div role="tabpanel" class="tab-pane container fade" id="{{section}}">
+			<h4>{{section}}</h4>
+			{% if section in helpfile %}
+				<i>{{helpfile[section]}}</i>
+			{% endif %}
+
+			<div class="form-vertical">
+				{{ config[section]|safe }}
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var set_values = {};
+	function set_config(parameter, value) {
+		$.getJSON("/app/config/set?parameter="+encodeURIComponent(parameter)+"&value="+encodeURIComponent(value), function(data){
+			console.log("Set values", parameter, value);
+		});
+	}
+
+	function set_toggle_value(target, value) {
+		if(!value) {
+			target.removeClass("btn-success");
+			target.addClass("btn-danger");
+			target.text("Disabled");
+		} else {
+			target.addClass("btn-success");
+			target.removeClass("btn-danger");
+			target.text("Enabled");
+		}
+	}
+
+	function toggle_event(event) {
+		var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		var current_value = target.hasClass("btn-success");
+		var next_value = !current_value;
+		set_config(name, next_value);
+		set_toggle_value(target, next_value);
+	}
+
+	function select_event(event) {
+	  var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		set_config(name, target.val());
+	}
+
+	function num_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = parseInt(target.val());
+      $('#save_config').removeClass('disabled');
+	}
+
+	function text_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = target.val();
+      $('#save_config').removeClass('disabled');
+	}
+
+	$( document ).ready(function() {
+		$( "[data-type=toggle]" ).click(function(e) {
+		  toggle_event(e);
+		});
+
+		$( "[data-type=select]" ).change(function(e) {
+		  select_event(e);
+		});
+
+		$( "[data-type=number]" ).change(function(e) {
+		  num_event(e);
+		});
+
+		$( "[data-type=text]" ).change(function(e) {
+		  text_event(e);
+		});
+
+		$('#save_config').click(function(){
+		  $.each(set_values, function(set_key, set_value){
+		    set_config(set_key, set_value);
+		  });
+		  setTimeout(function(){location.reload()}, 500);
+		});
+	});
+</script>
+
+{% endblock %}

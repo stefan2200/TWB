@@ -154,8 +154,8 @@ class AttackManager:
             self.logger.debug("Cannot scout %s at the moment because insufficient unit: spy" % vid)
             return False
         troops = {'spy': 5}
-        self.attack(vid, troops=troops)
-        self.attacked(vid, scout=True, safe=False)
+        if self.attack(vid, troops=troops):
+            self.attacked(vid, scout=True, safe=False)
 
     def can_attack(self, vid, clear=False):
         cache_entry = AttackCache.get_cache(vid)

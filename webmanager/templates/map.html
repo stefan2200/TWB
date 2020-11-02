@@ -1,0 +1,97 @@
+{% extends "main.html" %}
+
+{% block content %}
+<style>
+    #grid {
+      margin-left: auto;
+      margin-right: auto;
+      transform: rotate(-90deg);
+    }
+
+    #grid TR TD{
+      border:1px solid white;
+      background: #FFFFFF;
+      width: 30px;
+      height: 30px;
+      text-align: center;
+    }
+
+    #grid TR TD:hover {
+        background: #333333;
+    }
+
+    #grid TR TD.owner {
+        background: #00FF00;
+    }
+
+    #grid TR TD.enemy {
+        background: #FF0000;
+    }
+
+    #grid TR TD.tribe {
+        background: #0001FF;
+    }
+
+    #grid TR TD.barbarian {
+        background: #AAAAAA;
+    }
+</style>
+<div class="row">
+    <div class="col-lg-10">
+        <table id="grid"></table>
+    </div>
+    <div class="col-lg-2">
+        <h4 id="v_name"></h4>
+        <p id="v_data"></p>
+    </div>
+
+</div>
+<script>
+	var map_data = {{map | safe}}
+    function generateGrid(x, y, data) {
+      grid.innerHTML="";
+      for (var i=0; i<x; i++) {
+        row = grid.insertRow(i);
+        for (var j=0; j<y; j++) {
+          cell = row.insertCell(j);
+
+          if(i in data.grid && j in data.grid[i] && data.grid[i][j]) {
+            var village = data.grid[i][j];
+            cell.onclick = function() { clickCell(this); };
+            cell.onmouseover = function() { clickCell(this); };
+            if(village.owner != "0") {
+                cell.setAttribute("village", JSON.stringify(village));
+                if(data.extra && village.owner == data.extra.owner) {
+                    cell.setAttribute("class", "owner");
+                } else if(data.extra && data.extra.tribe != "0" && data.extra.tribe == village.tribe) {
+                    cell.setAttribute("class", "tribe");
+                } else {
+                    cell.setAttribute("class", "enemy");
+                }
+            } else {
+                cell.setAttribute("class", "barbarian");
+            }
+          }
+
+        }
+      }
+    }
+
+    generateGrid(Object.keys(map_data.grid).length, Object.keys(map_data.grid).length, map_data);
+
+    function clickCell(cell) {
+        var village_data = $(cell).attr("village");
+        if(!village_data) return;
+        var data = JSON.parse(village_data);
+        $('#v_name').text(data.name);
+
+        var output = '';
+        $.each(data, function(k, v){
+            if(jQuery.type(v) !== "object") {
+                output += '<strong>' + k + '</strong> ' + v + '<br />';
+            }
+        });
+        $('#v_data').html(output);
+    }
+</script>
+{% endblock %}

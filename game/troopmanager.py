@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+import random
 
 from core.extractors import Extractor
 
@@ -13,6 +14,7 @@ class TroopManager:
     can_farm = True
     can_gather = True
     can_fix_queue = True
+    randomize_unit_queue = True
 
     queue = []
     troops = {
@@ -51,7 +53,9 @@ class TroopManager:
         "spy": "stable",
         "light": "stable",
         "marcher": "stable",
-        "heavy": "stable"
+        "heavy": "stable",
+        "ram": "garage",
+        "catapult": "garage"
     }
 
     wanted_levels = {
@@ -104,16 +108,19 @@ class TroopManager:
             self.logger.info("%s still busy for %d seconds" % (building, self.wait_for[self.village_id][building] - time.time()))
             return False
 
-        if True:
-            for wanted in self.wanted[building]:
-                if wanted not in self.total_troops:
-                    if self.recruit(wanted, self.wanted[building][wanted], building=building):
-                        return True
-                    continue
+        run_selection = list(self.wanted[building].keys())
+        if self.randomize_unit_queue:
+            random.shuffle(run_selection)
 
-                if self.wanted[building][wanted] > self.total_troops[wanted]:
-                    if self.recruit(wanted, self.wanted[building][wanted] - self.total_troops[wanted], building=building):
-                        return True
+        for wanted in run_selection:
+            if wanted not in self.total_troops:
+                if self.recruit(wanted, self.wanted[building][wanted], building=building):
+                    return True
+                continue
+
+            if self.wanted[building][wanted] > self.total_troops[wanted]:
+                if self.recruit(wanted, self.wanted[building][wanted] - self.total_troops[wanted], building=building):
+                    return True
 
         self.logger.info("Recruitment:%s up-to-date" % building)
         return False
@@ -221,7 +228,7 @@ class TroopManager:
                 return True
         self.logger.info("Research of %s not yet possible" % unit_type)
 
-    def gather(self, selection=1):
+    def gather(self, selection=1, disabled_units=[]):
         if not self.can_gather:
             return False
         url = "game.php?village=%s&screen=place&mode=scavenge" % self.village_id
@@ -242,6 +249,8 @@ class TroopManager:
         for item in can_use:
             item, carry = item.split(':')
             if item == "knight":
+                continue
+            if item in disabled_units:
                 continue
             if item in troops and int(troops[item]) > 0:
                 payload["squad_requests[0][candidate_squad][unit_counts][%s]" % item] = troops[item]
@@ -267,7 +276,7 @@ class TroopManager:
         if existing:
             self.logger.warning("Building Village %s %s recruitment queue out-of-sync" % (self.village_id, building))
             if not self.can_fix_queue:
-                return False
+                return True
             for entry in existing:
                 self.cancel(building=building, id=entry)
                 self.logger.info("Canceled recruit item %s on building %s" % (entry, building))

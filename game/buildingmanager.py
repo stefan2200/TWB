@@ -62,17 +62,20 @@ class BuildingManager:
             self.waits_building = []
         if self.is_queued():
             self.logger.info("No build operation was executed: queue full, %d left" % len(self.queue))
+            return False
         if not build:
             return False
 
         if existing_queue != 0 and existing_queue != len(self.waits):
-            self.logger.warning("Building queue out of sync, waiting until %d manual actions are finished!" % existing_queue)
+            self.logger.warning("Building queue out of sync, waiting until %d manual actions are finished!" %
+                                existing_queue)
             return True
 
         for x in range(self.max_queue_len - len(self.waits)):
             result = self.get_next_building_action()
             if not result:
-                self.logger.info("No build more operations where executed (%d current, %d left)" % (len(self.waits), len(self.queue)))
+                self.logger.info("No build more operations where executed (%d current, %d left)" %
+                                 (len(self.waits), len(self.queue)))
                 return False
         return True
 
@@ -115,7 +118,8 @@ class BuildingManager:
                 build_item['wood'] > self.resman.storage or \
                 build_item['stone'] > self.resman.storage:
             build_data = 'storage:%d' % (int(self.levels['storage']) + 1)
-            if len(self.queue) and self.queue[0].split(':')[0] != "storage":
+            if len(self.queue) and "storage" not in [x.split(':')[0] for x in self.queue[0:self.max_lookahead]]\
+                    and int(self.levels['storage']) != 30:
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding storage in front of queue because queue item exceeds storage capacity")
 
@@ -166,7 +170,8 @@ class BuildingManager:
 
         if self.resman and self.resman.in_need_of("pop"):
             build_data = 'farm:%d' % (int(self.levels['farm']) + 1)
-            if len(self.queue) and self.queue[0].split(':')[0] != "farm":
+            if len(self.queue) and "farm" not in [x.split(':')[0] for x in self.queue[0:self.max_lookahead]] \
+                    and int(self.levels['farm']) != 30:
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding farm in front of queue because low on pop")
                 return self.get_next_building_action(0)
@@ -184,9 +189,11 @@ class BuildingManager:
             check = self.costs[entry]
             if check['can_build'] and self.has_enough(check) and 'build_link' in check:
                 queue = self.put_wait(check['build_time'])
-                self.logger.info("Building %s %d -> %d (finishes: %s)" % (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
+                self.logger.info("Building %s %d -> %d (finishes: %s)" %
+                                 (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
                 self.wrapper.reporter.report(self.village_id, "TWB_BUILD",
-                                     "Building %s %d -> %d (finishes: %s)" % (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
+                                             "Building %s %d -> %d (finishes: %s)" %
+                                             (entry, self.levels[entry], self.levels[entry]+1, self.readable_ts(queue)))
                 self.levels[entry] += 1
                 result = self.wrapper.get_url(check['build_link'].replace('amp;', ''))
                 self.game_state = Extractor.game_state(result)

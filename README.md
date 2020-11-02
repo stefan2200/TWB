@@ -1,7 +1,11 @@
+### New in 1.5
+- Nice configuration dashboard
+- Various bug fixes
+
 ### New in 1.4.4
 - Fixed snob (both systems working again)
 - Fixed various crashes and bugs
-- Configurable delay between requests (0.3 for very fast, 2.0 for very slow)
+- Configurable delay between requests (0.7 for fast, 2.0 for very slow)
 
 ### New in 1.4.2
 - Automatically add new villages once conquered
@@ -54,6 +58,15 @@ _When migrating from v1.1 please delete the cache/villages folder_
 - Your villages will be added to the config automatically, disable the "managed" parameter to make the bot skip the village
 - Additional properties can be tweaked by running the manager.py script
 - You might want to set the bot user-agent in core/request.py to your own user agent. They probably wont notice but just in case :)
+
+You can find the cookie string in the following location (Chrome):
+
+![Screenshot](readme/network.JPG)
+
+You need to use the cookie: header value
+
+*optional: If everything is set-up correctly and the bot is running you can `cd` into the webmanager directory and start the bot interface by running `server.py`. You can access this dashboard by visiting http://127.0.0.1:5000/ in your browser.
+A lot of new features will be added to the dashboard soon.*
 
 More information about configuring the bot can be found in the readme directory!
 
