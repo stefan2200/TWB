@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "author": "stefan2200"
   },
   "server": {
@@ -37,7 +37,8 @@
     "default": "basic",
     "batch_size": 25,
     "manage_defence": false,
-    "remove_manual_queued": false
+    "remove_manual_queued": false,
+    "randomize_unit_queue": true
   },
   "village_template": {
     "building": "purple_predator",
@@ -79,12 +80,13 @@
     "trade_max_per_hour": 1
   },
   "world": {
-    "knight_enabled": false,
-    "flags_enabled": false,
-    "quests_enabled": false,
+    "knight_enabled": null,
+    "flags_enabled": null,
+    "quests_enabled": null,
     "trade_for_premium": false,
     "archers_enabled": true,
-    "building_destruction_enabled": true
+    "building_destruction_enabled": true,
+    "boosters_enabled": null
   },
   "villages": {
 

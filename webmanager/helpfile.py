@@ -29,6 +29,7 @@ help_file = {
     'units.batch_size': 'The amount of units to attempt to create in a single run, increase this in late-game',
     'units.manage_defence': 'Manage defence between villages (experimental)',
     'units.remove_manual_queued': 'Remove manual queued recruitment entries',
+    'units.randomize_unit_queue': 'Randomize unit queue, allows a more wide variety in units',
     'farms': 'Automatic farming of nearby (barbarian) villages',
     'farms.farm': 'Enable automatic farming',
     'farms.min_points': 'The minimum points of villages to attack (also checks custom_farms)',

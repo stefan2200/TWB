@@ -202,6 +202,7 @@ class Village:
         # recruitment management
         if self.get_config(section="units", parameter="recruit", default=False):
             self.units.can_fix_queue = self.get_config(section="units", parameter="remove_manual_queued", default=False)
+            self.units.randomize_unit_queue = self.get_config(section="units", parameter="randomize_unit_queue", default=False)
             # prioritize_building: will only recruit when builder has sufficient funds for queue items
             if self.get_village_config(self.village_id, parameter="prioritize_building", default=False) and not self.resman.can_recruit():
                 self.logger.info("Not recruiting because builder has insufficient funds")

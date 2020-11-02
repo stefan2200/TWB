@@ -153,7 +153,7 @@ def stop_bot():
     return jsonify(not bm.is_running())
 
 
-@app.route('/', methods=['GET'])
+@app.route('/config', methods=['GET'])
 def get_config():
     return render_template('config.html', data=sync(), config=pre_process_config(), helpfile=help_file)
 
@@ -175,6 +175,11 @@ def get_map():
 @app.route('/villages', methods=['GET'])
 def get_village_overview():
     return render_template('villages.html', data=sync())
+
+
+@app.route('/', methods=['GET'])
+def get_home():
+    return render_template('bot.html', data=sync())
 
 
 @app.route('/app/js', methods=['GET'])

@@ -126,16 +126,17 @@ class TWB:
         return new_config
 
     def get_overview(self, config):
+        result_get = self.wrapper.get_url("game.php?screen=overview_villages")
         result_villages = None
         if 'add_new_villages' in config['bot'] and config['bot']['add_new_villages']:
-            result_villages = self.wrapper.get_url("game.php?screen=overview_villages")
-            result_villages = Extractor.village_ids_from_overview(result_villages)
+            result_villages = Extractor.village_ids_from_overview(result_get)
             for found_vid in result_villages:
                 if found_vid not in config['villages']:
                     print("Village %s was found but no config entry was found. Adding automatically" % found_vid)
                     self.add_village(vid=found_vid)
                     return self.get_overview(self.config())
-        return result_villages
+
+        return result_villages, result_get
 
     def add_village(self, vid, template=None):
         original = self.config()
@@ -148,6 +149,37 @@ class TWB:
         with open('config.json', 'w') as newcf:
             json.dump(original, newcf, indent=2, sort_keys=False)
             print("Deployed new configuration file")
+
+    def get_world_options(self, overview_page, config):
+        changed = False
+        if config['world']['flags_enabled'] is None:
+            changed = True
+            if 'screen=flags' in overview_page:
+                config['world']['flags_enabled'] = True
+            else:
+                config['world']['flags_enabled'] = False
+        if config['world']['knight_enabled'] is None:
+            changed = True
+            if 'screen=statue' in overview_page:
+                config['world']['knight_enabled'] = True
+            else:
+                config['world']['knight_enabled'] = False
+
+        if config['world']['boosters_enabled'] is None:
+            changed = True
+            if 'screen=inventory' in overview_page:
+                config['world']['boosters_enabled'] = True
+            else:
+                config['world']['boosters_enabled'] = False
+
+        if config['world']['quests_enabled'] is None:
+            changed = True
+            if 'Quests.setQuestData' in overview_page:
+                config['world']['quests_enabled'] = True
+            else:
+                config['world']['quests_enabled'] = False
+
+        return changed, config
 
     def run(self):
         config = self.config()
@@ -172,8 +204,14 @@ class TWB:
         defense_states = {}
         while self.should_run:
             config = self.config()
-            result_villages = self.get_overview(config)
-
+            result_villages, res_text = self.get_overview(config)
+            has_changed, new_cf = self.get_world_options(res_text.text, config)
+            if has_changed:
+                print("Updated world options")
+                config = self.merge_configs(config, new_cf)
+                with open('config.json', 'w') as newcf:
+                    json.dump(config, newcf, indent=2, sort_keys=False)
+                    print("Deployed new configuration file")
             vnum = 1
             for vil in self.villages:
                 if result_villages and vil.village_id not in result_villages:

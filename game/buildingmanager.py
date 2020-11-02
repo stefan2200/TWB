@@ -118,7 +118,8 @@ class BuildingManager:
                 build_item['wood'] > self.resman.storage or \
                 build_item['stone'] > self.resman.storage:
             build_data = 'storage:%d' % (int(self.levels['storage']) + 1)
-            if len(self.queue) and self.queue[0].split(':')[0] != "storage":
+            if len(self.queue) and "storage" not in [x.split(':')[0] for x in self.queue[0:self.max_lookahead]]\
+                    and int(self.levels['storage']) != 30:
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding storage in front of queue because queue item exceeds storage capacity")
 
@@ -169,7 +170,8 @@ class BuildingManager:
 
         if self.resman and self.resman.in_need_of("pop"):
             build_data = 'farm:%d' % (int(self.levels['farm']) + 1)
-            if len(self.queue) and self.queue[0].split(':')[0] != "farm":
+            if len(self.queue) and "farm" not in [x.split(':')[0] for x in self.queue[0:self.max_lookahead]] \
+                    and int(self.levels['farm']) != 30:
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding farm in front of queue because low on pop")
                 return self.get_next_building_action(0)

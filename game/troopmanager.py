@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+import random
 
 from core.extractors import Extractor
 
@@ -13,6 +14,7 @@ class TroopManager:
     can_farm = True
     can_gather = True
     can_fix_queue = True
+    randomize_unit_queue = True
 
     queue = []
     troops = {
@@ -51,7 +53,9 @@ class TroopManager:
         "spy": "stable",
         "light": "stable",
         "marcher": "stable",
-        "heavy": "stable"
+        "heavy": "stable",
+        "ram": "garage",
+        "catapult": "garage"
     }
 
     wanted_levels = {
@@ -104,16 +108,19 @@ class TroopManager:
             self.logger.info("%s still busy for %d seconds" % (building, self.wait_for[self.village_id][building] - time.time()))
             return False
 
-        if True:
-            for wanted in self.wanted[building]:
-                if wanted not in self.total_troops:
-                    if self.recruit(wanted, self.wanted[building][wanted], building=building):
-                        return True
-                    continue
+        run_selection = list(self.wanted[building].keys())
+        if self.randomize_unit_queue:
+            random.shuffle(run_selection)
 
-                if self.wanted[building][wanted] > self.total_troops[wanted]:
-                    if self.recruit(wanted, self.wanted[building][wanted] - self.total_troops[wanted], building=building):
-                        return True
+        for wanted in run_selection:
+            if wanted not in self.total_troops:
+                if self.recruit(wanted, self.wanted[building][wanted], building=building):
+                    return True
+                continue
+
+            if self.wanted[building][wanted] > self.total_troops[wanted]:
+                if self.recruit(wanted, self.wanted[building][wanted] - self.total_troops[wanted], building=building):
+                    return True
 
         self.logger.info("Recruitment:%s up-to-date" % building)
         return False
