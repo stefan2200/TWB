@@ -70,6 +70,53 @@ class DataReader:
                 print("Deployed new configuration file")
                 return True
 
+    @staticmethod
+    def get_session():
+        c_path = os.path.join("../cache", "session.json")
+        if not os.path.exists(c_path):
+            return {"raw": "", "endpoint": "None", "server": "None", "world": "None"}
+        with open(c_path, 'r') as session_file:
+            session_data = json.load(session_file)
+            cookies = []
+            for c in session_data['cookies']:
+                cookies.append("%s=%s" % (c, session_data['cookies'][c]))
+            session_data['raw'] = ';'.join(cookies)
+            return session_data
+
+
+class BuildingTemplateManager:
+
+    @staticmethod
+    def template_cache_list():
+        c_path = os.path.join("../templates", "builder")
+        output = {}
+        for existing in os.listdir(c_path):
+            if not existing.endswith(".txt"):
+                continue
+            with open(os.path.join("../templates", "builder", existing), 'r') as template_file:
+                output[existing] = BuildingTemplateManager.template_to_dict([x.strip() for x in template_file.readlines()])
+        return output
+
+    @staticmethod
+    def template_to_dict(t_list):
+        out_data = {
+
+        }
+        rows = []
+
+        for entry in t_list:
+            if entry.startswith('#') or ':' not in entry:
+                continue
+            building, next_level = entry.split(':')
+            next_level = int(next_level)
+            old = 0
+            if building in out_data:
+                old = out_data[building]
+            rows.append({'building': building, 'from': old, 'to': next_level})
+            out_data[building] = next_level
+
+        return rows
+
 
 class MapBuilder:
 

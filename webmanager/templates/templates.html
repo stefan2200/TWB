@@ -1,0 +1,71 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="row">
+	{% if not selected %}
+	<div class="col-lg-12">
+		<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Template</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for template in templates %}
+				<tr>
+					<td><a href="?t={{template}}">{{template}}</a></td>
+					<td>{{templates[template] | count}}</td>
+				</tr>
+			{% endfor %}
+			<tr class="table-primary">
+				<form method="post">
+					<td><input type="text" class="form-control" name="new" placeholder="New template (should end with .txt)"></td>
+					<td><input type="submit" class="btn btn-info btn-inline" name="add" value="Add new"></td>
+				</form>
+			</tr>
+		</tbody>
+	</table>
+	</div>
+	{% else %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Order</th>
+				<th>Building</th>
+				<th>Levels</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td></td>
+				<td>
+					<select id="new_row" class="form-control">
+						{% for building in buildings %}
+						<option value="{{building}}">{{building}}</option>
+						{% endfor %}
+					</select>
+				</td>
+				<td class="form-inline">
+					<input type="number" class="form-control" value="0" id="new_val_start"/>
+					-&gt;
+					<input type="number" class="form-control" value="1" id="new_val_end"/>
+				</td>
+				<td><input type="button" class="btn btn-success btn-inline" value="Add row"></td>
+			</tr>
+		{% for t in templates[selected] %}
+			<tr>
+				<td>{{ loop.index }}</td>
+				<td>{{ t.building }}</td>
+				<td>{{ t.from }} -&gt; {{ t.to }}</td>
+				<td></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+</div>
+
+{% endblock %}
