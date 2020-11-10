@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, send_from_directory, request, render_template
 import os
 import json
-from webmanager.helpfile import help_file, buildings
-from webmanager.utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
+try:
+    from webmanager.helpfile import help_file, buildings
+    from webmanager.utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
+except ImportError:
+    from helpfile import help_file, buildings
+    from utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
 
 bm = BotManager()
 
