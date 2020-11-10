@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, send_from_directory, request, render_template
 import os
 import json
-from webmanager.helpfile import help_file
-from webmanager.utils import DataReader, BotManager, MapBuilder
+try:
+    from webmanager.helpfile import help_file, buildings
+    from webmanager.utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
+except ImportError:
+    from helpfile import help_file, buildings
+    from utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
 
 bm = BotManager()
 
@@ -57,6 +61,12 @@ def pre_process_number(key, value, village_id=None):
     return '<input type="number" data-type="number" class="form-control" value="%s" data-type-option="%s" />' % (value, key)
 
 
+def pre_process_list(key, value, village_id=None):
+    if village_id:
+        return '<input type="text" data-type="list" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (village_id, ', '.join(value), key)
+    return '<input type="number" data-type="list" class="form-control" value="%s" data-type-option="%s" />' % (', '.join(value), key)
+
+
 def fancy(key):
     name = key
     if '.' in name:
@@ -89,6 +99,8 @@ def pre_process_config():
                 config_data += '%s %s' % (fancy(kvp), pre_process_bool(kvp, value))
             if type(value) == str:
                 config_data += '%s %s' % (fancy(kvp), pre_process_string(kvp, value))
+            if type(value) == list:
+                config_data += '%s %s' % (fancy(kvp), pre_process_list(kvp, value))
             if type(value) == int or type(value) == float:
                 config_data += '%s %s' % (fancy(kvp), pre_process_number(kvp, value))
         sections[section] = config_data
@@ -109,6 +121,8 @@ def pre_process_village_config(village_id):
             config_data += '%s %s' % (fancy(kvp), pre_process_bool(kvp, value, village_id))
         if type(value) == str:
             config_data += '%s %s' % (fancy(kvp), pre_process_string(kvp, value, village_id))
+        if type(value) == list:
+            config_data += '%s %s' % (fancy(kvp), pre_process_list(kvp, value, village_id))
         if type(value) == int or type(value) == float:
             config_data += '%s %s' % (fancy(kvp), pre_process_number(kvp, value, village_id))
     return config_data
@@ -162,13 +176,16 @@ def get_config():
 def get_village_config():
     data = sync()
     vid = request.args.get("id", None)
-    return render_template('village.html', data=data, config=pre_process_village_config(village_id=vid), current_select=vid, helpfile=help_file)
+    return render_template('village.html', data=data, config=pre_process_village_config(village_id=vid),
+                           current_select=vid, helpfile=help_file)
 
 
 @app.route('/map', methods=['GET'])
 def get_map():
     sync_data = sync()
-    map_data = json.dumps(MapBuilder.build(sync_data['villages'], current_village=next(iter(sync_data['bot']))))
+    center_id = request.args.get("center", None)
+    center = next(iter(sync_data['bot'])) if not center_id else center_id
+    map_data = json.dumps(MapBuilder.build(sync_data['villages'], current_village=center, size=15))
     return render_template('map.html', data=sync_data, map=map_data)
 
 
@@ -177,9 +194,27 @@ def get_village_overview():
     return render_template('villages.html', data=sync())
 
 
+@app.route('/building_templates', methods=['GET', 'POST'])
+def get_building_templates():
+    if request.form.get('new', None):
+        plain = os.path.basename(request.form.get('new'))
+        if not plain.endswith('.txt'):
+            plain = "%s.txt" % plain
+        tempfile = '../templates/builder/%s' % plain
+        if not os.path.exists(tempfile):
+            with open(tempfile, 'w') as ouf:
+                ouf.write("")
+    selected = request.args.get('t', None)
+    return render_template('templates.html',
+                           templates=BuildingTemplateManager.template_cache_list(),
+                           selected=selected,
+                           buildings=buildings)
+
+
 @app.route('/', methods=['GET'])
 def get_home():
-    return render_template('bot.html', data=sync())
+    session = DataReader.get_session()
+    return render_template('bot.html', data=sync(), session=session)
 
 
 @app.route('/app/js', methods=['GET'])

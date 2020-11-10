@@ -25,6 +25,7 @@ class BuildingManager:
     game_state = {}
     max_queue_len = 2
     resman = None
+    raw_template = None
 
     def __init__(self, wrapper, village_id):
         self.wrapper = wrapper
@@ -80,7 +81,7 @@ class BuildingManager:
         return True
 
     def complete_actions(self, text):
-        res = re.search(r'change_order\((\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text)
+        res = re.search(r'(?s)(\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text)
         if res and int(res.group(2)) <= time.time():
             self.wrapper.get_url("game.php?village=%s&screen=main&ajaxaction=build_order_reduce&h=%s&id=%s&destroy=0" %
                                  (self.village_id, self.wrapper.last_h, res.group(1)))
@@ -187,6 +188,10 @@ class BuildingManager:
                 self.logger.debug("Ignoring %s because not yet available" % entry)
                 return self.get_next_building_action(index + 1)
             check = self.costs[entry]
+            if 'max_level' in check and min_lvl > check['max_level']:
+                self.logger.debug("Removing entry %s because max_level exceeded" % entry)
+                self.queue.pop(index)
+                return self.get_next_building_action(index=index)
             if check['can_build'] and self.has_enough(check) and 'build_link' in check:
                 queue = self.put_wait(check['build_time'])
                 self.logger.info("Building %s %d -> %d (finishes: %s)" %

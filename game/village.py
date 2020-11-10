@@ -152,12 +152,14 @@ class Village:
             self.builder = BuildingManager(wrapper=self.wrapper, village_id=self.village_id)
             self.builder.resman = self.resman
             # manage buildings (has to always run because recruit check depends on building levels)
-            build_config = self.get_village_config(self.village_id, parameter="building", default=None)
-            if not build_config:
-                self.logger.warning("Village %d does not have 'building' config override!" % self.village_id)
-                build_config = self.get_config(section="building", parameter="default", default="purple_predator")
-
-            self.builder.queue = TemplateManager.get_template(category="builder", template=build_config)
+        build_config = self.get_village_config(self.village_id, parameter="building", default=None)
+        if not build_config:
+            self.logger.warning("Village %d does not have 'building' config override!" % self.village_id)
+            build_config = self.get_config(section="building", parameter="default", default="purple_predator")
+        new_queue = TemplateManager.get_template(category="builder", template=build_config)
+        if not self.builder.raw_template or self.builder.raw_template != new_queue:
+            self.builder.queue = new_queue
+            self.builder.raw_template = new_queue
             if not self.get_config(section="world", parameter="knight_enabled", default=False):
                 self.builder.queue = [x for x in self.builder.queue if "statue" not in x]
         self.builder.max_lookahead = self.get_config(section="building", parameter="max_lookahead", default=2)
@@ -166,8 +168,8 @@ class Village:
 
         if not self.units:
             self.units = TroopManager(wrapper=self.wrapper, village_id=self.village_id)
-            self.units.max_batch_size = self.get_config(section="units", parameter="batch_size", default=25)
             self.units.resman = self.resman
+        self.units.max_batch_size = self.get_config(section="units", parameter="batch_size", default=25)
 
         # set village templates
         unit_config = self.get_village_config(self.village_id, parameter="units", default=None)
@@ -202,7 +204,7 @@ class Village:
         # recruitment management
         if self.get_config(section="units", parameter="recruit", default=False):
             self.units.can_fix_queue = self.get_config(section="units", parameter="remove_manual_queued", default=False)
-            self.units.randomize_unit_queue = self.get_config(section="units", parameter="randomize_unit_queue", default=False)
+            self.units.randomize_unit_queue = self.get_config(section="units", parameter="randomize_unit_queue", default=True)
             # prioritize_building: will only recruit when builder has sufficient funds for queue items
             if self.get_village_config(self.village_id, parameter="prioritize_building", default=False) and not self.resman.can_recruit():
                 self.logger.info("Not recruiting because builder has insufficient funds")
