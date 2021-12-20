@@ -4,6 +4,7 @@ import time
 import random
 
 from core.extractors import Extractor
+from game.resources import ResourceManager
 
 
 class TroopManager:
@@ -59,6 +60,10 @@ class TroopManager:
         self.wrapper = wrapper
         self.village_id = village_id
         self.wait_for[village_id] = {"barracks": 0, "stable": 0, "garage": 0}
+        if not self.resman:
+            self.resman = ResourceManager(
+                wrapper=self.wrapper, village_id=self.village_id
+            )
 
     def update_totals(self):
         main_data = self.wrapper.get_action(
@@ -205,6 +210,22 @@ class TroopManager:
                     self.logger.debug(
                         "Skipping research of %s because of research error" % unit_type
                     )
+                    # Add needed resources to res manager?
+                    r = True
+                    if data["wood"] > self.game_data["village"]["wood"]:
+                        req = data["wood"] - self.game_data["village"]["wood"]
+                        self.resman.request(source="research", resource="wood", amount=req)
+                        r = False
+                    if data["stone"] > self.game_data["village"]["stone"]:
+                        req = data["stone"] - self.game_data["village"]["stone"]
+                        self.resman.request(source="research", resource="stone", amount=req)
+                        r = False
+                    if data["iron"] > self.game_data["village"]["iron"]:
+                        req = data["iron"] - self.game_data["village"]["iron"]
+                        self.resman.request(source="research", resource="iron", amount=req)
+                        r = False
+                    if not r:
+                        self.logger.debug("Research needs resources")
                     continue
                 if "error_buildings" in data and data["error_buildings"]:
                     self.logger.debug(
@@ -244,6 +265,22 @@ class TroopManager:
                     "Ignoring research of %s because of resource error %s"
                     % (unit_type, str(data["research_error"]))
                 )
+                # Add needed resources to res manager?
+                r = True
+                if data["wood"] > self.game_data["village"]["wood"]:
+                    req = data["wood"] - self.game_data["village"]["wood"]
+                    self.resman.request(source="research", resource="wood", amount=req)
+                    r = False
+                if data["stone"] > self.game_data["village"]["stone"]:
+                    req = data["stone"] - self.game_data["village"]["stone"]
+                    self.resman.request(source="research", resource="stone", amount=req)
+                    r = False
+                if data["iron"] > self.game_data["village"]["iron"]:
+                    req = data["iron"] - self.game_data["village"]["iron"]
+                    self.resman.request(source="research", resource="iron", amount=req)
+                    r = False
+                if not r:
+                    self.logger.debug("Research needs resources")
                 return False
             if "error_buildings" in data and data["error_buildings"]:
                 self.logger.debug(
