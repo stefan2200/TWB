@@ -28,14 +28,14 @@ class Map:
         self.map_data = Extractor.map_data(res)
         if self.map_data:
             for tile in self.map_data:
-                data = tile['data']
-                x = int(data['x'])
-                y = int(data['y'])
-                for lon in data['villages']:
+                data = tile["data"]
+                x = int(data["x"])
+                y = int(data["y"])
+                for lon in data["villages"]:
                     try:
-                        for lat in data['villages'][lon]:
+                        for lat in data["villages"][lon]:
                             coords = [x + int(lon), y + int(lat)]
-                            entry = data['villages'][lon][lat]
+                            entry = data["villages"][lon][lat]
                             if entry[0] == str(self.village_id):
                                 self.my_location = coords
 
@@ -43,7 +43,10 @@ class Map:
                     except:
                         continue
                 if not self.my_location:
-                    self.my_location = [game_state['village']['x'], game_state['village']['y']]
+                    self.my_location = [
+                        game_state["village"]["x"],
+                        game_state["village"]["y"],
+                    ]
         if not self.map_data or not self.villages:
             return self.get_map_old(game_state=game_state)
         return True
@@ -51,10 +54,10 @@ class Map:
     def get_map_old(self, game_state):
         if self.map_data:
             for tile in self.map_data:
-                data = tile['data']
-                x = int(data['x'])
-                y = int(data['y'])
-                vdata = data['villages']
+                data = tile["data"]
+                x = int(data["x"])
+                y = int(data["y"])
+                vdata = data["villages"]
                 for lon, lon_val in enumerate(vdata):
                     try:
                         for lat in vdata[lon]:
@@ -67,36 +70,37 @@ class Map:
                     except:
                         raise
             if not self.my_location:
-                self.my_location = [game_state['village']['x'], game_state['village']['y']]
+                self.my_location = [
+                    game_state["village"]["x"],
+                    game_state["village"]["y"],
+                ]
         if not self.map_data or not self.villages:
-            print("Error reading map state for village %s, farming might not work properly" % self.village_id)
+            print(
+                "Error reading map state for village %s, farming might not work properly"
+                % self.village_id
+            )
             return False
         return True
 
     def build_cache_entry(self, location, entry):
         vid = entry[0]
         name = entry[2]
-        points = int(entry[3].replace('.', ''))
+        points = int(entry[3].replace(".", ""))
         player = entry[4]
         bonus = entry[6]
         clan = entry[11]
         structure = {
-            'id': vid,
-            'name': name,
-            'location': location,
-            'bonus': bonus,
-            'points': points,
-            'safe': False,
-            'scout': False,
-            'tribe': clan,
-            'owner': player,
-            'buildings': {
-
-            },
-
-            'resources': {
-
-            }
+            "id": vid,
+            "name": name,
+            "location": location,
+            "bonus": bonus,
+            "points": points,
+            "safe": False,
+            "scout": False,
+            "tribe": clan,
+            "owner": player,
+            "buildings": {},
+            "resources": {},
         }
         self.map_pos[vid] = location
         cached = self.in_cache(vid)
@@ -111,7 +115,10 @@ class Map:
         return entry
 
     def get_dist(self, ext_loc):
-        distance = math.sqrt(((self.my_location[0] - ext_loc[0]) ** 2) + ((self.my_location[1] - ext_loc[1]) ** 2))
+        distance = math.sqrt(
+            ((self.my_location[0] - ext_loc[0]) ** 2)
+            + ((self.my_location[1] - ext_loc[1]) ** 2)
+        )
         return distance
 
 
@@ -120,12 +127,12 @@ class MapCache:
     def get_cache(village_id):
         t_path = os.path.join("cache", "villages", village_id + ".json")
         if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
+            with open(t_path, "r") as f:
                 return json.load(f)
         return None
 
     @staticmethod
     def set_cache(village_id, entry):
         t_path = os.path.join("cache", "villages", village_id + ".json")
-        with open(t_path, 'w') as f:
+        with open(t_path, "w") as f:
             return f.write(json.dumps(entry))

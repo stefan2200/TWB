@@ -21,9 +21,17 @@ class ReportManager:
         for repid in self.last_reports:
             entry = self.last_reports[repid]
             if vid == entry["dest"]:
-                if entry["type"] == "attack" and entry['losses'] == {}:
+                if entry["type"] == "attack" and entry["losses"] == {}:
                     return 1
-                if entry["type"] == "scout" and entry['losses'] == {} and (entry['extra']['defence_units'] == {} or entry['extra']['defence_units'] == entry['extra']['defence_losses']):
+                if (
+                    entry["type"] == "scout"
+                    and entry["losses"] == {}
+                    and (
+                        entry["extra"]["defence_units"] == {}
+                        or entry["extra"]["defence_units"]
+                        == entry["extra"]["defence_losses"]
+                    )
+                ):
                     return 1
                 if entry["losses"] != {}:
                     return 0
@@ -37,7 +45,10 @@ class ReportManager:
             self.logger.info("First run, re-reading cache entries")
             self.last_reports = ReportCache.cache_grab()
             self.logger.info("Got %d reports from cache" % len(self.last_reports))
-        url = "game.php?village=%s&screen=report&mode=all&from=%d" % (self.village_id, page * 12)
+        url = "game.php?village=%s&screen=report&mode=all&from=%d" % (
+            self.village_id,
+            page * 12,
+        )
         result = self.wrapper.get_url(url)
         self.game_state = Extractor.game_state(result)
         new = 0
@@ -47,7 +58,10 @@ class ReportManager:
             if report_id in self.last_reports:
                 continue
             new += 1
-            url = "game.php?village=%s&screen=report&mode=all&group_id=0&view=%s" % (self.village_id, report_id)
+            url = "game.php?village=%s&screen=report&mode=all&group_id=0&view=%s" % (
+                self.village_id,
+                report_id,
+            )
             data = self.wrapper.get_url(url)
 
             get_type = re.search(r'class="report_(\w+)', data.text)
@@ -62,7 +76,9 @@ class ReportManager:
                     self.last_reports[report_id] = res
         if new == 12 or full_run and page < 20:
             page += 1
-            self.logger.debug("%d new reports where added, also checking page %d" % (new, page))
+            self.logger.debug(
+                "%d new reports where added, also checking page %d" % (new, page)
+            )
             return self.read(page, full_run=full_run)
 
     def re_unit(self, inp):
@@ -76,8 +92,8 @@ class ReportManager:
     def re_building(self, inp):
         output = {}
         for row in inp:
-            k = row['id']
-            v = row['level']
+            k = row["id"]
+            v = row["level"]
             if int(v) > 0:
                 output[k] = int(v)
         return output
@@ -89,81 +105,120 @@ class ReportManager:
         to_village = None
         to_player = None
 
-        extra = {
-
-        }
+        extra = {}
 
         losses = {}
 
         attacker = re.search(r'(?s)(<table id="attack_info_att".+?</table>)', report)
         if attacker:
-            attacker_data = re.search(r'data-player="(\d+)" data-id="(\d+)"', attacker.group(1))
+            attacker_data = re.search(
+                r'data-player="(\d+)" data-id="(\d+)"', attacker.group(1)
+            )
             if attacker_data:
                 from_player = attacker_data.group(1)
                 from_village = attacker_data.group(2)
-                units = re.search(r'(?s)<table id="attack_info_att_units"(.+?)</table>', attacker.group(1))
+                units = re.search(
+                    r'(?s)<table id="attack_info_att_units"(.+?)</table>',
+                    attacker.group(1),
+                )
                 if units:
-                    sent_units = re.findall('(?s)<tr>(.+?)</tr>', units.group(1))
-                    extra['units_sent'] = self.re_unit(Extractor.units_in_total(sent_units[0]))
+                    sent_units = re.findall("(?s)<tr>(.+?)</tr>", units.group(1))
+                    extra["units_sent"] = self.re_unit(
+                        Extractor.units_in_total(sent_units[0])
+                    )
                     if len(sent_units) == 2:
-                        extra['units_losses'] = self.re_unit(Extractor.units_in_total(sent_units[1]))
-                        if from_player == self.game_state['player']['id']:
-                            losses = extra['units_losses']
+                        extra["units_losses"] = self.re_unit(
+                            Extractor.units_in_total(sent_units[1])
+                        )
+                        if from_player == self.game_state["player"]["id"]:
+                            losses = extra["units_losses"]
 
         defender = re.search(r'(?s)(<table id="attack_info_def".+?</table>)', report)
         if defender:
-            defender_data = re.search(r'data-player="(\d+)" data-id="(\d+)"', defender.group(1))
+            defender_data = re.search(
+                r'data-player="(\d+)" data-id="(\d+)"', defender.group(1)
+            )
             if defender_data:
                 to_player = defender_data.group(1)
                 to_village = defender_data.group(2)
-                units = re.search(r'(?s)<table id="attack_info_def_units"(.+?)</table>', defender.group(1))
+                units = re.search(
+                    r'(?s)<table id="attack_info_def_units"(.+?)</table>',
+                    defender.group(1),
+                )
                 if units:
-                    def_units = re.findall('(?s)<tr>(.+?)</tr>', units.group(1))
-                    extra['defence_units'] = self.re_unit(Extractor.units_in_total(def_units[0]))
+                    def_units = re.findall("(?s)<tr>(.+?)</tr>", units.group(1))
+                    extra["defence_units"] = self.re_unit(
+                        Extractor.units_in_total(def_units[0])
+                    )
                     if len(def_units) == 2:
-                        extra['defence_losses'] = self.re_unit(Extractor.units_in_total(def_units[1]))
-                        if to_player == self.game_state['player']['id']:
-                            losses = extra['defence_losses']
+                        extra["defence_losses"] = self.re_unit(
+                            Extractor.units_in_total(def_units[1])
+                        )
+                        if to_player == self.game_state["player"]["id"]:
+                            losses = extra["defence_losses"]
         results = re.search(r'(?s)(<table id="attack_results".+?</table>)', report)
-        report = report.replace('<span class="grey">.</span>', '')
+        report = report.replace('<span class="grey">.</span>', "")
         if results:
             loot = {}
-            for loot_entry in re.findall(r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report):
+            for loot_entry in re.findall(
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report
+            ):
                 loot[loot_entry[0]] = loot_entry[1]
-            extra['loot'] = loot
+            extra["loot"] = loot
             self.logger.info("attack report %s -> %s" % (from_village, to_village))
 
-        scout_results = re.search(r'(?s)(<table id="attack_spy_resources".+?</table>)', report)
+        scout_results = re.search(
+            r'(?s)(<table id="attack_spy_resources".+?</table>)', report
+        )
         if scout_results:
             self.logger.info("scout report %s -> %s" % (from_village, to_village))
-            scout_buildings = re.search(r'(?s)<input id="attack_spy_building_data" type="hidden" value="(.+?)"', report)
+            scout_buildings = re.search(
+                r'(?s)<input id="attack_spy_building_data" type="hidden" value="(.+?)"',
+                report,
+            )
             if scout_buildings:
-                raw = scout_buildings.group(1).replace('&quot;', '"')
-                extra['buildings'] = self.re_building(json.loads(raw))
+                raw = scout_buildings.group(1).replace("&quot;", '"')
+                extra["buildings"] = self.re_building(json.loads(raw))
             loot = {}
-            for loot_entry in re.findall(r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report):
+            for loot_entry in re.findall(
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report
+            ):
                 loot[loot_entry[0]] = loot_entry[1]
-            extra['resources'] = loot
-            units_away = re.search(r'(?s)(<table id="attack_spy_away".+?</table>)', report)
+            extra["resources"] = loot
+            units_away = re.search(
+                r'(?s)(<table id="attack_spy_away".+?</table>)', report
+            )
             if units_away:
                 data_away = self.re_unit(Extractor.units_in_total(units_away.group(1)))
-                extra['units_away'] = data_away
+                extra["units_away"] = data_away
 
         attack_type = "scout" if scout_results and not results else "attack"
-        res = self.put(report_id, attack_type, from_village, to_village, data=extra, losses=losses)
+        res = self.put(
+            report_id, attack_type, from_village, to_village, data=extra, losses=losses
+        )
         self.last_reports[report_id] = res
         return True
 
-    def put(self, report_id, report_type, origin_village=None, dest_village=None, losses={}, data={}):
+    def put(
+        self,
+        report_id,
+        report_type,
+        origin_village=None,
+        dest_village=None,
+        losses={},
+        data={},
+    ):
         output = {
-            'type': report_type,
-            'origin': origin_village,
-            'dest': dest_village,
-            'losses': losses,
-            'extra': data
+            "type": report_type,
+            "origin": origin_village,
+            "dest": dest_village,
+            "losses": losses,
+            "extra": data,
         }
         ReportCache.set_cache(report_id, output)
-        self.logger.info("Processed %s report with id %s" % (report_type, str(report_id)))
+        self.logger.info(
+            "Processed %s report with id %s" % (report_type, str(report_id))
+        )
         return output
 
 
@@ -172,14 +227,14 @@ class ReportCache:
     def get_cache(report_id):
         t_path = os.path.join("cache", "reports", report_id + ".json")
         if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
+            with open(t_path, "r") as f:
                 return json.load(f)
         return None
 
     @staticmethod
     def set_cache(report_id, entry):
         t_path = os.path.join("cache", "reports", report_id + ".json")
-        with open(t_path, 'w') as f:
+        with open(t_path, "w") as f:
             return json.dump(entry, f)
 
     @staticmethod
@@ -190,6 +245,6 @@ class ReportCache:
             if not existing.endswith(".json"):
                 continue
             t_path = os.path.join("cache", "reports", existing)
-            with open(t_path, 'r') as f:
-                output[existing.replace('.json', '')] = json.load(f)
+            with open(t_path, "r") as f:
+                output[existing.replace(".json", "")] = json.load(f)
         return output

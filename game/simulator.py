@@ -24,7 +24,7 @@ class Simulator:
             "load": 25,
             "type": 1,
             "points_att": 1,
-            "points_def": 4
+            "points_def": 4,
         },
         "sword": {
             "name": "sword",
@@ -43,7 +43,7 @@ class Simulator:
             "load": 15,
             "type": 1,
             "points_att": 2,
-            "points_def": 5
+            "points_def": 5,
         },
         "axe": {
             "name": "axe",
@@ -62,7 +62,7 @@ class Simulator:
             "load": 10,
             "type": 1,
             "points_att": 4,
-            "points_def": 1
+            "points_def": 1,
         },
         "archer": {
             "name": "archer",
@@ -81,7 +81,7 @@ class Simulator:
             "load": 10,
             "type": 3,
             "points_att": 2,
-            "points_def": 5
+            "points_def": 5,
         },
         "light": {
             "name": "light_cavalry",
@@ -100,7 +100,7 @@ class Simulator:
             "load": 80,
             "type": 2,
             "points_att": 13,
-            "points_def": 5
+            "points_def": 5,
         },
         "marcher": {
             "name": "mounted_archer",
@@ -119,7 +119,7 @@ class Simulator:
             "load": 50,
             "type": 3,
             "points_att": 12,
-            "points_def": 6
+            "points_def": 6,
         },
         "heavy": {
             "name": "heavy_cavalry",
@@ -138,7 +138,7 @@ class Simulator:
             "load": 50,
             "type": 2,
             "points_att": 15,
-            "points_def": 23
+            "points_def": 23,
         },
         "ram": {
             "name": "ram",
@@ -157,7 +157,7 @@ class Simulator:
             "load": 0,
             "type": 1,
             "points_att": 8,
-            "points_def": 4
+            "points_def": 4,
         },
         "catapult": {
             "name": "catapult",
@@ -176,7 +176,7 @@ class Simulator:
             "load": 0,
             "type": 1,
             "points_att": 10,
-            "points_def": 12
+            "points_def": 12,
         },
         "knight": {
             "name": "knight",
@@ -195,7 +195,7 @@ class Simulator:
             "load": 100,
             "type": 2,
             "points_att": 20,
-            "points_def": 40
+            "points_def": 40,
         },
         "snob": {
             "name": "snob",
@@ -215,8 +215,8 @@ class Simulator:
             "speed": 35,
             "load": 0,
             "type": 1,
-            "special": 1
-        }
+            "special": 1,
+        },
     }
     attack_pool = {
         "spear": "attack",
@@ -235,15 +235,11 @@ class Simulator:
     attack_units = {
         "attack": ["spear", "sword", "axe", "ram", "catapult", "snob"],
         "attack_cavalry": ["light", "heavy", "knight"],
-        "attack_archer": ["archer", "marcher"]
+        "attack_archer": ["archer", "marcher"],
     }
 
     def attack_sum(self, units):
-        total = {
-            "attack": 0,
-            "attack_cavalry": 0,
-            "attack_archer": 0
-        }
+        total = {"attack": 0, "attack_cavalry": 0, "attack_archer": 0}
         for unit in units:
             total[self.attack_pool[unit]] += self.pool[unit]["attack"] * units[unit]
         return total
@@ -257,21 +253,13 @@ class Simulator:
                     self.pool[unit][item] = levels[unit][item]
 
     def attack_sum_food(self, units):
-        total = {
-            "attack": 0,
-            "attack_cavalry": 0,
-            "attack_archer": 0
-        }
+        total = {"attack": 0, "attack_cavalry": 0, "attack_archer": 0}
         for unit in units:
             total[self.attack_pool[unit]] += self.pool[unit]["food"] * units[unit]
         return total
 
     def defense_sum(self, units):
-        total = {
-            "defense": 0,
-            "defense_cavalry": 0,
-            "defense_archer": 0
-        }
+        total = {"defense": 0, "defense_cavalry": 0, "defense_archer": 0}
         for unit in units:
             total["defense"] += self.pool[unit]["def_inf"] * units[unit]
             total["defense_cavalry"] += self.pool[unit]["def_kav"] * units[unit]
@@ -292,7 +280,12 @@ class Simulator:
         result = wall - round(num_rams / (4 * math.pow(1.09, wall)))
         return result if result >= 0 else 0
 
-    def post_wall(self, attacker, defender, wall,):
+    def post_wall(
+        self,
+        attacker,
+        defender,
+        wall,
+    ):
         rams = attacker["quantity"]["ram"]
         wall = wall if wall else 0
 
@@ -303,11 +296,18 @@ class Simulator:
         if def_sum != 0:
             lose_def = self.get_sum(defender["losses"]) / def_sum
         if lose_def == 1:
-            lose_att = self.get_sum(attacker["losses"]) / self.get_sum(attacker["quantity"])
+            lose_att = self.get_sum(attacker["losses"]) / self.get_sum(
+                attacker["quantity"]
+            )
             dmg = (rams * self.pool["ram"]["attack"]) / (4 * math.pow(1.09, wall))
-            resulting = wall - round(dmg - 0.5 * dmg * lose_att);
+            resulting = wall - round(dmg - 0.5 * dmg * lose_att)
         else:
-            resulting = wall - round(rams * self.pool["ram"]["attack"] * lose_def / (8 * math.pow(1.09, wall)));
+            resulting = wall - round(
+                rams
+                * self.pool["ram"]["attack"]
+                * lose_def
+                / (8 * math.pow(1.09, wall))
+            )
         return max(0, resulting)
 
     def simulate(self, attackerUnits, defenderUnits, wall, nightbonus, moral, luck):
@@ -334,8 +334,12 @@ class Simulator:
         }
 
         for unit in self.pool:
-            attacker["quantity"][unit] = attackerUnits[unit] if unit in attackerUnits else 0
-            defender["quantity"][unit] = defenderUnits[unit] if unit in defenderUnits else 0
+            attacker["quantity"][unit] = (
+                attackerUnits[unit] if unit in attackerUnits else 0
+            )
+            defender["quantity"][unit] = (
+                defenderUnits[unit] if unit in defenderUnits else 0
+            )
 
         resultingWall = self.pre_wall(wall=wall, num_rams=attackerUnits["ram"])
         wallBonus = 1 + resultingWall * 0.05
@@ -360,8 +364,13 @@ class Simulator:
                     continue
 
                 ratio = attackFood[attackType] / attackFoodSum
-                defense = def_strength[
-                              attackType.replace('attack', 'defense')] * ratio * wallBonus * nightbonus + wallDefense * ratio
+                defense = (
+                    def_strength[attackType.replace("attack", "defense")]
+                    * ratio
+                    * wallBonus
+                    * nightbonus
+                    + wallDefense * ratio
+                )
                 a = attack_strength[attackType] * moral * luck / defense
                 if a < 1:
                     c = math.sqrt(a) * a
@@ -379,8 +388,12 @@ class Simulator:
                         attackerUnits[unit] -= c * attackerUnits[unit]
 
         for unit in self.pool:
-            attacker["losses"][unit] = attacker["quantity"][unit] - round((attackerUnits[unit]));
-            defender["losses"][unit] = defender["quantity"][unit] - round((defenderUnits[unit]));
+            attacker["losses"][unit] = attacker["quantity"][unit] - round(
+                (attackerUnits[unit])
+            )
+            defender["losses"][unit] = defender["quantity"][unit] - round(
+                (defenderUnits[unit])
+            )
 
         return {
             "attacker": attacker,
@@ -396,14 +409,14 @@ class SimCache:
     def get_cache(world):
         t_path = os.path.join("cache", "stats_%s.json" % world)
         if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
+            with open(t_path, "r") as f:
                 return json.load(f)
         return None
 
     @staticmethod
     def set_cache(world, entry):
         t_path = os.path.join("cache", "stats_%s.json" % world)
-        with open(t_path, 'w') as f:
+        with open(t_path, "w") as f:
             return json.dump(entry, f)
 
     @staticmethod
@@ -420,5 +433,5 @@ class SimCache:
         if not entry:
             return {}
 
-        for unit in entry['response']['unit_data']:
+        for unit in entry["response"]["unit_data"]:
             return

@@ -19,22 +19,11 @@ class DefenceManager:
     allow_support_send = True
     allow_support_recv = True
 
-    defensive_units = [
-        "spear",
-        "sword",
-        "archer",
-        "marcher",
-        "spy"
-    ]
+    defensive_units = ["spear", "sword", "archer", "marcher", "spy"]
 
-    hide_units = [
-        "snob",
-        "axe"
-    ]
+    hide_units = ["snob", "axe"]
 
-    flags = {
-
-    }
+    flags = {}
 
     runs = 0
     logger = None
@@ -72,7 +61,10 @@ class DefenceManager:
             if u in self.units.troops and int(self.units.troops[u]) > 0:
                 send_support[u] = int(int(self.units.troops[u]) * self.support_factor)
 
-        self.logger.info("Sending requested support to village %s: %s" % (requesting_village, str(send_support)))
+        self.logger.info(
+            "Sending requested support to village %s: %s"
+            % (requesting_village, str(send_support))
+        )
         return self.support(requesting_village, troops=send_support)
 
     def update(self, main, with_defence=False):
@@ -99,7 +91,11 @@ class DefenceManager:
                 if len(self.supported) >= self.support_max_villages:
                     self.logger.debug("Already supported 2 villages, ignoring")
                     break
-                if not self.under_attack and self.my_other_villages[vil] and self.allow_support_send:
+                if (
+                    not self.under_attack
+                    and self.my_other_villages[vil]
+                    and self.allow_support_send
+                ):
                     if vil in self.supported:
                         continue
                     if index >= 2:
@@ -128,7 +124,9 @@ class DefenceManager:
             if vid == self.village_id:
                 continue
             if not attack_state:
-                self.logger.info("Evacuating troops from village %s: %s" % (vid, str(to_hide)))
+                self.logger.info(
+                    "Evacuating troops from village %s: %s" % (vid, str(to_hide))
+                )
                 self.support(vid, troops=to_hide)
                 return True
 
@@ -137,26 +135,49 @@ class DefenceManager:
             return
         if not self._can_change_flag:
             if not self._sf_logged:
-                self.logger.info("Unable to set new flag on village %s because of cool down" % self.village_id)
+                self.logger.info(
+                    "Unable to set new flag on village %s because of cool down"
+                    % self.village_id
+                )
                 self._sf_logged = True
             return
         self._sf_logged = False
-        if not self.current_flag or self.current_flag[0] is not set_flag or self.get_highest_flag_possible(
-                flag_id=set_flag) > self.current_flag[1]:
-            self.flag_set(set_flag,
-                          level=self.get_highest_flag_possible(flag_id=set_flag))
-            self.logger.info("Setting flag %d level %d for village %s" %
-                             (set_flag,
-                              self.get_highest_flag_possible(flag_id=set_flag),
-                              self.village_id))
+        if (
+            not self.current_flag
+            or self.current_flag[0] is not set_flag
+            or self.get_highest_flag_possible(flag_id=set_flag) > self.current_flag[1]
+        ):
+            self.flag_set(
+                set_flag, level=self.get_highest_flag_possible(flag_id=set_flag)
+            )
+            self.logger.info(
+                "Setting flag %d level %d for village %s"
+                % (
+                    set_flag,
+                    self.get_highest_flag_possible(flag_id=set_flag),
+                    self.village_id,
+                )
+            )
 
     def flag_upgrade(self, flag, level):
-        return self.wrapper.get_api_action(self.village_id, action="upgrade_flag",
-                                           params={'screen': "flags", "h": self.wrapper.last_h}, data={"flag_type": flag, "from_level": level})
+        return self.wrapper.get_api_action(
+            self.village_id,
+            action="upgrade_flag",
+            params={"screen": "flags", "h": self.wrapper.last_h},
+            data={"flag_type": flag, "from_level": level},
+        )
 
     def flag_set(self, flag, level):
-        return self.wrapper.get_api_action(self.village_id, action="assign_flag",
-                                           params={'screen': "flags", "h": self.wrapper.last_h}, data={"flag_type": str(flag), "level": str(level), 'village_id': self.village_id})
+        return self.wrapper.get_api_action(
+            self.village_id,
+            action="assign_flag",
+            params={"screen": "flags", "h": self.wrapper.last_h},
+            data={
+                "flag_type": str(flag),
+                "level": str(level),
+                "village_id": self.village_id,
+            },
+        )
 
     def get_highest_flag_possible(self, flag_id=1):
         if flag_id not in self.flags:
@@ -179,12 +200,17 @@ class DefenceManager:
         if not get_flag_data:
             self.logger.warning("Error reading flag data")
             return
-        get_current_flag = re.search(r'(?s)<div id="current_flag".+?/(\d+)_(\d+)\.png.+?<p>(.+?)</p>.+?</div>', result.text)
+        get_current_flag = re.search(
+            r'(?s)<div id="current_flag".+?/(\d+)_(\d+)\.png.+?<p>(.+?)</p>.+?</div>',
+            result.text,
+        )
         if get_current_flag:
             cflag = [int(get_current_flag.group(1)), int(get_current_flag.group(2))]
             if cflag != self.current_flag:
                 self.current_flag = cflag
-                self.logger.info("Current village flag: %s" % get_current_flag.group(3).strip())
+                self.logger.info(
+                    "Current village flag: %s" % get_current_flag.group(3).strip()
+                )
         upgraded = 0
         raw_flags = json.loads(get_flag_data.group(1))
         self.flags = {}
@@ -196,7 +222,9 @@ class DefenceManager:
                         self.logger.info("Upgraded flag %s" % flag_type)
                         upgraded += 1
                     if int(amount) > 0:
-                        if int(flag_type) not in self.flags or self.flags[int(flag_type)] < int(level):
+                        if int(flag_type) not in self.flags or self.flags[
+                            int(flag_type)
+                        ] < int(level):
                             self.flags[int(flag_type)] = int(level)
         if upgraded:
             return self.manage_flags()
@@ -217,12 +245,7 @@ class DefenceManager:
             return False
 
         x, y = self.map.map_pos[vid]
-        post_data = {
-            'x': x,
-            'y': y,
-            'target_type': 'coord',
-            'support': 'Ondersteunen'
-        }
+        post_data = {"x": x, "y": y, "target_type": "coord", "support": "Ondersteunen"}
         pre_data.update(post_data)
 
         confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
@@ -230,8 +253,10 @@ class DefenceManager:
         if '<div class="error_box">' in conf.text:
             return False
         duration = Extractor.attack_duration(conf)
-        self.logger.info("[Support] %s -> %s duration %f.1 h" %
-                         (self.village_id, vid, duration / 3600))
+        self.logger.info(
+            "[Support] %s -> %s duration %f.1 h"
+            % (self.village_id, vid, duration / 3600)
+        )
 
         confirm_data = {}
         for u in Extractor.attack_form(conf):
@@ -239,12 +264,13 @@ class DefenceManager:
             if k == "attack":
                 continue
             confirm_data[k] = v
-        new_data = {
-            'h': self.wrapper.last_h
-        }
+        new_data = {"h": self.wrapper.last_h}
         confirm_data.update(new_data)
-        result = self.wrapper.get_api_action(village_id=self.village_id, action="popup_command",
-                                             params={"screen": "place"}, data=confirm_data)
+        result = self.wrapper.get_api_action(
+            village_id=self.village_id,
+            action="popup_command",
+            params={"screen": "place"},
+            data=confirm_data,
+        )
 
         return result
-
