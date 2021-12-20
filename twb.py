@@ -9,6 +9,7 @@ import copy
 import os
 import collections
 import traceback
+import socket
 
 from core.extractors import Extractor
 from core.request import WebWrapper
@@ -32,6 +33,20 @@ class TWB:
     wrapper = None
     should_run = True
     runs = 0
+
+    def internet_online(self, host="8.8.8.8", port=53, timeout=3):
+        """
+        Host: 8.8.8.8 (google-public-dns-a.google.com)
+        OpenPort: 53/tcp
+        Service: domain (DNS/TCP)
+        """
+        try:
+            socket.setdefaulttimeout(timeout)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+            return True
+        except socket.error as ex:
+            print(ex)
+            return False
 
     def manual_config(self):
         print("Hello and welcome, it looks like you don't have a config file (yet)")
@@ -201,6 +216,10 @@ class TWB:
         return changed, config
 
     def run(self):
+        if not self.internet_online():
+            print("You are offline!")
+            return False
+
         config = self.config()
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
@@ -226,76 +245,95 @@ class TWB:
         rm = None
         defense_states = {}
         while self.should_run:
-            config = self.config()
-            result_villages, res_text = self.get_overview(config)
-            has_changed, new_cf = self.get_world_options(res_text.text, config)
-            if has_changed:
-                print("Updated world options")
-                config = self.merge_configs(config, new_cf)
-                with open("config.json", "w") as newcf:
-                    json.dump(config, newcf, indent=2, sort_keys=False)
-                    print("Deployed new configuration file")
-            vnum = 1
-            for vil in self.villages:
-                if result_villages and vil.village_id not in result_villages:
-                    print(
-                        "Village %s will be ignored because it is not available anymore"
-                        % vil.village_id
-                    )
-                    continue
-                if not rm:
-                    rm = vil.rep_man
+            if not self.internet_online():
+                print("Internet seems to be down, waiting till its back online...")
+                sleep = 0
+                active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
+                get_h = time.localtime().tm_hour
+                if get_h in range(active_h[0], active_h[1]):
+                    sleep = config["bot"]["active_delay"]
                 else:
-                    vil.rep_man = rm
-                if (
-                    "auto_set_village_names" in config["bot"]
-                    and config["bot"]["auto_set_village_names"]
-                ):
-                    template = config["bot"]["village_name_template"]
-                    fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
-                    num_pad = fs % vnum
-                    template = template.replace("{num}", num_pad)
-                    vil.village_set_name = template
+                    if config["bot"]["inactive_still_active"]:
+                        sleep = config["bot"]["inactive_delay"]
 
-                vil.run(config=config, first_run=vnum == 1)
-                if (
-                    vil.get_config(
-                        section="units", parameter="manage_defence", default=False
-                    )
-                    and vil.def_man
-                ):
-                    defense_states[vil.village_id] = (
-                        vil.def_man.under_attack
-                        if vil.def_man.allow_support_recv
-                        else False
-                    )
-                vnum += 1
-
-            if len(defense_states) and config["farms"]["farm"]:
-                for vil in self.villages:
-                    print("Syncing attack states")
-                    vil.def_man.my_other_villages = defense_states
-
-            sleep = 0
-            active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
-            get_h = time.localtime().tm_hour
-            if get_h in range(active_h[0], active_h[1]):
-                sleep = config["bot"]["active_delay"]
+                sleep += random.randint(20, 120)
+                dtn = datetime.datetime.now()
+                dt_next = dtn + datetime.timedelta(0, sleep)
+                print(
+                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                )
+                time.sleep(sleep)
             else:
-                if config["bot"]["inactive_still_active"]:
-                    sleep = config["bot"]["inactive_delay"]
+                config = self.config()
+                result_villages, res_text = self.get_overview(config)
+                has_changed, new_cf = self.get_world_options(res_text.text, config)
+                if has_changed:
+                    print("Updated world options")
+                    config = self.merge_configs(config, new_cf)
+                    with open("config.json", "w") as newcf:
+                        json.dump(config, newcf, indent=2, sort_keys=False)
+                        print("Deployed new configuration file")
+                vnum = 1
+                for vil in self.villages:
+                    if result_villages and vil.village_id not in result_villages:
+                        print(
+                            "Village %s will be ignored because it is not available anymore"
+                            % vil.village_id
+                        )
+                        continue
+                    if not rm:
+                        rm = vil.rep_man
+                    else:
+                        vil.rep_man = rm
+                    if (
+                        "auto_set_village_names" in config["bot"]
+                        and config["bot"]["auto_set_village_names"]
+                    ):
+                        template = config["bot"]["village_name_template"]
+                        fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
+                        num_pad = fs % vnum
+                        template = template.replace("{num}", num_pad)
+                        vil.village_set_name = template
 
-            sleep += random.randint(20, 120)
-            dtn = datetime.datetime.now()
-            dt_next = dtn + datetime.timedelta(0, sleep)
-            self.runs += 1
-            if self.runs % 5 == 0:
-                print("Optimizing farms")
-                VillageManager.farm_manager()
-            print(
-                "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
-            )
-            time.sleep(sleep)
+                    vil.run(config=config, first_run=vnum == 1)
+                    if (
+                        vil.get_config(
+                            section="units", parameter="manage_defence", default=False
+                        )
+                        and vil.def_man
+                    ):
+                        defense_states[vil.village_id] = (
+                            vil.def_man.under_attack
+                            if vil.def_man.allow_support_recv
+                            else False
+                        )
+                    vnum += 1
+
+                if len(defense_states) and config["farms"]["farm"]:
+                    for vil in self.villages:
+                        print("Syncing attack states")
+                        vil.def_man.my_other_villages = defense_states
+
+                sleep = 0
+                active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
+                get_h = time.localtime().tm_hour
+                if get_h in range(active_h[0], active_h[1]):
+                    sleep = config["bot"]["active_delay"]
+                else:
+                    if config["bot"]["inactive_still_active"]:
+                        sleep = config["bot"]["inactive_delay"]
+
+                sleep += random.randint(20, 120)
+                dtn = datetime.datetime.now()
+                dt_next = dtn + datetime.timedelta(0, sleep)
+                self.runs += 1
+                if config["farms"]["farm"] and self.runs % 5 == 0:
+                    print("Optimizing farms")
+                    VillageManager.farm_manager()
+                print(
+                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                )
+                time.sleep(sleep)
 
     def start(self):
         if not os.path.exists("cache"):
