@@ -110,6 +110,8 @@ class DefenceManager:
                 index += 1
         if ok:
             self.logger.info("Area OK for village %s, nice and quiet" % self.village_id)
+            # All is well
+            self.flag_logic(self.set_flag_not_under_attack)
 
     def evacuate(self):
         if not self.units:

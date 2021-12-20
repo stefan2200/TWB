@@ -49,12 +49,18 @@
   {
     "building": "stable",
     "level": 1,
+    "upgrades": {
+        "spy": 1
+    },
     "build": {
       "barracks": {
         "spear": 100,
         "sword": 50,
         "axe": 100
       }
+    },
+    "stable": {
+      "spy": 10
     },
     "farm": [
         {"axe": 15},
@@ -78,13 +84,15 @@
         "axe": 100
       },
       "stable": {
-        "spy": 10,
+        "spy": 15,
         "light": 20
       }
     },
     "farm": [
         {"spear": 50},
-        {"light": 5}
+        {"light": 5},
+        {"axe": 15},
+        {"spear": 30}
     ]
   },
   {
@@ -123,8 +131,8 @@
         "archer": 100
       },
       "stable": {
-        "spy": 10,
-        "light": 20
+        "spy": 50,
+        "light": 100
       }
     },
     "farm": [

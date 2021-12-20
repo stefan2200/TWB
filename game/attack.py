@@ -246,11 +246,17 @@ class AttackManager:
             confirm_data[k] = v
         new_data = {
             'building': 'main',
-            'h': self.wrapper.last_h,
+            'h': self.wrapper.last_h
         }
         confirm_data.update(new_data)
+        # The extractor doesn't like the empty cb value, and mistakes its value for x. So I add it here.
+        if 'x' not in confirm_data:
+            confirm_data['x'] = x
+        
         result = self.wrapper.get_api_action(village_id=self.village_id, action="popup_command",
                                              params={"screen": "place"}, data=confirm_data)
+
+        # self.logger.debug(f"Attack result: {result}")
 
         return result
 

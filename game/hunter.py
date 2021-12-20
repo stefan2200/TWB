@@ -110,6 +110,8 @@ class Hunter:
             'h': self.wrapper.last_h,
         }
         confirm_data.update(new_data)
+        if 'x' not in confirm_data:
+            confirm_data['x'] = x
 
         return confirm_data, duration
 
@@ -153,6 +155,8 @@ class Hunter:
             'h': self.wrapper.last_h,
         }
         confirm_data.update(new_data)
+        if 'x' not in confirm_data:
+            confirm_data['x'] = x
         result = self.wrapper.get_api_action(village_id=self.village_id, action="popup_command",
                                              params={"screen": "place"}, data=confirm_data)
 
