@@ -70,6 +70,13 @@ class TroopManager:
             action="overview", village_id=self.village_id
         )
         self.game_data = Extractor.game_state(main_data)
+
+        if self.resman:
+            self.resman.update(self.game_data)
+            if "research" in self.resman.requested:
+                # new run, remove request
+                self.resman.requested["research"] = {}
+
         if not self.logger:
             self.logger = logging.getLogger(
                 "Recruitment: %s" % self.game_data["village"]["name"]
