@@ -271,6 +271,9 @@ class Village:
             self.units.wanted = entry["build"]
 
         if self.units.wanted_levels != {}:
+            # Remove disabled units
+            for disabled in disabled_units:
+                self.units.wanted_levels.pop(disabled, None)
             self.logger.info(
                 "%s as wanted upgrades for current village"
                 % (str(self.units.wanted_levels))
