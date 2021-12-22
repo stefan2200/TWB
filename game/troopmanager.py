@@ -72,7 +72,6 @@ class TroopManager:
         self.game_data = Extractor.game_state(main_data)
 
         if self.resman:
-            self.resman.update(self.game_data)
             if "research" in self.resman.requested:
                 # new run, remove request
                 self.resman.requested["research"] = {}
@@ -318,7 +317,7 @@ class TroopManager:
                         data["research_time"]
                     )
                 self.logger.info("Started research of %s" % unit_type)
-                self.resman.update(res["game_data"])
+                # self.resman.update(res["game_data"])
                 return True
         self.logger.info("Research of %s not yet possible" % unit_type)
 

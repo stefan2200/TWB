@@ -109,6 +109,14 @@ class ResourceManager:
                 return True
         return False
 
+    def in_need_amount(self, obj_type):
+        amount = 0
+        for x in self.requested:
+            types = self.requested[x]
+            if obj_type in types and self.requested[x][obj_type] > 0:
+                amount += self.requested[x][obj_type]
+        return amount
+
     def get_needs(self):
         needed_the_most = None
         needed_amount = 0
@@ -189,6 +197,12 @@ class ResourceManager:
                 how_many = round(how_many, -1)
                 if how_many < 250:
                     return
+                
+                self.logger.debug("Checking current market offers")
+                if self.check_other_offers(item, how_many, plenty):
+                    self.logger.debug("Took market offer!")
+                    return
+
                 if how_many > self.max_trade_amount:
                     how_many = self.max_trade_amount
                     self.logger.debug(
@@ -211,3 +225,67 @@ class ResourceManager:
                 )
 
                 self.trade(plenty, biased, item, how_many)
+
+    def check_other_offers(self, item, how_many, sell):
+        url = "game.php?village=%s&screen=market&mode=other_offer" % self.village_id
+        res = self.wrapper.get_url(url=url)
+        p = re.compile(
+            r"(?:<!-- insert the offer -->\n+)\s+<tr>(.*?)<\/tr>", re.S | re.M
+        )
+        cur_off_tds = p.findall(res.text)
+
+        willing_to_sell = self.actual[sell] - self.in_need_amount(sell)
+        self.logger.debug(f"Found {len(cur_off_tds)} offers on market, willing to sell {willing_to_sell} {sell}")
+
+
+        for tds in cur_off_tds:
+            res_offer = re.findall(
+                r"<span class=\"icon header (.+?)\".+?>(.+?)</td>", tds
+            )
+            off_id = re.findall(
+                r"<input type=\"hidden\" name=\"id\" value=\"(\d+)", tds
+            )
+
+            if len(off_id) < 1:
+                # Not enough resources to trade
+                continue
+
+            offer = self.parse_res_offer(res_offer, off_id[0])
+            if (
+                offer["offered"] == item
+                and offer["offer_amount"] >= how_many
+                and offer["wanted"] == sell
+                and offer["wanted_amount"] <= willing_to_sell
+            ):
+                print(
+                    f"Good offer: {offer['offer_amount']} {offer['offered']} for {offer['wanted_amount']} {offer['wanted']}"
+                )
+                # Take the deal!
+                payload = {
+                    "count": 1,
+                    "id": offer["id"],
+                    "h": "self.wrapper.last_h",
+                }
+                post_url = f"game.php?village={self.village_id}&screen=market&mode=other_offer&action=accept_multi&start=0&id={offer['id']}&h=self.wrapper.last_h"
+                # print(f"Would post: {post_url} {payload}")
+                self.wrapper.post_url(post_url, data=payload)
+                self.last_trade = int(time.time())
+                return True
+
+        # No useful offers found
+        return False
+
+    def parse_res_offer(self, res_offer, id):
+        off, want, ratio = res_offer
+        res_offer, res_offer_amount = off
+        res_wanted, res_wanted_amount = want
+
+        return {
+            "id": id,
+            "offered": res_offer,
+            "offer_amount": int("".join([s for s in res_offer_amount if s.isdigit()])),
+            "wanted": res_wanted,
+            "wanted_amount": int(
+                "".join([s for s in res_wanted_amount if s.isdigit()])
+            ),
+        }

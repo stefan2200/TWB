@@ -164,6 +164,8 @@ class BuildingManager:
             )
             self.resman.request(source="building", resource="pop", amount=req)
             r = False
+        if not r:
+            self.logger.debug(f"Requested resources: {self.resman.requested}")
         return r
 
     def get_level(self, building):
