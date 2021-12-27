@@ -77,6 +77,10 @@ class ResourceManager:
             self.requested[source] = {resource: amount}
 
     def can_recruit(self):
+        if self.actual["pop"] == 0:
+            self.logger.info("Can't recruit, no room for pops!")
+            return False
+
         for x in self.requested:
             types = self.requested[x]
             for sub in types:
@@ -257,19 +261,20 @@ class ResourceManager:
                 and offer["wanted"] == sell
                 and offer["wanted_amount"] <= willing_to_sell
             ):
-                print(
+                self.logger.info(
                     f"Good offer: {offer['offer_amount']} {offer['offered']} for {offer['wanted_amount']} {offer['wanted']}"
                 )
                 # Take the deal!
                 payload = {
                     "count": 1,
                     "id": offer["id"],
-                    "h": "self.wrapper.last_h",
+                    "h": self.wrapper.last_h,
                 }
-                post_url = f"game.php?village={self.village_id}&screen=market&mode=other_offer&action=accept_multi&start=0&id={offer['id']}&h=self.wrapper.last_h"
+                post_url = f"game.php?village={self.village_id}&screen=market&mode=other_offer&action=accept_multi&start=0&id={offer['id']}&h={self.wrapper.last_h}"
                 # print(f"Would post: {post_url} {payload}")
                 self.wrapper.post_url(post_url, data=payload)
                 self.last_trade = int(time.time())
+                self.actual[offer['wanted']] = self.actual[offer['wanted']] - offer['wanted_amount']
                 return True
 
         # No useful offers found

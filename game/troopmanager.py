@@ -104,12 +104,12 @@ class TroopManager:
                 self.total_troops[k] = int(v)
         self.logger.debug("Village units total: %s" % str(self.total_troops))
 
-    def start_update(self, building="barracks"):
+    def start_update(self, building="barracks", disabled_units =[]):
 
         if self.wait_for[self.village_id][building] > time.time():
             self.logger.info(
-                "%s still busy for %d seconds"
-                % (building, self.wait_for[self.village_id][building] - time.time())
+                "%s still busy for %s"
+                % (building, self.readable_ts(self.wait_for[self.village_id][building]))
             )
             return False
 
@@ -118,6 +118,10 @@ class TroopManager:
             random.shuffle(run_selection)
 
         for wanted in run_selection:
+            # Ignore disabled units
+            if wanted in disabled_units:
+                continue
+
             if wanted not in self.total_troops:
                 if self.recruit(
                     wanted, self.wanted[building][wanted], building=building
@@ -486,3 +490,13 @@ class TroopManager:
             )
             return True
         return False
+
+    def readable_ts(self, seconds):
+        seconds -= time.time()
+        seconds = seconds % (24 * 3600)
+        hour = seconds // 3600
+        seconds %= 3600
+        minutes = seconds // 60
+        seconds %= 60
+
+        return "%d:%02d:%02d" % (hour, minutes, seconds)

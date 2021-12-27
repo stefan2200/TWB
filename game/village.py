@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import json
 import os
@@ -339,12 +340,25 @@ class Village:
                             % building
                         )
                         continue
-                    self.units.start_update(building)
+                    self.units.start_update(building, disabled_units)
 
         self.logger.debug("Current resources: %s" % str(self.resman.actual))
         self.logger.debug("Requested resources: %s" % str(self.resman.requested))
+
+        # Forced peace?
+        forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
+        forced_peace = False
+        for time_pairs in forced_peace_times:
+            start_dt = datetime.strptime(time_pairs["start"],"%d.%m.%y %H:%M:%S")
+            end_dt = datetime.strptime(time_pairs["end"],"%d.%m.%y %H:%M:%S")
+            now = datetime.now()
+            if  now > start_dt and now < end_dt:
+                self.logger.debug("Currently in a forced peace time! No attacks will be send.")
+                forced_peace = True
+                break
+
         # attack management
-        if self.units.can_attack:
+        if not forced_peace and self.units.can_attack:
             if not self.area:
                 self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
             self.area.get_map()
