@@ -125,6 +125,50 @@ class WebWrapper:
         response = self.get_url(url)
         return response
 
+    def get_api_data(self, village_id, action, params={}):
+
+        custom = dict(self.headers)
+        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['x-requested-with'] = "XMLHttpRequest"
+        custom['tribalwars-ajax'] = "1"
+        req = {
+            'ajax': action,
+            'village': village_id,
+            'screen': 'api'
+        }
+        req.update(params)
+        payload = "game.php?%s" % urlencode(req)
+        url = urljoin(self.endpoint, payload)
+        res = self.get_url(url, headers=custom)
+        if res.status_code == 200:
+            try:
+                return res.json()
+            except:
+                return res
+
+    def post_api_data(self, village_id, action, params={}, data={}):
+
+        custom = dict(self.headers)
+        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['x-requested-with'] = "XMLHttpRequest"
+        custom['tribalwars-ajax'] = "1"
+        req = {
+            'ajax': action,
+            'village': village_id,
+            'screen': 'api'
+        }
+        req.update(params)
+        payload = "game.php?%s" % urlencode(req)
+        url = urljoin(self.endpoint, payload)
+        if 'h' not in data:
+            data['h'] = self.last_h
+        res = self.post_url(url, data=data, headers=custom)
+        if res.status_code == 200:
+            try:
+                return res.json()
+            except:
+                return res
+
     def get_api_action(self, village_id, action, params={}, data={}):
 
         custom = dict(self.headers)
