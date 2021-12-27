@@ -33,8 +33,22 @@ class ReportManager:
                     )
                 ):
                     return 1
+                
+                # Acceptable losses for attacks
+                print(f'Units sent: {entry["extra"]["units_sent"]}')
+                print(f'Units lost: {entry["losses"]}')
+
+                for sent_type in entry["extra"]["units_sent"]:
+                    amount = entry["extra"]["units_sent"][sent_type]
+                    if sent_type in entry["losses"]:
+                        if amount == entry["losses"][sent_type]:
+                            return 0 # Lost all units!
+                        elif entry["losses"][sent_type] <= 1:
+                            # Allow to lose 1 unit (luck depended)
+                            return 1 # Lost 'just' one unit
+
                 if entry["losses"] != {}:
-                    return 0
+                    return 0 # Disengage if anything was lost!
         return -1
 
     def read(self, page=0, full_run=False):
