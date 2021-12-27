@@ -37,6 +37,20 @@ class Extractor:
         return None
 
     @staticmethod
+    def get_quest_rewards(res):
+        if type(res) != str:
+            res = res.text
+        get_rewards = re.search(r'RewardSystem\.setRewards\((\[\{.+?\}\]),', res)
+        rewards = []
+        if get_rewards:
+            result = json.loads(get_rewards.group(1), strict=False)
+            for reward in result:
+                if reward['status'] == "unlocked":
+                    rewards.append(reward)
+        # Return all off them
+        return rewards
+
+    @staticmethod
     def map_data(res):
         if type(res) != str:
             res = res.text

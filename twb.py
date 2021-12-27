@@ -216,11 +216,27 @@ class TWB:
         return changed, config
 
     def run(self):
+        config = self.config()
         if not self.internet_online():
-            print("You are offline!")
+            print("Internet seems to be down, waiting till its back online...")
+            sleep = 0
+            active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
+            get_h = time.localtime().tm_hour
+            if get_h in range(active_h[0], active_h[1]):
+                sleep = config["bot"]["active_delay"]
+            else:
+                if config["bot"]["inactive_still_active"]:
+                    sleep = config["bot"]["inactive_delay"]
+
+            sleep += random.randint(20, 120)
+            dtn = datetime.datetime.now()
+            dt_next = dtn + datetime.timedelta(0, sleep)
+            print(
+                "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+            )
+            time.sleep(sleep)
             return False
 
-        config = self.config()
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
             server=config["server"]["server"],
