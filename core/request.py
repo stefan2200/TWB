@@ -59,7 +59,7 @@ class WebWrapper:
             res = self.web.get(url=url, headers=headers)
             self.logger.debug("GET %s [%d]" % (url, res.status_code))
             self.post_process(res)
-            if '<div id="bot_check">' in res.text:
+            if 'data-bot-protect="forced"' in res.text:
                 self.logger.warning("Bot protection hit! cannot continue")
                 self.reporter.report(0, "TWB_RECAPTCHA", "Stopping bot, press any key once captcha has been solved")
                 input("Press any key...")
