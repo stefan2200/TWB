@@ -41,6 +41,7 @@ class ResourceManager:
 
     def do_premium_stuff(self):
         gpl = self.get_plenty_off()
+        self.logger.debug(f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}")
         if gpl and self.do_premium_trade:
             url = "game.php?village=%s&screen=market&mode=exchange" % self.village_id
             res = self.wrapper.get_url(url=url)
@@ -50,7 +51,7 @@ class ResourceManager:
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
             for p in price_fetch:
-                prices[p] = data["stock"] * data["rates"]
+                prices[p] = data["stock"][p] * data["rates"][p]
             self.logger.info("Actual premium prices: %s" % prices)
 
             if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
@@ -100,10 +101,14 @@ class ResourceManager:
                 continue
             if sub == "pop":
                 continue
+            # self.logger.debug(f"We have {self.actual[sub]} {sub}. Enough? {self.actual[sub]} > {int(self.storage / self.ratio)}")
             if self.actual[sub] > int(self.storage / self.ratio):
                 if self.actual[sub] > most_of:
                     most = sub
                     most_of = self.actual[sub]
+        # if most:
+        #     self.logger.debug(f"We have plenty of {most}")
+
         return most
 
     def in_need_of(self, obj_type):

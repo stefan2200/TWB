@@ -461,7 +461,10 @@ class Village:
         ) and self.get_village_config(
             self.village_id, parameter="trade_for_premium", default=False
         ):
+            # Set the parameter correctly when the config says so.
+            self.resman.do_premium_trade = True
             self.resman.do_premium_stuff()
+        
         self.set_cache_vars()
         self.logger.info("Village cycle done, returning to overview")
         self.wrapper.reporter.report(
