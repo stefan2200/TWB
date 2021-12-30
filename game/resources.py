@@ -83,6 +83,8 @@ class ResourceManager:
             return False
 
         for x in self.requested:
+            if "recruitment" in x:
+                continue
             types = self.requested[x]
             for sub in types:
                 if types[sub] > 0:

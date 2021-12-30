@@ -442,13 +442,18 @@ class TroopManager:
                 "Recruitment of %d %s failed because of not enough resources"
                 % (amount, unit_type)
             )
+            self.reserve_resources(resources, amount, get_min, unit_type)
             return False
+        
+        needed_reserve = False
         if get_min < amount:
             if wait_for:
                 self.logger.warning(
                     "Recruitment of %d %s failed because of not enough resources"
                     % (amount, unit_type)
                 )
+                self.reserve_resources(resources, amount, get_min, unit_type)
+                needed_reserve = True
                 return False
             if get_min > 0:
                 self.logger.info(
@@ -456,6 +461,15 @@ class TroopManager:
                     % (amount, unit_type, get_min)
                 )
                 amount = get_min
+                needed_reserve = True
+                self.reserve_resources(resources, amount, get_min, unit_type)
+
+        if not needed_reserve:
+            # No need to reserve resources anymore!
+            for x in self.resman.requested:
+                if f"recruitment_{unit_type}" == x:
+                    self.resman.requested.pop(x)
+
         result = self.wrapper.get_api_action(
             village_id=self.village_id,
             action="train",
@@ -490,6 +504,15 @@ class TroopManager:
             )
             return True
         return False
+
+    def reserve_resources(self, resources, wanted_times, has_times, unit_type):
+        # Resources per unit, batch wanted, batch already recruiting
+        self.logger.debug(f"Requesting resources to recruit {wanted_times - has_times} {unit_type}")
+        for res in ["wood", "stone", "iron"]:
+            req = resources[res] * (wanted_times - has_times)
+            self.resman.request(source="recruitment_{unit_type}", resource=res, amount=req)
+
+
 
     def readable_ts(self, seconds):
         seconds -= time.time()

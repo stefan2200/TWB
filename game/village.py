@@ -511,7 +511,6 @@ class Village:
             )
         # The data is escaped for JS, so unescape it before sending it to the extractor.
         rewards = Extractor.get_quest_rewards(decode(result["response"]["dialog"], 'unicode-escape'))
-        print(rewards)
         for reward in rewards:
             # First check if there is enough room for storing the reward
             for t_resource in reward["reward"]:
