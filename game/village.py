@@ -348,6 +348,12 @@ class Village:
                         continue
                     self.units.start_update(building, disabled_units)
 
+        for x in self.resman.requested:
+            if all(res == 0 for res in self.resman.requested[x].values()):
+                # remove empty requests!
+                del self.resman.requested[x]
+
+
         self.logger.debug("Current resources: %s" % str(self.resman.actual))
         self.logger.debug("Requested resources: %s" % str(self.resman.requested))
 
