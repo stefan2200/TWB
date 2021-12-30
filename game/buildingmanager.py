@@ -260,6 +260,9 @@ class BuildingManager:
                 result = self.wrapper.get_url(check["build_link"].replace("amp;", ""))
                 self.game_state = Extractor.game_state(result)
                 self.costs = Extractor.building_data(result)
+                if self.resman and "building" in self.resman.requested:
+                    # Build something, remove request
+                    self.resman.requested["building"] = {}
                 return True
             else:
                 return self.get_next_building_action(index + 1)

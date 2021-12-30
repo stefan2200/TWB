@@ -460,9 +460,10 @@ class TroopManager:
                     "Recruitment of %d %s was set to %d because of resources"
                     % (amount, unit_type, get_min)
                 )
+                self.reserve_resources(resources, amount, get_min, unit_type)
                 amount = get_min
                 needed_reserve = True
-                self.reserve_resources(resources, amount, get_min, unit_type)
+                
 
         if not needed_reserve:
             # No need to reserve resources anymore!
@@ -510,7 +511,7 @@ class TroopManager:
         self.logger.debug(f"Requesting resources to recruit {wanted_times - has_times} {unit_type}")
         for res in ["wood", "stone", "iron"]:
             req = resources[res] * (wanted_times - has_times)
-            self.resman.request(source="recruitment_{unit_type}", resource=res, amount=req)
+            self.resman.request(source=f"recruitment_{unit_type}", resource=res, amount=req)
 
 
 
