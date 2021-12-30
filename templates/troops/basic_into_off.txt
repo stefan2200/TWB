@@ -124,7 +124,9 @@
     "level": 10,
     "upgrades": {
         "axe": 4,
-        "light": 3
+        "light": 3,
+        "ram": 1,
+        "catapult": 1
     },
     "build": {
       "barracks": {
@@ -143,7 +145,8 @@
     },
     "farm": [
         {"light": 25},
-        {"axe": 50}
+        {"axe": 50},
+        {"light": 5}
     ]
   },
   {
@@ -176,7 +179,8 @@
     },
     "farm": [
         {"axe": 125},
-        {"light": 25}
+        {"light": 25},
+        {"light": 5}
     ]
   }
 ]

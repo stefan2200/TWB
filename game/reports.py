@@ -34,9 +34,10 @@ class ReportManager:
                 ):
                     return 1
                 
-                # Acceptable losses for attacks
-                print(f'Units sent: {entry["extra"]["units_sent"]}')
-                print(f'Units lost: {entry["losses"]}')
+                if entry["losses"] != {}:
+                    # Acceptable losses for attacks
+                    print(f'Units sent: {entry["extra"]["units_sent"]}')
+                    print(f'Units lost: {entry["losses"]}')
 
                 for sent_type in entry["extra"]["units_sent"]:
                     amount = entry["extra"]["units_sent"][sent_type]

@@ -230,10 +230,15 @@ class AttackManager:
                     )
                     return False
                 if status == 0:
-                    self.logger.info(
-                        "%s: scout report noted enemy units, ignoring" % vid
-                    )
-                    return False
+                    if cache_entry["last_attack"] + self.farm_low_prio_wait > int(time.time()):
+                        self.logger.info(f"{vid}: Old scout report found, re-scouting")
+                        self.scout(vid)
+                        return False
+                    else:
+                        self.logger.info(
+                            "%s: scout report noted enemy units, ignoring" % vid
+                        )
+                        return False
                 self.logger.info(
                     "%s: scout report noted no enemy units, attacking" % vid
                 )

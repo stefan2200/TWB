@@ -1,4 +1,5 @@
 import json
+import os
 from game.reports import ReportCache
 from game.attack import AttackCache
 
@@ -10,13 +11,13 @@ class VillageManager:
             config = json.load(f)
 
         if verbose:
-            print("Villages: %d" % len(config["villages"]))
+            print("[Farm Manager] Villages: %d" % len(config["villages"]))
         attacks = AttackCache.cache_grab()
         reports = ReportCache.cache_grab()
 
         if verbose:
-            print("Reports: %d" % len(reports))
-            print("Farms: %d" % len(attacks))
+            print("[Farm Manager] Reports: %d" % len(reports))
+            print("[Farm Manager] Farms: %d" % len(attacks))
         t = {"wood": 0, "iron": 0, "stone": 0}
         for farm in attacks:
             data = attacks[farm]
@@ -75,12 +76,24 @@ class VillageManager:
             if r["type"] == "scout" or r["type"] == "attack":
                 if r["losses"] != {}:
                     for unit in r["losses"]:
-                        total_loss_count += r["losses"][unit]
+                        total_loss_count += r["losses"][unit] * 2 if unit == "light" else r["losses"][unit]
                     if total_loss_count > 10 and verbose:
-                        print("Dangerous: %s" % r)
+                        print(f"[Farm Manager] Dangerous: {r} -> {total_loss_count} total loss count, extending farm time")
+                    if total_loss_count > 10:
+                        data["low_profile"] = True
+                        AttackCache.set_cache(farm, data)
 
         if verbose:
-            print("Total loot: %s" % t)
+            print("[Farm Manager] Total loot: %s" % t)
+
+        list_of_files = sorted([ "./cache/reports/"+f for f in os.listdir("./cache/reports/")], key=os.path.getctime)
+
+        print(f"Found {len(list_of_files)} files")
+
+        while len(list_of_files) > 350:
+            oldest_file = list_of_files.pop(0)
+            print(f"[Farm Manager] Delete old report ({oldest_file})")
+            os.remove(os.path.abspath(oldest_file))
 
 
 if __name__ == "__main__":

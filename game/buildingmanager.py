@@ -67,13 +67,20 @@ class BuildingManager:
             return False
 
         if existing_queue != 0 and existing_queue != len(self.waits):
-            self.logger.warning(
-                "Building queue out of sync, waiting until %d manual actions are finished!"
-                % existing_queue
-            )
-            return True
+            if existing_queue > 1:
+                self.logger.warning(
+                    "Building queue out of sync, waiting until %d manual actions are finished!"
+                    % existing_queue
+                )
+                return True
+            else:
+                self.logger.info("Just 1 manual action left, trying to queue next building")
 
-        for x in range(self.max_queue_len - len(self.waits)):
+        if existing_queue == 1:
+            r = self.max_queue_len - 1
+        else:
+            r = self.max_queue_len - len(self.waits)
+        for x in range(r):
             result = self.get_next_building_action()
             if not result:
                 self.logger.info(
@@ -81,6 +88,10 @@ class BuildingManager:
                     % (len(self.waits), len(self.queue))
                 )
                 return False
+        # Check for instant build after putting something in the queue
+        main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
+        if self.complete_actions(main_data.text):
+            return self.start_update(build=build, set_village_name=set_village_name)
         return True
 
     def complete_actions(self, text):
