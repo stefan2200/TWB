@@ -5,6 +5,15 @@ import json
 class Extractor:
 
     @staticmethod
+    def village_data(res):
+        if type(res) != str:
+            res = res.text
+        grabber = re.search(r'var village = (.+);', res)
+        if grabber:
+            data = grabber.group(1)
+            return json.loads(data, strict=False)
+
+    @staticmethod
     def game_state(res):
         if type(res) != str:
             res = res.text

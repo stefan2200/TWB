@@ -1,5 +1,6 @@
 import logging
 import math
+import re
 import time
 import random
 
@@ -330,9 +331,24 @@ class TroopManager:
             return False
         url = "game.php?village=%s&screen=place&mode=scavenge" % self.village_id
         result = self.wrapper.get_url(url=url)
-        if '"scavenging_squad":{' in result.text:
-            self.logger.debug("Ignoring scavenge because already one underway")
+        village_data = Extractor.village_data(result)
+
+        available_selection = 0
+
+        for option in reversed(sorted(village_data['options'].keys())):
+            self.logger.debug(f"Option: {option} Locked? {village_data['options'][option]['is_locked']} Is underway? {village_data['options'][option]['scavenging_squad'] != None }")
+            if int(option) <= selection and not village_data['options'][option]['is_locked'] and not village_data['options'][option]['scavenging_squad'] != None:
+                available_selection = option
+                break
+        
+        # check how many are able to do down from selection. So, selection first, if more available, that one next. 2 -> 1 -> done
+        if available_selection == 0:
+            self.logger.info("All gather operations are underway.")
             return False
+        else:
+            self.logger.info(f"Gather operation {available_selection} is ready to start.")
+            selection = available_selection
+        
         troops = dict(self.troops)
 
         can_use = [
@@ -377,7 +393,7 @@ class TroopManager:
                 village_id=self.village_id,
             )
             self.last_gather = int(time.time())
-            self.logger.info("Using troops for gather operation: 1")
+            self.logger.info(f"Using troops for gather operation: {selection}")
             return True
 
     def cancel(self, building, id):

@@ -213,12 +213,26 @@ class ResourceManager:
             return
         if drop_existing:
             self.drop_existing_trades()
+
         plenty = self.get_plenty_off()
         if plenty and not self.in_need_of(plenty):
             need = self.get_needs()
             if need:
+                # check incoming resources
+                url = "game.php?village=%s&screen=market&mode=other_offer" % self.village_id
+                res = self.wrapper.get_url(url=url)
+                p = re.compile(r'Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ', re.M)
+                incoming = p.findall(res.text)
+                resource_incoming = {}
+                if incoming:
+                    resource_incoming[incoming[0][0].strip()] = int("".join([s for s in incoming[0][1] if s.isdigit()]))
+                    self.logger.info(f"There are resources incoming! {resource_incoming}")
+                
                 item, how_many = need
                 how_many = round(how_many, -1)
+                if item in resource_incoming and resource_incoming[item] >= how_many:
+                    self.logger.info(f"Needed {item} already incoming! ({resource_incoming[item]} >= {how_many})")
+                    return
                 if how_many < 250:
                     return
                 
@@ -257,6 +271,17 @@ class ResourceManager:
             r"(?:<!-- insert the offer -->\n+)\s+<tr>(.*?)<\/tr>", re.S | re.M
         )
         cur_off_tds = p.findall(res.text)
+        p = re.compile(r'Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ', re.M)
+        incoming = p.findall(res.text)
+        resource_incoming = {}
+        if incoming:
+            resource_incoming[incoming[0][0].strip()] = int("".join([s for s in incoming[0][1] if s.isdigit()]))
+        
+        if item in resource_incoming:
+            how_many = how_many - resource_incoming[item]
+            if how_many < 1:
+                self.logger.info("Requested resource already incoming!")
+                return False
 
         willing_to_sell = self.actual[sell] - self.in_need_amount(sell)
         self.logger.debug(f"Found {len(cur_off_tds)} offers on market, willing to sell {willing_to_sell} {sell}")
