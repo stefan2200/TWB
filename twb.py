@@ -34,12 +34,13 @@ class TWB:
     should_run = True
     runs = 0
 
-    def internet_online(self, host="8.8.8.8", port=53, timeout=3):
+    def internet_online(self, host="8.8.4.4", port=53, timeout=5):
         """
         Host: 8.8.8.8 (google-public-dns-a.google.com)
         OpenPort: 53/tcp
         Service: domain (DNS/TCP)
         """
+        return True
         try:
             socket.setdefaulttimeout(timeout)
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
@@ -345,10 +346,11 @@ class TWB:
                 self.runs += 1
                 if config["farms"]["farm"] and self.runs % 5 == 0:
                     print("Optimizing farms")
-                    VillageManager.farm_manager()
+                    VillageManager.farm_manager(verbose=True)
                 print(
                     "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
                 )
+                sys.stdout.flush()
                 time.sleep(sleep)
 
     def start(self):

@@ -4,6 +4,8 @@ import json
 from core.extractors import Extractor
 import logging
 import time
+from datetime import datetime
+from datetime import timedelta
 
 
 class AttackManager:
@@ -21,6 +23,8 @@ class AttackManager:
     farm_minpoints = 0
     farm_maxpoints = 1000
     ignored = []
+
+    forced_peace_time = None
 
     # blocks villages which cannot be attacked at the moment (too low points, beginners protection etc..)
     _unknown_ignored = []
@@ -74,6 +78,8 @@ class AttackManager:
             cached = self.can_attack(vid=target["id"], clear=False)
             if cached:
                 attack_result = self.attack(target["id"], troops=template)
+                if attack_result == "forced_peace":
+                    return 0
                 self.logger.info(
                     "Attacking %s -> %s (%s)"
                     % (self.village_id, target["id"], str(template))
@@ -300,6 +306,12 @@ class AttackManager:
         if '<div class="error_box">' in conf.text:
             return False
         duration = Extractor.attack_duration(conf)
+        if self.forced_peace_time:
+            now = datetime.now()
+            if now + timedelta(seconds=duration) > self.forced_peace_time:
+                self.logger.info("Attack would arrive after the forced peace timer, not sending attack!")
+                return "forced_peace"
+
         self.logger.info(
             "[Attack] %s -> %s duration %f.1 h"
             % (self.village_id, vid, duration / 3600)
@@ -323,8 +335,6 @@ class AttackManager:
             params={"screen": "place"},
             data=confirm_data,
         )
-
-        # self.logger.debug(f"Attack result: {result}")
 
         return result
 

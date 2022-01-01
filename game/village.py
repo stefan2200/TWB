@@ -348,10 +348,15 @@ class Village:
                         continue
                     self.units.start_update(building, disabled_units)
 
+        #
+        to_dell = []
         for x in self.resman.requested:
             if all(res == 0 for res in self.resman.requested[x].values()):
                 # remove empty requests!
-                del self.resman.requested[x]
+                to_dell.append(x)
+        
+        for x in to_dell:
+            self.resman.requested.pop(x)
 
 
         self.logger.debug("Current resources: %s" % str(self.resman.actual))
@@ -360,10 +365,15 @@ class Village:
         # Forced peace?
         forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
         forced_peace = False
+        forced_peace_today = False
+        forced_peace_today_start = None
         for time_pairs in forced_peace_times:
             start_dt = datetime.strptime(time_pairs["start"],"%d.%m.%y %H:%M:%S")
             end_dt = datetime.strptime(time_pairs["end"],"%d.%m.%y %H:%M:%S")
             now = datetime.now()
+            if start_dt.date() == datetime.today().date():
+                forced_peace_today = True
+                forced_peace_today_start = start_dt
             if  now > start_dt and now < end_dt:
                 self.logger.debug("Currently in a forced peace time! No attacks will be send.")
                 forced_peace = True
@@ -393,6 +403,10 @@ class Village:
                         map=self.area,
                     )
                     self.attack.repman = self.rep_man
+                if forced_peace_today:
+                    self.logger.info("Forced peace time coming up today!")
+                    self.attack.forced_peace_time = forced_peace_today_start
+
                 self.attack.target_high_points = self.get_config(
                     section="farms", parameter="attack_higher_points", default=False
                 )

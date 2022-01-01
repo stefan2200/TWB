@@ -190,11 +190,21 @@ class ResourceManager:
                 self.logger.info(
                     "Removing offer %s from market because it existed too long" % offer
                 )
+    
+    def readable_ts(self, seconds):
+        seconds -= int(time.time())
+        seconds = seconds % (24 * 3600)
+        hour = seconds // 3600
+        seconds %= 3600
+        minutes = seconds // 60
+        seconds %= 60
+
+        return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def manage_market(self, drop_existing=True):
         last = self.last_trade + int(3600 * self.trade_max_per_hour)
         if last > int(time.time()):
-            self.logger.debug("Won't trade for %d seconds" % (last - int(time.time())))
+            self.logger.debug("Won't trade for %s" % (self.readable_ts(last)))
             return
 
         get_h = time.localtime().tm_hour

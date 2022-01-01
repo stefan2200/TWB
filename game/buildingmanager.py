@@ -103,10 +103,7 @@ class BuildingManager:
                 "game.php?village=%s&screen=main&ajaxaction=build_order_reduce&h=%s&id=%s&destroy=0"
                 % (self.village_id, self.wrapper.last_h, res.group(1))
             )
-            self.logger.debug(
-                "Quick build action %s was completed, re-running function"
-                % res.group(1)
-            )
+            self.logger.debug("Quick build action was completed, re-running function")
             return True
         return False
 

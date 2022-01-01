@@ -24,8 +24,14 @@ class VillageManager:
 
             num_attack = []
             loot = {"wood": 0, "iron": 0, "stone": 0}
+            total_loss_count = 0
+            total_sent_count = 0
             for rep in reports:
                 if reports[rep]["dest"] == farm and reports[rep]["type"] == "attack":
+                    for unit in reports[rep]["extra"]["units_sent"]:
+                        total_sent_count += reports[rep]["extra"]["units_sent"][unit]
+                    for unit in reports[rep]["losses"]:
+                        total_loss_count += reports[rep]["losses"][unit]
                     try:
                         res = reports[rep]["extra"]["loot"]
                         for r in res:
@@ -34,6 +40,10 @@ class VillageManager:
                         num_attack.append(reports[rep])
                     except:
                         pass
+            percentage_lost = 0
+            if total_sent_count > 0:
+                percentage_lost = total_loss_count / total_sent_count * 100
+
             perf = ""
             if data["high_profile"]:
                 perf = "High Profile "
@@ -41,8 +51,8 @@ class VillageManager:
                 perf = "Low Profile "
             if verbose:
                 print(
-                    "%sFarm village %s attacked %d times - Total loot: %s"
-                    % (perf, farm, len(num_attack), str(loot))
+                    "%sFarm village %s attacked %d times - Total loot: %s - Total units lost: %s (%s)"
+                    % (perf, farm, len(num_attack), str(loot), str(total_loss_count), str(percentage_lost))
                 )
             if len(num_attack):
                 total = 0
@@ -69,6 +79,16 @@ class VillageManager:
                             )
                         data["high_profile"] = True
                         AttackCache.set_cache(farm, data)
+
+            if percentage_lost > 20 and not data["low_profile"]:
+                print(f"[Farm Manager] Dangerous {percentage_lost} percentage lost units! Extending farm time")
+                data["low_profile"] = True
+                data["high_profile"] = False
+                AttackCache.set_cache(farm, data)
+            if percentage_lost > 50 and len(num_attack) > 10:
+                print("[Farm Manager] Farm seems too dangerous/ unprofitable to farm. Setting safe to false!")
+                data["safe"] = False
+                AttackCache.set_cache(farm, data)
 
         for report in reports:
             r = reports[report]
