@@ -328,6 +328,9 @@ class Village:
                 self.logger.info(
                     "Not recruiting because builder has insufficient funds"
                 )
+                for x in list(self.resman.requested.keys()):
+                    if "recruitment_" in x:
+                        self.resman.requested.pop(f"{x}", None)
             elif (
                 self.get_village_config(
                     self.village_id, parameter="prioritize_snob", default=False
@@ -337,6 +340,9 @@ class Village:
                 and self.snobman.is_incomplete
             ):
                 self.logger.info("Not recruiting because snob has insufficient funds")
+                for x in list(self.resman.requested.keys()):
+                    if "recruitment_" in x:
+                        self.resman.requested.pop(f"{x}", None)
             else:
                 # do a build run for every
                 for building in self.units.wanted:
