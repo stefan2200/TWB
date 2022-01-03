@@ -124,10 +124,39 @@
     "level": 10,
     "upgrades": {
         "axe": 4,
-        "light": 3
+        "light": 3,
+        "ram": 1
     },
     "build": {
       "barracks": {
+        "spear": 250,
+        "axe": 750,
+        "sword": 100
+      },
+      "stable": {
+        "spy": 150,
+        "light": 250
+      },
+      "garage": {
+        "ram": 15
+      }
+    },
+    "farm": [
+        {"light": 25, "spy": 1},
+        {"axe": 50, "spy": 1}
+    ]
+  },
+  {
+    "building": "smith",
+    "level": 12,
+    "upgrades": {
+        "axe": 4,
+        "light": 3,
+        "ram": 1,
+        "catapult": 1
+    },
+    "build": {
+     "barracks": {
         "spear": 250,
         "axe": 750,
         "sword": 100
@@ -142,8 +171,8 @@
       }
     },
     "farm": [
-        {"light": 25},
-        {"axe": 50}
+        {"light": 25, "spy": 1},
+        {"axe": 50, "spy": 1}
     ]
   },
   {
@@ -175,8 +204,8 @@
       }
     },
     "farm": [
-        {"axe": 125},
-        {"light": 25}
+        {"axe": 125, "spy": 1},
+        {"light": 25, "spy": 1}
     ]
   }
 ]

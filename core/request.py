@@ -59,7 +59,7 @@ class WebWrapper:
             res = self.web.get(url=url, headers=headers)
             self.logger.debug("GET %s [%d]" % (url, res.status_code))
             self.post_process(res)
-            if '<div id="bot_check">' in res.text:
+            if 'data-bot-protect="forced"' in res.text:
                 self.logger.warning("Bot protection hit! cannot continue")
                 self.reporter.report(0, "TWB_RECAPTCHA", "Stopping bot, press any key once captcha has been solved")
                 input("Press any key...")
@@ -124,6 +124,50 @@ class WebWrapper:
         url = "game.php?village=%s&screen=%s" % (village_id, action)
         response = self.get_url(url)
         return response
+
+    def get_api_data(self, village_id, action, params={}):
+
+        custom = dict(self.headers)
+        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['x-requested-with'] = "XMLHttpRequest"
+        custom['tribalwars-ajax'] = "1"
+        req = {
+            'ajax': action,
+            'village': village_id,
+            'screen': 'api'
+        }
+        req.update(params)
+        payload = "game.php?%s" % urlencode(req)
+        url = urljoin(self.endpoint, payload)
+        res = self.get_url(url, headers=custom)
+        if res.status_code == 200:
+            try:
+                return res.json()
+            except:
+                return res
+
+    def post_api_data(self, village_id, action, params={}, data={}):
+
+        custom = dict(self.headers)
+        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['x-requested-with'] = "XMLHttpRequest"
+        custom['tribalwars-ajax'] = "1"
+        req = {
+            'ajax': action,
+            'village': village_id,
+            'screen': 'api'
+        }
+        req.update(params)
+        payload = "game.php?%s" % urlencode(req)
+        url = urljoin(self.endpoint, payload)
+        if 'h' not in data:
+            data['h'] = self.last_h
+        res = self.post_url(url, data=data, headers=custom)
+        if res.status_code == 200:
+            try:
+                return res.json()
+            except:
+                return res
 
     def get_api_action(self, village_id, action, params={}, data={}):
 

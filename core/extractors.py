@@ -5,6 +5,15 @@ import json
 class Extractor:
 
     @staticmethod
+    def village_data(res):
+        if type(res) != str:
+            res = res.text
+        grabber = re.search(r'var village = (.+);', res)
+        if grabber:
+            data = grabber.group(1)
+            return json.loads(data, strict=False)
+
+    @staticmethod
     def game_state(res):
         if type(res) != str:
             res = res.text
@@ -35,6 +44,20 @@ class Extractor:
                 if data['goals_completed'] == data['goals_total']:
                     return quest
         return None
+
+    @staticmethod
+    def get_quest_rewards(res):
+        if type(res) != str:
+            res = res.text
+        get_rewards = re.search(r'RewardSystem\.setRewards\((\[\{.+?\}\]),', res)
+        rewards = []
+        if get_rewards:
+            result = json.loads(get_rewards.group(1), strict=False)
+            for reward in result:
+                if reward['status'] == "unlocked":
+                    rewards.append(reward)
+        # Return all off them
+        return rewards
 
     @staticmethod
     def map_data(res):

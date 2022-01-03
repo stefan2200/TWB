@@ -8,12 +8,8 @@ from game.simulator import Simulator
 
 class Hunter:
     game_map = None
-    schedule = {
-
-    }
-    target_villages = {
-
-    }
+    schedule = {}
+    target_villages = {}
     villages = []
     sim = Simulator()
 
@@ -50,7 +46,9 @@ class Hunter:
             if v.attack.has_troops_available(troops):
                 return v
 
-    def send_attack_chain(self, source, item, exact_send_time=0, min_sleep_amount_millis=100):
+    def send_attack_chain(
+        self, source, item, exact_send_time=0, min_sleep_amount_millis=100
+    ):
         data = self.schedule[item]
         attack_set = []
         self.logger.info("Nearing timing window, preparing %d attacks" % len(data))
@@ -69,7 +67,9 @@ class Hunter:
         millis = 0
         millis += diff.seconds * 1000
         millis += diff.microseconds / 1000
-        self.logger.info("Sent %d attacks in %d milliseconds" % (len(attack_set), millis))
+        self.logger.info(
+            "Sent %d attacks in %d milliseconds" % (len(attack_set), millis)
+        )
         self.wrapper.priority_mode = False
 
     def attack(self, source, vid, troops=None):
@@ -86,12 +86,7 @@ class Hunter:
             return False
 
         x, y = self.game_map.map_pos[vid]
-        post_data = {
-            'x': x,
-            'y': y,
-            'target_type': 'coord',
-            'attack': 'Aanvallen'
-        }
+        post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}
         pre_data.update(post_data)
 
         confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
@@ -106,16 +101,22 @@ class Hunter:
                 continue
             confirm_data[k] = v
         new_data = {
-            'building': 'main',
-            'h': self.wrapper.last_h,
+            "building": "main",
+            "h": self.wrapper.last_h,
         }
         confirm_data.update(new_data)
+        if "x" not in confirm_data:
+            confirm_data["x"] = x
 
         return confirm_data, duration
 
     def send_attack(self, source, data):
-        return self.wrapper.get_api_action(village_id=source, action="popup_command",
-                                           params={"screen": "place"}, data=data)
+        return self.wrapper.get_api_action(
+            village_id=source,
+            action="popup_command",
+            params={"screen": "place"},
+            data=data,
+        )
 
     def prepare(self, vid, troops=None):
         url = "game.php?village=%s&screen=place&target=%s" % (self.village_id, vid)
@@ -128,12 +129,7 @@ class Hunter:
             pre_data.update(troops)
 
         x, y = self.map.map_pos[vid]
-        post_data = {
-            'x': x,
-            'y': y,
-            'target_type': 'coord',
-            'attack': 'Aanvallen'
-        }
+        post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}
         pre_data.update(post_data)
 
         confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
@@ -149,11 +145,17 @@ class Hunter:
                 continue
             confirm_data[k] = v
         new_data = {
-            'building': 'main',
-            'h': self.wrapper.last_h,
+            "building": "main",
+            "h": self.wrapper.last_h,
         }
         confirm_data.update(new_data)
-        result = self.wrapper.get_api_action(village_id=self.village_id, action="popup_command",
-                                             params={"screen": "place"}, data=confirm_data)
+        if "x" not in confirm_data:
+            confirm_data["x"] = x
+        result = self.wrapper.get_api_action(
+            village_id=self.village_id,
+            action="popup_command",
+            params={"screen": "place"},
+            data=confirm_data,
+        )
 
         return result
