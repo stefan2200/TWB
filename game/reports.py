@@ -18,13 +18,11 @@ class ReportManager:
         self.wrapper = wrapper
         self.village_id = village_id
     
-    
-    
     def has_resources_left(self, vid):
         possible_reports = []
         for repid in self.last_reports:
             entry = self.last_reports[repid]
-            if vid == entry["dest"] and "when" in entry["extra"]:
+            if vid == entry["dest"] and entry["extra"].get("when", None):
                 possible_reports.append(entry)
         #self.logger.debug(f"Considered {len(possible_reports)} reports")
         if len(possible_reports) == 0:
@@ -38,8 +36,9 @@ class ReportManager:
         self.logger.debug(f'This is the newest? {datetime.fromtimestamp(int(entry["extra"]["when"]))}')
         #self.logger.debug(f'{entry["extra"]["when"]} seems to be the last attack.')
         # last_loot = entry["extra"]["loot"] if "loot" in entry["extra"] else None
-        if "resources" in entry["extra"] and entry["extra"]["resources"] != {}:
+        if entry["extra"].get("resources", None):
             return True, entry["extra"]["resources"]
+        return False, {}
 
     def safe_to_engage(self, vid):
         for repid in self.last_reports:
