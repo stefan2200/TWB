@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
+from game.reports import ReportCache
+
 
 class AttackManager:
     map = None
@@ -213,6 +215,15 @@ class AttackManager:
 
     def can_attack(self, vid, clear=False):
         cache_entry = AttackCache.get_cache(vid)
+
+        if cache_entry and cache_entry["last_attack"]:
+            last_attack = datetime.fromtimestamp(cache_entry["last_attack"])
+            now = datetime.now()
+            if last_attack < now - timedelta(hours=12):
+                self.logger.debug(f"Attacked long ago({last_attack}), trying scout attack")
+                if self.scout(vid):
+                    return False
+        
         if not cache_entry:
             status = self.repman.safe_to_engage(vid)
             if status == 1:
@@ -236,8 +247,8 @@ class AttackManager:
                     )
                     return False
                 if status == 0:
-                    if cache_entry["last_attack"] + self.farm_low_prio_wait > int(time.time()):
-                        self.logger.info(f"{vid}: Old scout report found, re-scouting")
+                    if cache_entry["last_attack"] + self.farm_low_prio_wait * 2 > int(time.time()):
+                        self.logger.info(f"{vid}: Old scout report found ({cache_entry['last_attack']}), re-scouting")
                         self.scout(vid)
                         return False
                     else:
@@ -264,6 +275,16 @@ class AttackManager:
             min_time = self.farm_high_prio_wait
         if "low_profile" in cache_entry and cache_entry["low_profile"]:
             min_time = self.farm_low_prio_wait
+        
+        if cache_entry and self.repman:
+            res_left, res = self.repman.has_resources_left(vid)
+            total_loot = 0
+            for x in res:
+                total_loot += int(res[x])
+            
+            if res_left and total_loot > 100:
+                self.logger.debug(f"Draining farm of resources! Sending attack to get {res}.")
+                min_time = int(self.farm_high_prio_wait / 2)
 
         if cache_entry["last_attack"] + min_time > int(time.time()):
             self.logger.debug(

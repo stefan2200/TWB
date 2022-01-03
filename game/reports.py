@@ -4,6 +4,7 @@ import re
 import logging
 
 from core.extractors import Extractor
+from datetime import datetime
 
 
 class ReportManager:
@@ -16,6 +17,29 @@ class ReportManager:
     def __init__(self, wrapper=None, village_id=None):
         self.wrapper = wrapper
         self.village_id = village_id
+    
+    
+    
+    def has_resources_left(self, vid):
+        possible_reports = []
+        for repid in self.last_reports:
+            entry = self.last_reports[repid]
+            if vid == entry["dest"] and "when" in entry["extra"]:
+                possible_reports.append(entry)
+        #self.logger.debug(f"Considered {len(possible_reports)} reports")
+        if len(possible_reports) == 0:
+            return False, {}
+
+        def highest_when(attack):
+            return datetime.fromtimestamp(int(attack["extra"]["when"]))
+
+        #self.logger.debug(f"Reports: {possible_reports}")
+        entry = max(possible_reports, key=highest_when)
+        self.logger.debug(f'This is the newest? {datetime.fromtimestamp(int(entry["extra"]["when"]))}')
+        #self.logger.debug(f'{entry["extra"]["when"]} seems to be the last attack.')
+        # last_loot = entry["extra"]["loot"] if "loot" in entry["extra"] else None
+        if "resources" in entry["extra"] and entry["extra"]["resources"] != {}:
+            return True, entry["extra"]["resources"]
 
     def safe_to_engage(self, vid):
         for repid in self.last_reports:
@@ -124,6 +148,10 @@ class ReportManager:
 
         losses = {}
 
+        attacked = re.search(r'(\d{2}\.\d{2}\.\d{2} \d{2}\:\d{2}\:\d{2})<span class=\"small grey\">', report)
+        if attacked:
+            extra["when"] = int(datetime.strptime(attacked.group(1), "%d.%m.%y %H:%M:%S").timestamp())
+
         attacker = re.search(r'(?s)(<table id="attack_info_att".+?</table>)', report)
         if attacker:
             attacker_data = re.search(
@@ -194,12 +222,12 @@ class ReportManager:
             if scout_buildings:
                 raw = scout_buildings.group(1).replace("&quot;", '"')
                 extra["buildings"] = self.re_building(json.loads(raw))
-            loot = {}
+            found_res = {}
             for loot_entry in re.findall(
-                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', scout_results.group(1)
             ):
-                loot[loot_entry[0]] = loot_entry[1]
-            extra["resources"] = loot
+                found_res[loot_entry[0]] = loot_entry[1]
+            extra["resources"] = found_res
             units_away = re.search(
                 r'(?s)(<table id="attack_spy_away".+?</table>)', report
             )

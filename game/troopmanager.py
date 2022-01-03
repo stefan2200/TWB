@@ -338,63 +338,70 @@ class TroopManager:
         for option in reversed(sorted(village_data['options'].keys())):
             self.logger.debug(f"Option: {option} Locked? {village_data['options'][option]['is_locked']} Is underway? {village_data['options'][option]['scavenging_squad'] != None }")
             if int(option) <= selection and not village_data['options'][option]['is_locked'] and not village_data['options'][option]['scavenging_squad'] != None:
-                available_selection = option
-                break
-        
-        # check how many are able to do down from selection. So, selection first, if more available, that one next. 2 -> 1 -> done
-        if available_selection == 0:
-            self.logger.info("All gather operations are underway.")
-            return False
-        else:
-            self.logger.info(f"Gather operation {available_selection} is ready to start.")
-            selection = available_selection
-        
-        troops = dict(self.troops)
+                available_selection = int(option)
+                self.logger.info(f"Gather operation {available_selection} is ready to start.")
+                selection = available_selection
+            
+                troops = dict(self.troops)
+                can_use = [
+                        "spear:25",
+                        "sword:15",
+                        "axe:10",
+                        "archer:10",
+                        "light:80",
+                        "marcher:50",
+                        "heavy:50",
+                        "knight:100",
+                    ]
+                if selection > 2:
+                    can_use = [
+                        "spear:25",
+                        "sword:15",
+                        "archer:10",
+                        "marcher:50",
+                        "heavy:50",
+                        "knight:100",
+                    ]
+                self.logger.info(f"Can use these: {can_use}")
+                payload = {
+                    "squad_requests[0][village_id]": self.village_id,
+                    "squad_requests[0][option_id]": str(selection),
+                    "squad_requests[0][use_premium]": "false",
+                }
 
-        can_use = [
-            "spear:25",
-            "sword:15",
-            "axe:10",
-            "archer:10",
-            "light:80",
-            "marcher:50",
-            "heavy:50",
-            "knight:100",
-        ]
-        payload = {
-            "squad_requests[0][village_id]": self.village_id,
-            "squad_requests[0][option_id]": str(selection),
-            "squad_requests[0][use_premium]": "false",
-        }
-
-        total_carry = 0
-        for item in can_use:
-            item, carry = item.split(":")
-            if item == "knight":
-                continue
-            if item in disabled_units:
-                continue
-            if item in troops and int(troops[item]) > 0:
-                payload[
-                    "squad_requests[0][candidate_squad][unit_counts][%s]" % item
-                ] = troops[item]
-                total_carry += int(carry) * int(troops[item])
+                total_carry = 0
+                for item in can_use:
+                    item, carry = item.split(":")
+                    if item == "knight":
+                        continue
+                    if item in disabled_units:
+                        continue
+                    if item in troops and int(troops[item]) > 0:
+                        payload[
+                            "squad_requests[0][candidate_squad][unit_counts][%s]" % item
+                        ] = troops[item]
+                        total_carry += int(carry) * int(troops[item])
+                    else:
+                        payload[
+                            "squad_requests[0][candidate_squad][unit_counts][%s]" % item
+                        ] = "0"
+                payload["squad_requests[0][candidate_squad][carry_max]"] = str(total_carry)
+                if total_carry > 0:
+                    payload["h"] = self.wrapper.last_h
+                    self.wrapper.get_api_action(
+                        action="send_squads",
+                        params={"screen": "scavenge_api"},
+                        data=payload,
+                        village_id=self.village_id,
+                    )
+                    self.last_gather = int(time.time())
+                    self.logger.info(f"Using troops for gather operation: {selection}")
             else:
-                payload[
-                    "squad_requests[0][candidate_squad][unit_counts][%s]" % item
-                ] = "0"
-        payload["squad_requests[0][candidate_squad][carry_max]"] = str(total_carry)
-        if total_carry > 0:
-            payload["h"] = self.wrapper.last_h
-            self.wrapper.get_api_action(
-                action="send_squads",
-                params={"screen": "scavenge_api"},
-                data=payload,
-                village_id=self.village_id,
-            )
-            self.last_gather = int(time.time())
-            self.logger.info(f"Using troops for gather operation: {selection}")
-            return True
+                # Gathering already exists or locked
+                pass
+        
+        self.logger.info("All gather operations are underway.")
+        return True
 
     def cancel(self, building, id):
         self.wrapper.get_api_action(
@@ -483,9 +490,8 @@ class TroopManager:
 
         if not needed_reserve:
             # No need to reserve resources anymore!
-            for x in self.resman.requested:
-                if f"recruitment_{unit_type}" == x:
-                    self.resman.requested.pop(x)
+            if f"recruitment_{unit_type}" in self.resman.requested:
+                self.resman.requested.pop(f"recruitment_{unit_type}", None)
 
         result = self.wrapper.get_api_action(
             village_id=self.village_id,
