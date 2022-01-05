@@ -30,16 +30,21 @@ class BuildingManager:
     def start_update(self, build=False, set_village_name=None):
 
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
+        self.game_state = Extractor.game_state(main_data)
+        vname = self.game_state["village"]["name"]
+
+        if not self.logger:
+            self.logger = logging.getLogger("Builder: %s" % vname)
+
         if self.complete_actions(main_data.text):
             return self.start_update(build=build, set_village_name=set_village_name)
         self.costs = Extractor.building_data(main_data)
-        self.game_state = Extractor.game_state(main_data)
+
         if self.resman:
             self.resman.update(self.game_state)
             if "building" in self.resman.requested:
                 # new run, remove request
                 self.resman.requested["building"] = {}
-        vname = self.game_state["village"]["name"]
         if set_village_name and vname != set_village_name:
             self.wrapper.post_url(
                 url="game.php?village=%s&screen=main&action=change_name"
@@ -47,8 +52,6 @@ class BuildingManager:
                 data={"name": set_village_name, "h": self.wrapper.last_h},
             )
 
-        if not self.logger:
-            self.logger = logging.getLogger("Builder: %s" % vname)
         self.logger.debug("Updating building levels")
         tmp = self.game_state["village"]["buildings"]
         for e in tmp:

@@ -17,7 +17,7 @@ class ReportManager:
     def __init__(self, wrapper=None, village_id=None):
         self.wrapper = wrapper
         self.village_id = village_id
-    
+
     def has_resources_left(self, vid):
         possible_reports = []
         for repid in self.last_reports:

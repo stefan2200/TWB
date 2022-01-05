@@ -1,3 +1,4 @@
 requests
 coloredlogs
+psutil
 flask

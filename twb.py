@@ -9,7 +9,7 @@ import copy
 import os
 import collections
 import traceback
-import socket
+import requests
 
 from core.extractors import Extractor
 from core.request import WebWrapper
@@ -34,19 +34,11 @@ class TWB:
     should_run = True
     runs = 0
 
-    def internet_online(self, host="8.8.4.4", port=53, timeout=5):
-        """
-        Host: 8.8.8.8 (google-public-dns-a.google.com)
-        OpenPort: 53/tcp
-        Service: domain (DNS/TCP)
-        """
-        return True
+    def internet_online(self):
         try:
-            socket.setdefaulttimeout(timeout)
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+            requests.get("https://github.com/stefan2200/TWB", timeout=(10, 60))
             return True
-        except socket.error as ex:
-            print(ex)
+        except requests.Timeout:
             return False
 
     def manual_config(self):
@@ -158,7 +150,8 @@ class TWB:
     def get_overview(self, config):
         result_get = self.wrapper.get_url("game.php?screen=overview_villages")
         result_villages = None
-        if "add_new_villages" in config["bot"] and config["bot"]["add_new_villages"]:
+        has_new_villages = False
+        if config["bot"].get("add_new_villages", False):
             result_villages = Extractor.village_ids_from_overview(result_get)
             for found_vid in result_villages:
                 if found_vid not in config["villages"]:
@@ -167,7 +160,9 @@ class TWB:
                         % found_vid
                     )
                     self.add_village(vid=found_vid)
-                    return self.get_overview(self.config())
+                    has_new_villages = True
+            if has_new_villages:
+                return self.get_overview(self.config())
 
         return result_villages, result_get
 
@@ -247,7 +242,7 @@ class TWB:
         )
 
         self.wrapper.start()
-        if "user_agent" not in config["bot"]:
+        if not config["bot"].get("user_agent", None):
             print(
                 "No custom user agent was supplied, this will likely get you banned."
                 "Please set the bot -> user_agent parameter to your browsers one. "
@@ -344,9 +339,8 @@ class TWB:
                 dtn = datetime.datetime.now()
                 dt_next = dtn + datetime.timedelta(0, sleep)
                 self.runs += 1
-                if config["farms"]["farm"] and self.runs % 5 == 0:
-                    print("Optimizing farms")
-                    VillageManager.farm_manager(verbose=True)
+
+                VillageManager.farm_manager(verbose=True)
                 print(
                     "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
                 )

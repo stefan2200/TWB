@@ -105,7 +105,7 @@ class TroopManager:
                 self.total_troops[k] = int(v)
         self.logger.debug("Village units total: %s" % str(self.total_troops))
 
-    def start_update(self, building="barracks", disabled_units =[]):
+    def start_update(self, building="barracks", disabled_units=[]):
 
         if self.wait_for[self.village_id][building] > time.time():
             self.logger.info(
@@ -347,21 +347,21 @@ class TroopManager:
                         "spear:25",
                         "sword:15",
                         "axe:10",
-                        "archer:10",
                         "light:80",
-                        "marcher:50",
                         "heavy:50",
-                        "knight:100",
+                        "knight:100"
                     ]
+                if "archer" in self.total_troops:
+                    can_use.extend(["archer:10", "marcher:50"])
                 if selection > 2:
                     can_use = [
                         "spear:25",
                         "sword:15",
-                        "archer:10",
-                        "marcher:50",
                         "heavy:50",
-                        "knight:100",
+                        "knight:100"
                     ]
+                    if "archer" in self.total_troops:
+                        can_use.extend(["archer:10", "marcher:50"])
                 self.logger.info(f"Can use these: {can_use}")
                 payload = {
                     "squad_requests[0][village_id]": self.village_id,
@@ -486,7 +486,6 @@ class TroopManager:
                 self.reserve_resources(resources, amount, get_min, unit_type)
                 amount = get_min
                 needed_reserve = True
-                
 
         if not needed_reserve:
             # No need to reserve resources anymore!
