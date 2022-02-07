@@ -31,17 +31,27 @@ class Map:
                 data = tile["data"]
                 x = int(data["x"])
                 y = int(data["y"])
-                for lon in data["villages"]:
-                    try:
-                        for lat in data["villages"][lon]:
-                            coords = [x + int(lon), y + int(lat)]
-                            entry = data["villages"][lon][lat]
-                            if entry[0] == str(self.village_id):
-                                self.my_location = coords
-
-                            self.build_cache_entry(location=coords, entry=entry)
-                    except:
+                vdata = data["villages"]
+                # Fix broken parsing                 
+                if type(vdata) is dict:
+                    cdata = [{}] * 20
+                    for k, v in vdata.items():
+                        if type(v) is not dict:
+                            cdata[int(k)] = {0: item[0:] for item in v}
+                        else:
+                            cdata[int(k)] = v
+                    vdata = cdata
+                for lon, val in enumerate(vdata):
+                    if not val:
                         continue
+                    for lat, entry in val.items():
+                        if not lat:
+                            continue
+                        coords = [x + int(lon), y + int(lat)]
+                        if entry[0] == str(self.village_id):
+                            self.my_location = coords
+
+                        self.build_cache_entry(location=coords, entry=entry)
                 if not self.my_location:
                     self.my_location = [
                         game_state["village"]["x"],
