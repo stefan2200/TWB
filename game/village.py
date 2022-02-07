@@ -422,7 +422,9 @@ class Village:
                 self.attack.farm_maxpoints = self.get_config(
                     section="farms", parameter="max_points", default=1080
                 )
-
+                self.attack.farm_radius = self.get_config(
+                    section="farms", parameter="search_radius", default=50
+                )
                 self.attack.farm_default_wait = self.get_config(
                     section="farms", parameter="default_away_time", default=1200
                 )
