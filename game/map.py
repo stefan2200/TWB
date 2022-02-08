@@ -52,8 +52,6 @@ class Map:
                             self.my_location = coords
 
                         self.build_cache_entry(location=coords, entry=entry)
-                    except:
-                        continue
                 if not self.my_location:
                     self.my_location = [
                         game_state["village"]["x"],
