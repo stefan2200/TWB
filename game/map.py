@@ -44,6 +44,9 @@ class Map:
                 for lon, val in enumerate(vdata):
                     if not val:
                         continue
+                    # Force dict type to iterate properly
+                    if type(val) != dict:
+                        val = {i: val[i] for i in range(0, len(val))}
                     for lat, entry in val.items():
                         if not lat:
                             continue
