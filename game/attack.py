@@ -179,11 +179,12 @@ class AttackManager:
                     continue
             distance = self.map.get_dist(village["location"])
             if distance > self.farm_radius:
-                self.logger.debug(
-                    "Village %s will be ignored because it is too far away: distance is %f, max is %d"
-                    % (vid, distance, self.farm_radius)
-                )
-                self.ignored.append(vid)
+                if vid not in self.ignored:
+                    self.logger.debug(
+                        "Village %s will be ignored because it is too far away: distance is %f, max is %d"
+                        % (vid, distance, self.farm_radius)
+                    )
+                    self.ignored.append(vid)
                 continue
             if vid in self.ignored:
                 self.logger.debug("Removed %s from farm ignore list" % vid)
