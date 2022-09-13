@@ -49,7 +49,7 @@ class Extractor:
     def get_quest_rewards(res):
         if type(res) != str:
             res = res.text
-        get_rewards = re.search(r'RewardSystem\.setRewards\((\[\{.+?\}\]),', res)
+        get_rewards = re.search(r'RewardSystem\.setRewards\(\s*(\[\{.+?\}\]),', res)
         rewards = []
         if get_rewards:
             result = json.loads(get_rewards.group(1), strict=False)
