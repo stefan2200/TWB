@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, send_from_directory, request, render_template
 import os
+import sys
 import json
 try:
     from webmanager.helpfile import help_file, buildings
@@ -237,6 +238,7 @@ def config_set():
     return jsonify(sync())
 
 
-app.run()
-
-
+if len(sys.argv) > 1:
+    app.run(host="localhost", port=sys.argv[1])
+else:
+    app.run()
