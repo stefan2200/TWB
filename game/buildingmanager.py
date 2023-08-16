@@ -27,8 +27,18 @@ class BuildingManager:
         self.wrapper = wrapper
         self.village_id = village_id
 
-    def start_update(self, build=False, set_village_name=None):
+    def create_update_links(self, extracted_buildings):
+        link = self.game_state["link_base_pure"] + "main&action=upgrade_building"
 
+        for building in extracted_buildings:
+            _id = extracted_buildings[building]["id"]
+            _link = link + "&id=" + _id + "&type=main&h=" + self.game_state["csrf"]
+
+            extracted_buildings[building]["build_link"] = _link
+
+        return extracted_buildings
+
+    def start_update(self, build=False, set_village_name=None):
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
         self.game_state = Extractor.game_state(main_data)
         vname = self.game_state["village"]["name"]
@@ -39,6 +49,7 @@ class BuildingManager:
         if self.complete_actions(main_data.text):
             return self.start_update(build=build, set_village_name=set_village_name)
         self.costs = Extractor.building_data(main_data)
+        self.costs = self.create_update_links(self.costs)
 
         if self.resman:
             self.resman.update(self.game_state)
@@ -77,7 +88,9 @@ class BuildingManager:
                 )
                 return True
             else:
-                self.logger.info("Just 1 manual action left, trying to queue next building")
+                self.logger.info(
+                    "Just 1 manual action left, trying to queue next building"
+                )
 
         if existing_queue == 1:
             r = self.max_queue_len - 1
@@ -195,7 +208,6 @@ class BuildingManager:
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def get_next_building_action(self, index=0):
-
         if index >= self.max_lookahead:
             self.logger.debug("Not building anything because insufficient resources")
             return False
