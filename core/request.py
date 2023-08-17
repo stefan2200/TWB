@@ -172,9 +172,9 @@ class WebWrapper:
     def get_api_action(self, village_id, action, params={}, data={}):
 
         custom = dict(self.headers)
-        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
-        custom['x-requested-with'] = "XMLHttpRequest"
-        custom['tribalwars-ajax'] = "1"
+        custom['Accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['X-Requested-With'] = "XMLHttpRequest"
+        custom['TribalWars-Ajax'] = "1"
         req = {
             'ajaxaction': action,
             'village': village_id,
@@ -191,3 +191,4 @@ class WebWrapper:
                 return res.json()
             except:
                 return res
+        return None
