@@ -580,6 +580,6 @@ class Village:
         self.set_cache(self.village_id, entry=village_entry)
 
     def set_cache(self, village_id, entry):
-        t_path = os.path.join("cache", "managed", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "cache", "managed", village_id + ".json")
         with open(t_path, "w") as f:
             return json.dump(entry, f)
