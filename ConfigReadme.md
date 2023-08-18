@@ -24,10 +24,18 @@ It should automatically create the required tables if they don't exist yet.
 
 ## Bot
 This will configure non game-related related features.
+
 **Active Hours**
 Hours that the bot should be active, it defaults to 6 in the morning to 23 at night. The current time will be set to your current timezone so if your TZ differs from the game's one make sure you include the difference in time!
+
 **Active Delay, Inactive Delay and Inactive Still Active**
 Active delay configures the minimal time the bot will wait until next run during active hours. Inactive delay will configure the same for inactive hours. If inactive_still_active is disabled the bot will completely shut down during inactive hours and will probably time-out your session so you have to manually restart the bot in the morning.
+
+**Forced Peace Times**
+An array of times that you cannot attack (christmas etc..). Should be in the form of:
+```
+[{"start:": "%d.%m.%y %H:%M:%S", "end":"%d.%m.%y %H:%M:%S"}, {"start:": "24.12.2001 17:00:00", "end":"27.12.2001 01:00:00"}]
+```
 
 ## Building
 The manage_building boolean can disable building globally so you wont have to re-configure all your villages manually.

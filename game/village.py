@@ -364,7 +364,6 @@ class Village:
         for x in to_dell:
             self.resman.requested.pop(x)
 
-
         self.logger.debug("Current resources: %s" % str(self.resman.actual))
         self.logger.debug("Requested resources: %s" % str(self.resman.requested))
 
@@ -374,13 +373,13 @@ class Village:
         forced_peace_today = False
         forced_peace_today_start = None
         for time_pairs in forced_peace_times:
-            start_dt = datetime.strptime(time_pairs["start"],"%d.%m.%y %H:%M:%S")
-            end_dt = datetime.strptime(time_pairs["end"],"%d.%m.%y %H:%M:%S")
+            start_dt = datetime.strptime(time_pairs["start"], "%d.%m.%y %H:%M:%S")
+            end_dt = datetime.strptime(time_pairs["end"], "%d.%m.%y %H:%M:%S")
             now = datetime.now()
             if start_dt.date() == datetime.today().date():
                 forced_peace_today = True
                 forced_peace_today_start = start_dt
-            if  now > start_dt and now < end_dt:
+            if start_dt < now < end_dt:
                 self.logger.debug("Currently in a forced peace time! No attacks will be send.")
                 forced_peace = True
                 break
@@ -580,6 +579,6 @@ class Village:
         self.set_cache(self.village_id, entry=village_entry)
 
     def set_cache(self, village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "cache", "managed", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "managed", village_id + ".json")
         with open(t_path, "w") as f:
             return json.dump(entry, f)

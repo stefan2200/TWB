@@ -70,7 +70,7 @@ class TWB:
                     "It should start with Chrome, Firefox or something. Please try again"
                 )
                 return self.manual_config()
-
+            browser_ua = browser_ua.strip()
             disclaimer = """
             Read carefully: Please note the use of this bot can cause bans, kicks, annoyances and other stuff.
             I do my best to make the bot as undetectable as possible but most issues / bans are config related.
@@ -165,7 +165,7 @@ class TWB:
             if has_new_villages:
                 return self.get_overview(self.config())
 
-        return result_villages, result_get
+        return result_villages, result_get, config
 
     def add_village(self, vid, template=None):
         original = self.config()
@@ -279,12 +279,12 @@ class TWB:
                 time.sleep(sleep)
             else:
                 config = self.config()
-                result_villages, res_text = self.get_overview(config)
+                result_villages, res_text, config = self.get_overview(config)
                 has_changed, new_cf = self.get_world_options(res_text.text, config)
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open("config.json", "w") as newcf:
+                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
