@@ -9,11 +9,17 @@ class DataReader:
     @staticmethod
     def cache_grab(cache_location):
         output = {}
-        c_path = os.path.join("../cache", cache_location)
+        c_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "cache",
+            cache_location
+        )
         for existing in os.listdir(c_path):
+            existing = str(existing)
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join("../cache", cache_location, existing)
+            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", cache_location, existing)
             with open(t_path, 'r') as f:
                 try:
                     output[existing.replace('.json', '')] = json.load(f)
@@ -28,8 +34,9 @@ class DataReader:
     def template_grab(template_location):
         output = []
         template_location = template_location.replace('.', '/')
-        c_path = os.path.join("../", template_location)
+        c_path = os.path.join(os.path.dirname(__file__), "..", template_location)
         for existing in os.listdir(c_path):
+            existing = str(existing)
             if not existing.endswith(".txt"):
                 continue
             output.append(existing.split('.')[0])
@@ -37,7 +44,7 @@ class DataReader:
 
     @staticmethod
     def config_grab():
-        with open('../config.json', 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), "..", "config.json"), 'r') as f:
             return json.load(f)
 
     @staticmethod
@@ -46,33 +53,35 @@ class DataReader:
             value = json.loads(value)
         except:
             pass
-        with open('../config.json', 'r') as config_file:
+        config_file_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
+        with open(config_file_path, 'r') as config_file:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
             if "." in parameter:
                 section, param = parameter.split('.')
                 template[section][param] = value
             else:
                 template[parameter] = value
-            with open('../config.json', 'w') as newcf:
+            with open(config_file_path, 'w') as newcf:
                 json.dump(template, newcf, indent=2, sort_keys=False)
                 print("Deployed new configuration file")
                 return True
 
     @staticmethod
     def village_config_set(village_id, parameter, value):
-        with open('../config.json', 'r') as config_file:
+        config_file_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
+        with open(config_file_path, 'r') as config_file:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
             if village_id not in template['villages']:
                 return False
             template['villages'][str(village_id)][parameter] = json.loads(value)
-            with open('../config.json', 'w') as newcf:
+            with open(config_file_path, 'w') as newcf:
                 json.dump(template, newcf, indent=2, sort_keys=False)
                 print("Deployed new configuration file")
                 return True
 
     @staticmethod
     def get_session():
-        c_path = os.path.join("../cache", "session.json")
+        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
         if not os.path.exists(c_path):
             return {"raw": "", "endpoint": "None", "server": "None", "world": "None"}
         with open(c_path, 'r') as session_file:
@@ -88,12 +97,12 @@ class BuildingTemplateManager:
 
     @staticmethod
     def template_cache_list():
-        c_path = os.path.join("../templates", "builder")
+        c_path = os.path.join(os.path.dirname(__file__), "..", "templates", "builder")
         output = {}
         for existing in os.listdir(c_path):
             if not existing.endswith(".txt"):
                 continue
-            with open(os.path.join("../templates", "builder", existing), 'r') as template_file:
+            with open(os.path.join(os.path.dirname(__file__), "..", "templates", "builder", existing), 'r') as template_file:
                 output[existing] = BuildingTemplateManager.template_to_dict([x.strip() for x in template_file.readlines()])
         return output
 
@@ -185,7 +194,7 @@ class BotManager:
         return False
 
     def start(self):
-        wd = os.path.join(os.getcwd(), "..")
+        wd = os.path.join(os.path.dirname(__file__), "..")
         proc = subprocess.Popen("python twb.py", cwd=wd, shell=True)
         self.pid = proc.pid
         print("Bot started successfully")

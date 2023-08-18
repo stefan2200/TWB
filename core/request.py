@@ -87,8 +87,9 @@ class WebWrapper:
             return None
 
     def start(self, ):
-        if os.path.exists('cache/session.json'):
-            with open('cache/session.json') as f:
+        session_file = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
+        if os.path.exists(session_file):
+            with open(session_file) as f:
                 session_data = json.load(f)
                 self.web.cookies.update(session_data['cookies'])
                 get_test = self.get_url("game.php?screen=overview")
@@ -112,7 +113,7 @@ class WebWrapper:
         for c in self.web.cookies:
             cookies[c.name] = c.value
 
-        with open('cache/session.json', 'w') as f:
+        with open(session_file, 'w') as f:
             session = {
                 'endpoint': self.endpoint,
                 'server': self.server,

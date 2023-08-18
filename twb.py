@@ -70,7 +70,7 @@ class TWB:
                     "It should start with Chrome, Firefox or something. Please try again"
                 )
                 return self.manual_config()
-
+            browser_ua = browser_ua.strip()
             disclaimer = """
             Read carefully: Please note the use of this bot can cause bans, kicks, annoyances and other stuff.
             I do my best to make the bot as undetectable as possible but most issues / bans are config related.
@@ -85,15 +85,15 @@ class TWB:
             if "yes" not in final_check.lower():
                 print("Goodbye :)")
                 sys.exit(0)
-
-            with open("config.example.json", "r") as template_file:
+            root_directory = os.path.dirname(__file__)
+            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
                 template["server"]["endpoint"] = game_endpoint
                 template["server"]["server"] = sub_parts.lower()
                 template["bot"]["user_agent"] = browser_ua
-                with open("config.json", "w") as newcf:
+                with open(os.path.join(root_directory, "config.json"), "w") as newcf:
                     json.dump(template, newcf, indent=2, sort_keys=False)
                     print("Deployed new configuration file")
                     return True
@@ -102,29 +102,30 @@ class TWB:
 
     def config(self):
         template = None
-        if os.path.exists("config.example.json"):
-            with open("config.example.json", "r") as template_file:
+        root_directory = os.path.dirname(__file__)
+        if os.path.exists(os.path.join(root_directory, "config.example.json")):
+            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
-        if not os.path.exists("config.json"):
+        if not os.path.exists(os.path.join(root_directory, "config.json")):
             if self.manual_config():
                 return self.config()
             else:
                 print("Unable to start without a valid config file")
                 sys.exit(1)
         config = None
-        with open("config.json", "r") as f:
+        with open(os.path.join(root_directory, "config.json"), "r") as f:
             config = json.load(f, object_pairs_hook=collections.OrderedDict)
         if template and config["build"]["version"] != template["build"]["version"]:
             print(
                 "Outdated config file found, merging (old copy saved as config.bak)\n"
                 "Remove config.example.json to disable this behaviour"
             )
-            with open("config.bak", "w") as backup:
+            with open(os.path.join(root_directory, "config.bak"), "w") as backup:
                 json.dump(config, backup, indent=2, sort_keys=False)
             config = self.merge_configs(config, template)
-            with open("config.json", "w") as newcf:
+            with open(os.path.join(root_directory, "config.json"), "w") as newcf:
                 json.dump(config, newcf, indent=2, sort_keys=False)
                 print("Deployed new configuration file")
         return config
@@ -164,11 +165,12 @@ class TWB:
             if has_new_villages:
                 return self.get_overview(self.config())
 
-        return result_villages, result_get
+        return result_villages, result_get, config
 
     def add_village(self, vid, template=None):
         original = self.config()
-        with open("config.bak", "w") as backup:
+        root_directory = os.path.dirname(__file__)
+        with open(os.path.join(root_directory, "config.bak"), "w") as backup:
             json.dump(original, backup, indent=2, sort_keys=False)
         if not template and "village_template" not in original:
             print("Village entry %s could not be added to the config file!" % vid)
@@ -176,7 +178,7 @@ class TWB:
         original["villages"][vid] = (
             template if template else original["village_template"]
         )
-        with open("config.json", "w") as newcf:
+        with open(os.path.join(root_directory, "config.json"), "w") as newcf:
             json.dump(original, newcf, indent=2, sort_keys=False)
             print("Deployed new configuration file")
 
@@ -277,12 +279,12 @@ class TWB:
                 time.sleep(sleep)
             else:
                 config = self.config()
-                result_villages, res_text = self.get_overview(config)
+                result_villages, res_text, config = self.get_overview(config)
                 has_changed, new_cf = self.get_world_options(res_text.text, config)
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open("config.json", "w") as newcf:
+                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
@@ -348,22 +350,23 @@ class TWB:
                 time.sleep(sleep)
 
     def start(self):
-        if not os.path.exists("cache"):
-            os.mkdir("cache")
-        if not os.path.exists(os.path.join("cache", "attacks")):
-            os.mkdir(os.path.join("cache", "attacks"))
-        if not os.path.exists(os.path.join("cache", "reports")):
-            os.mkdir(os.path.join("cache", "reports"))
-        if not os.path.exists(os.path.join("cache", "villages")):
-            os.mkdir(os.path.join("cache", "villages"))
-        if not os.path.exists(os.path.join("cache", "world")):
-            os.mkdir(os.path.join("cache", "world"))
-        if not os.path.exists(os.path.join("cache", "logs")):
-            os.mkdir(os.path.join("cache", "logs"))
-        if not os.path.exists(os.path.join("cache", "managed")):
-            os.mkdir(os.path.join("cache", "managed"))
-        if not os.path.exists(os.path.join("cache", "hunter")):
-            os.mkdir(os.path.join("cache", "hunter"))
+        root_directory = os.path.dirname(__file__)
+        if not os.path.exists(os.path.join(root_directory, "cache")):
+            os.mkdir(os.path.join(root_directory, "cache"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "attacks")):
+            os.mkdir(os.path.join(root_directory, "cache", "attacks"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "reports")):
+            os.mkdir(os.path.join(root_directory, "cache", "reports"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "villages")):
+            os.mkdir(os.path.join(root_directory, "cache", "villages"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "world")):
+            os.mkdir(os.path.join(root_directory, "cache", "world"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "logs")):
+            os.mkdir(os.path.join(root_directory, "cache", "logs"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "managed")):
+            os.mkdir(os.path.join(root_directory, "cache", "managed"))
+        if not os.path.exists(os.path.join(root_directory, "cache", "hunter")):
+            os.mkdir(os.path.join(root_directory, "cache", "hunter"))
 
         self.run()
 

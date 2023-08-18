@@ -371,7 +371,7 @@ class AttackManager:
 class AttackCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join("cache", "attacks", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -379,18 +379,18 @@ class AttackCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join("cache", "attacks", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
         with open(t_path, "w") as f:
             return json.dump(entry, f)
 
     @staticmethod
     def cache_grab():
         output = {}
-        c_path = os.path.join("cache", "attacks")
+        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks")
         for existing in os.listdir(c_path):
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join("cache", "attacks", existing)
+            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", existing)
             with open(t_path, "r") as f:
                 output[existing.replace(".json", "")] = json.load(f)
         return output
