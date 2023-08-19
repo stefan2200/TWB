@@ -1,9 +1,73 @@
 import logging
 import time
 import re
-import json
 from core.extractors import Extractor
 
+
+class PremiumExchange:
+    def __init__(self, wrapper, stock: dict, capacity: dict, tax: dict, constants: dict, duration: int, merchants: int):
+        self.wrapper = wrapper
+        self.stock = stock
+        self.capacity = capacity
+        self.tax = tax
+        self.constants = constants
+        self.duration = duration
+        self.merchants = merchants
+
+    # do not call this anihilation (calculate_cost) - i dechipered it from tribalwars js
+    def calculate_cost(self, item, a):
+        t = self.stock[item]
+        n = self.capacity[item]
+
+        # tax = self.tax["buy"] if a >= 0 else self.tax["sell"]
+        tax = self.tax["sell"] # twb never buys on premium exchange
+
+        return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
+
+    def calculate_marginal_price(self, e, a):
+        c = self.constants
+        return c["resource_base_price"] - c["resource_price_elasticity"] * e / (a + c["stock_size_modifier"])
+
+    def calculate_rate_for_one_point(self, item: str):
+        a = self.stock[item]
+        t = self.capacity[item]
+        n = self.calculate_marginal_price(a, t)
+        r = int(1 / n)
+        c = self.calculate_cost(item, r)
+        i = 0
+
+        while c > 1 and i < 50:
+            r -= 1
+            i += 1
+            c = self.calculate_cost(item, r)
+            
+        return r
+    
+    @staticmethod
+    def optimize_n(amount, sell_price, merchants, size=1000):
+
+        def _ratio(a, b, size=1000):
+            a = (size * b) - a
+            return a / size
+
+        offers = []
+
+        for i in range(1, merchants + 1):
+            for j in range(amount // sell_price + 1):
+                r = _ratio(j * sell_price, i, size=size)
+                if r >= 0:
+                    offers.append((i, r, j))
+
+        offers.sort(key=lambda x: (x[1], -x[0]))
+
+        r = {
+            "merchants": offers[0][0],
+            "ratio": offers[0][1],
+            "n_to_sell": offers[0][2]
+        }
+
+        return r
+    
 
 class ResourceManager:
     actual = {}
@@ -50,75 +114,19 @@ class ResourceManager:
             res = self.wrapper.get_url(url=url)
             data = Extractor.premium_data(res.text)
 
-            #       calculateRateForOnePoint: function(e) {
-            # for (var a = PremiumExchange.data.stock[e], t = PremiumExchange.data.capacity[e], n = (PremiumExchange.data.tax.buy,
-            # PremiumExchange.calculateMarginalPrice(a, t)), r = Math.floor(1 / n), c = PremiumExchange.calculateCost(e, r), i = 0; c > 1 && i < 50; )
-            #     r--,
-            #     i++,
-            #     c = PremiumExchange.calculateCost(e, r);
-            # return r
+            premium_exchange = PremiumExchange(
+                wrapper=self.wrapper,
+                stock=data["stock"],
+                capacity=data["capacity"],
+                tax=data["tax"],
+                constants=data["constants"],
+                duration=data["duration"],
+                merchants=data["merchants"]
+            )
 
-            #         class PremiumExchange:
-            # @staticmethod
-            # def calculateCost(e, a):
-            #     t = PremiumExchange.data.stock[e]
-            #     n = PremiumExchange.data.capacity[e]
-            #     tax = PremiumExchange.data.tax.buy if a >= 0 else PremiumExchange.data.tax.sell
-            #     return (1 + tax) * (PremiumExchange.calculateMarginalPrice(t, n) + PremiumExchange.calculateMarginalPrice(t - a, n)) * a / 2
-
-            # @staticmethod
-            # def calculateMarginalPrice(e, a):
-            #     t = PremiumExchange.data.constants
-            #     return t.resource_base_price - t.resource_price_elasticity * e / (a + t.stock_size_modifier)
-
-            # @staticmethod
-            # def calculateRateForOnePoint(e):
-            #     a = PremiumExchange.data.stock[e]
-            #     t = PremiumExchange.data.capacity[e]
-            #     n = PremiumExchange.data.tax.buy  # This line might need correction, as explained in the previous response
-            #     n = PremiumExchange.calculateMarginalPrice(a, t)
-            #     r = int(1 / n)
-            #     c = PremiumExchange.calculateCost(e, r)
-            #     i = 0
-            #     while c > 1 and i < 50:
-            #         r -= 1
-            #         i += 1
-            #         c = PremiumExchange.calculateCost(e, r)
-            #     return r
-
-            # print(json.dumps(data, indent=4))
-
-            #     "stock": {
-            #         "wood": 457324,
-            #         "stone": 469274,
-            #         "iron": 437902
-            #     },
-            #     "capacity": {
-            #         "wood": 535163,
-            #         "stone": 551661,
-            #         "iron": 503552
-            #     },
-            #     "rates": {
-            #         "wood": 0.0028082739663846477,
-            #         "stone": 0.0028507451094267385,
-            #         "iron": 0.002621192164293136
-            #     },
-            #     "tax": {
-            #         "buy": 0.03,
-            #         "sell": 0
-            #     },
-            #     "constants": {
-            #         "resource_base_price": 0.015,
-            #         "resource_price_elasticity": 0.0148,
-            #         "stock_size_modifier": 20000
-            #     },
-            #     "duration": 7200,
-            #     "merchants": 3
-            
-            # t.resource_base_price - t.resource_price_elasticity * e / (a + t.stock_size_modifier)
-            
-            # e stock
-            # a capacit
+            cost_per_point = premium_exchange.calculate_rate_for_one_point(gpl)
+            self.logger.debug(f"Cost per point: {cost_per_point}")
+            self.logger.info(f"Current {gpl} price: {self.actual[gpl]}")
 
             if not data:
                 self.logger.warning("Error reading premium data!")
@@ -134,27 +142,45 @@ class ResourceManager:
                 )
 
                 self.logger.debug(f"Trying to trade {gpl} - exchange_begin")
+
+                prices[gpl] = int(prices[gpl])
+
+                gpl_data = PremiumExchange.optimize_n(
+                    amount=prices[gpl],
+                    sell_price=cost_per_point,
+                    merchants=data["merchants"],
+                    size=1000
+                )
+
+                self.logger.debug(f"Optimized trade: {gpl} {gpl_data}")
+
                 result = self.wrapper.get_api_action(
                     self.village_id,
                     action="exchange_begin",
                     params={"screen": "market"},
-                    data={"sell_%s" % gpl: "1"},
+                    data={"sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point)},
                 )
 
                 if result:
                     _rate_hash = result["response"][0]["rate_hash"]
 
+                    trade_data = {
+                        "sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point),
+                        "rate_hash": _rate_hash,
+                        "mb": "1"
+                    }
+
                     result = self.wrapper.get_api_action(
                         self.village_id,
                         action="exchange_confirm",
                         params={"screen": "market"},
-                        data={"sell_%s" % gpl: "1", "rate_hash": _rate_hash, "mb": "1"},
+                        data=trade_data,
                     )
 
-                    self.logger.info(
-                        "Trade successful!"
-                    ) if result else self.logger.info("Trade failed!")
-
+                    if result:
+                        self.logger.info("Trade successful!")
+                    else:
+                        self.logger.info("Trade failed!")
                 else:
                     self.logger.debug(
                         f"Trying to trade {gpl} for premium points - exchange_begin - failed"
@@ -207,8 +233,8 @@ class ResourceManager:
                 if self.actual[sub] > most_of:
                     most = sub
                     most_of = self.actual[sub]
-        # if most:
-        #     self.logger.debug(f"We have plenty of {most}")
+        if most:
+            self.logger.debug(f"We have plenty of {most}")
 
         return most
 
