@@ -136,7 +136,7 @@ class ResourceManager:
                 prices[p] = data["stock"][p] * data["rates"][p]
             self.logger.info("Actual premium prices: %s" % prices)
 
-            if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
+            if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl] and data["merchants"] > 0:
                 self.logger.info(
                     "Attempting trade of %d %s for premium point" % (prices[gpl], gpl)
                 )
