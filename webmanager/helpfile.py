@@ -64,7 +64,6 @@ help_file = {
     'village.prioritize_building': 'Do not recruit if the builder does not have enough resources',
     'village.prioritize_snob': 'Do not recruit if the snob does not have enough resources',
     'village.trade_for_premium': 'Trade left-over resources for premium points (requires the global option to be enabled)',
-    'village.premium_aggressive': 'Option allows TWB to sell more raw materials for premium points resulting in slower village development',
     'village.gather_enabled': 'Uses left-over units to gather additional resources if the option is enabled on the world',
     'village.gather_selection': 'The gather operation to preform (they have to be unlocked first)',
     'village.snobs': 'The amount of snobs to create in the current village',

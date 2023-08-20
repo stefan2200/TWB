@@ -104,7 +104,7 @@ class ResourceManager:
             "Resource Manager: %s" % game_state["village"]["name"]
         )
 
-    def do_premium_stuff(self, premium_aggressive=False):
+    def do_premium_stuff(self):
         gpl = self.get_plenty_off()
         self.logger.debug(
             f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}"
@@ -134,12 +134,8 @@ class ResourceManager:
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
             
-            if premium_aggressive is True:
-                for p in price_fetch:
-                    prices[p] = self.actual[p] - int(self.storage / self.ratio)
-            else:
-                for p in price_fetch:
-                    prices[p] = data["stock"][p] * data["rates"][p]
+            for p in price_fetch:
+                prices[p] = data["stock"][p] * data["rates"][p]
 
             self.logger.info("Actual premium prices: %s" % prices)
 
@@ -165,7 +161,7 @@ class ResourceManager:
 
                 self.logger.debug(f"Optimized trade: {gpl} {gpl_data} {gpl_data['n_to_sell'] * cost_per_point}")
 
-                if gpl_data["ratio"] > 0.3:
+                if gpl_data["ratio"] > 0.4:
                     self.logger.info("Not worth trading!")
                     return
 
