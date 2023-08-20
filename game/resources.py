@@ -104,7 +104,7 @@ class ResourceManager:
             "Resource Manager: %s" % game_state["village"]["name"]
         )
 
-    def do_premium_stuff(self):
+    def do_premium_stuff(self, premium_aggressive=False):
         gpl = self.get_plenty_off()
         self.logger.debug(
             f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}"
@@ -125,6 +125,7 @@ class ResourceManager:
             )
 
             cost_per_point = premium_exchange.calculate_rate_for_one_point(gpl)
+
             self.logger.debug(f"Cost per point: {cost_per_point}")
             self.logger.info(f"Current {gpl} price: {self.actual[gpl]}")
 
@@ -132,14 +133,24 @@ class ResourceManager:
                 self.logger.warning("Error reading premium data!")
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
-            for p in price_fetch:
-                prices[p] = data["stock"][p] * data["rates"][p]
+            
+            if premium_aggressive is True:
+                for p in price_fetch:
+                    prices[p] = self.actual[p] - int(self.storage / self.ratio)
+            else:
+                for p in price_fetch:
+                    prices[p] = data["stock"][p] * data["rates"][p]
+
             self.logger.info("Actual premium prices: %s" % prices)
 
-            if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl] and data["merchants"] > 0:
+            if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
                 self.logger.info(
                     "Attempting trade of %d %s for premium point" % (prices[gpl], gpl)
                 )
+
+                if data["merchants"] < 1:
+                    self.logger.info("Not enough merchants available!")
+                    return
 
                 self.logger.debug(f"Trying to trade {gpl} - exchange_begin")
 
@@ -152,7 +163,11 @@ class ResourceManager:
                     size=1000
                 )
 
-                self.logger.debug(f"Optimized trade: {gpl} {gpl_data}")
+                self.logger.debug(f"Optimized trade: {gpl} {gpl_data} {gpl_data['n_to_sell'] * cost_per_point}")
+
+                if gpl_data["ratio"] > 0.3:
+                    self.logger.info("Not worth trading!")
+                    return
 
                 result = self.wrapper.get_api_action(
                     self.village_id,
