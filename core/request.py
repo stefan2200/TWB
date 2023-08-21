@@ -87,8 +87,9 @@ class WebWrapper:
             return None
 
     def start(self, ):
-        if os.path.exists('cache/session.json'):
-            with open('cache/session.json') as f:
+        session_file = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
+        if os.path.exists(session_file):
+            with open(session_file) as f:
                 session_data = json.load(f)
                 self.web.cookies.update(session_data['cookies'])
                 get_test = self.get_url("game.php?screen=overview")
@@ -112,7 +113,7 @@ class WebWrapper:
         for c in self.web.cookies:
             cookies[c.name] = c.value
 
-        with open('cache/session.json', 'w') as f:
+        with open(session_file, 'w') as f:
             session = {
                 'endpoint': self.endpoint,
                 'server': self.server,
@@ -172,9 +173,9 @@ class WebWrapper:
     def get_api_action(self, village_id, action, params={}, data={}):
 
         custom = dict(self.headers)
-        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
-        custom['x-requested-with'] = "XMLHttpRequest"
-        custom['tribalwars-ajax'] = "1"
+        custom['Accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['X-Requested-With'] = "XMLHttpRequest"
+        custom['TribalWars-Ajax'] = "1"
         req = {
             'ajaxaction': action,
             'village': village_id,
@@ -191,3 +192,4 @@ class WebWrapper:
                 return res.json()
             except:
                 return res
+        return None

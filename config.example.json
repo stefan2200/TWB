@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.5.1",
+    "version": "1.6",
     "author": "stefan2200"
   },
   "server": {
@@ -69,7 +69,8 @@
     "low_loot_away_time": 7200,
     "max_farms": 25,
     "attack_higher_points": false,
-    "force_scout_if_available": true
+    "force_scout_if_available": true,
+    "forced_peace_times": []
   },
   "market": {
     "auto_trade": true,

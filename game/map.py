@@ -138,7 +138,7 @@ class Map:
 class MapCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join("cache", "villages", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -146,6 +146,6 @@ class MapCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join("cache", "villages", village_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
         with open(t_path, "w") as f:
             return f.write(json.dumps(entry))

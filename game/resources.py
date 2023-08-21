@@ -4,6 +4,71 @@ import re
 from core.extractors import Extractor
 
 
+class PremiumExchange:
+    def __init__(self, wrapper, stock: dict, capacity: dict, tax: dict, constants: dict, duration: int, merchants: int):
+        self.wrapper = wrapper
+        self.stock = stock
+        self.capacity = capacity
+        self.tax = tax
+        self.constants = constants
+        self.duration = duration
+        self.merchants = merchants
+
+    # do not call this anihilation (calculate_cost) - i dechipered it from tribalwars js
+    def calculate_cost(self, item, a):
+        t = self.stock[item]
+        n = self.capacity[item]
+
+        # tax = self.tax["buy"] if a >= 0 else self.tax["sell"]
+        tax = self.tax["sell"] # twb never buys on premium exchange
+
+        return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
+
+    def calculate_marginal_price(self, e, a):
+        c = self.constants
+        return c["resource_base_price"] - c["resource_price_elasticity"] * e / (a + c["stock_size_modifier"])
+
+    def calculate_rate_for_one_point(self, item: str):
+        a = self.stock[item]
+        t = self.capacity[item]
+        n = self.calculate_marginal_price(a, t)
+        r = int(1 / n)
+        c = self.calculate_cost(item, r)
+        i = 0
+
+        while c > 1 and i < 50:
+            r -= 1
+            i += 1
+            c = self.calculate_cost(item, r)
+            
+        return r
+    
+    @staticmethod
+    def optimize_n(amount, sell_price, merchants, size=1000):
+
+        def _ratio(a, b, size=1000):
+            a = (size * b) - a
+            return a / size
+
+        offers = []
+
+        for i in range(1, merchants + 1):
+            for j in range(amount // sell_price + 1):
+                r = _ratio(j * sell_price, i, size=size)
+                if r >= 0:
+                    offers.append((i, r, j))
+
+        offers.sort(key=lambda x: (x[1], -x[0]))
+
+        r = {
+            "merchants": offers[0][0],
+            "ratio": offers[0][1],
+            "n_to_sell": offers[0][2]
+        }
+
+        return r
+    
+
 class ResourceManager:
     actual = {}
 
@@ -41,29 +106,97 @@ class ResourceManager:
 
     def do_premium_stuff(self):
         gpl = self.get_plenty_off()
-        self.logger.debug(f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}")
+        self.logger.debug(
+            f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}"
+        )
         if gpl and self.do_premium_trade:
             url = "game.php?village=%s&screen=market&mode=exchange" % self.village_id
             res = self.wrapper.get_url(url=url)
             data = Extractor.premium_data(res.text)
+
+            premium_exchange = PremiumExchange(
+                wrapper=self.wrapper,
+                stock=data["stock"],
+                capacity=data["capacity"],
+                tax=data["tax"],
+                constants=data["constants"],
+                duration=data["duration"],
+                merchants=data["merchants"]
+            )
+
+            cost_per_point = premium_exchange.calculate_rate_for_one_point(gpl)
+
+            self.logger.debug(f"Cost per point: {cost_per_point}")
+            self.logger.info(f"Current {gpl} price: {self.actual[gpl]}")
+
             if not data:
                 self.logger.warning("Error reading premium data!")
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
+            
             for p in price_fetch:
                 prices[p] = data["stock"][p] * data["rates"][p]
+
             self.logger.info("Actual premium prices: %s" % prices)
 
             if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
                 self.logger.info(
                     "Attempting trade of %d %s for premium point" % (prices[gpl], gpl)
                 )
-                self.wrapper.get_api_action(
+
+                if data["merchants"] < 1:
+                    self.logger.info("Not enough merchants available!")
+                    return
+
+                self.logger.debug(f"Trying to trade {gpl} - exchange_begin")
+
+                prices[gpl] = int(prices[gpl])
+
+                gpl_data = PremiumExchange.optimize_n(
+                    amount=prices[gpl],
+                    sell_price=cost_per_point,
+                    merchants=data["merchants"],
+                    size=1000
+                )
+
+                self.logger.debug(f"Optimized trade: {gpl} {gpl_data} {gpl_data['n_to_sell'] * cost_per_point}")
+
+                if gpl_data["ratio"] > 0.4:
+                    self.logger.info("Not worth trading!")
+                    return
+
+                result = self.wrapper.get_api_action(
                     self.village_id,
                     action="exchange_begin",
                     params={"screen": "market"},
-                    data={"sell_%s" % gpl: "1"},
+                    data={"sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point)},
                 )
+
+                if result:
+                    _rate_hash = result["response"][0]["rate_hash"]
+
+                    trade_data = {
+                        "sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point),
+                        "rate_hash": _rate_hash,
+                        "mb": "1"
+                    }
+
+                    result = self.wrapper.get_api_action(
+                        self.village_id,
+                        action="exchange_confirm",
+                        params={"screen": "market"},
+                        data=trade_data,
+                    )
+
+                    if result:
+                        self.logger.info("Trade successful!")
+                    else:
+                        self.logger.info("Trade failed!")
+                else:
+                    self.logger.debug(
+                        f"Trying to trade {gpl} for premium points - exchange_begin - failed"
+                    )
+                    self.logger.info("Trade failed!")
 
     def check_state(self):
         for source in self.requested:
@@ -111,8 +244,8 @@ class ResourceManager:
                 if self.actual[sub] > most_of:
                     most = sub
                     most_of = self.actual[sub]
-        # if most:
-        #     self.logger.debug(f"We have plenty of {most}")
+        if most:
+            self.logger.debug(f"We have plenty of {most}")
 
         return most
 
@@ -190,7 +323,7 @@ class ResourceManager:
                 self.logger.info(
                     "Removing offer %s from market because it existed too long" % offer
                 )
-    
+
     def readable_ts(self, seconds):
         seconds -= int(time.time())
         seconds = seconds % (24 * 3600)
@@ -219,23 +352,34 @@ class ResourceManager:
             need = self.get_needs()
             if need:
                 # check incoming resources
-                url = "game.php?village=%s&screen=market&mode=other_offer" % self.village_id
+                url = (
+                    "game.php?village=%s&screen=market&mode=other_offer"
+                    % self.village_id
+                )
                 res = self.wrapper.get_url(url=url)
-                p = re.compile(r'Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ', re.M)
+                p = re.compile(
+                    r"Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ", re.M
+                )
                 incoming = p.findall(res.text)
                 resource_incoming = {}
                 if incoming:
-                    resource_incoming[incoming[0][0].strip()] = int("".join([s for s in incoming[0][1] if s.isdigit()]))
-                    self.logger.info(f"There are resources incoming! {resource_incoming}")
-                
+                    resource_incoming[incoming[0][0].strip()] = int(
+                        "".join([s for s in incoming[0][1] if s.isdigit()])
+                    )
+                    self.logger.info(
+                        f"There are resources incoming! {resource_incoming}"
+                    )
+
                 item, how_many = need
                 how_many = round(how_many, -1)
                 if item in resource_incoming and resource_incoming[item] >= how_many:
-                    self.logger.info(f"Needed {item} already incoming! ({resource_incoming[item]} >= {how_many})")
+                    self.logger.info(
+                        f"Needed {item} already incoming! ({resource_incoming[item]} >= {how_many})"
+                    )
                     return
                 if how_many < 250:
                     return
-                
+
                 self.logger.debug("Checking current market offers")
                 if self.check_other_offers(item, how_many, plenty):
                     self.logger.debug("Took market offer!")
@@ -271,12 +415,14 @@ class ResourceManager:
             r"(?:<!-- insert the offer -->\n+)\s+<tr>(.*?)<\/tr>", re.S | re.M
         )
         cur_off_tds = p.findall(res.text)
-        p = re.compile(r'Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ', re.M)
+        p = re.compile(r"Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ", re.M)
         incoming = p.findall(res.text)
         resource_incoming = {}
         if incoming:
-            resource_incoming[incoming[0][0].strip()] = int("".join([s for s in incoming[0][1] if s.isdigit()]))
-        
+            resource_incoming[incoming[0][0].strip()] = int(
+                "".join([s for s in incoming[0][1] if s.isdigit()])
+            )
+
         if item in resource_incoming:
             how_many = how_many - resource_incoming[item]
             if how_many < 1:
@@ -284,8 +430,9 @@ class ResourceManager:
                 return False
 
         willing_to_sell = self.actual[sell] - self.in_need_amount(sell)
-        self.logger.debug(f"Found {len(cur_off_tds)} offers on market, willing to sell {willing_to_sell} {sell}")
-
+        self.logger.debug(
+            f"Found {len(cur_off_tds)} offers on market, willing to sell {willing_to_sell} {sell}"
+        )
 
         for tds in cur_off_tds:
             res_offer = re.findall(
@@ -319,7 +466,9 @@ class ResourceManager:
                 # print(f"Would post: {post_url} {payload}")
                 self.wrapper.post_url(post_url, data=payload)
                 self.last_trade = int(time.time())
-                self.actual[offer['wanted']] = self.actual[offer['wanted']] - offer['wanted_amount']
+                self.actual[offer["wanted"]] = (
+                    self.actual[offer["wanted"]] - offer["wanted_amount"]
+                )
                 return True
 
         # No useful offers found

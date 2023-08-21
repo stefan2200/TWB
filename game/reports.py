@@ -269,7 +269,7 @@ class ReportManager:
 class ReportCache:
     @staticmethod
     def get_cache(report_id):
-        t_path = os.path.join("cache", "reports", report_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -277,18 +277,18 @@ class ReportCache:
 
     @staticmethod
     def set_cache(report_id, entry):
-        t_path = os.path.join("cache", "reports", report_id + ".json")
+        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
         with open(t_path, "w") as f:
             return json.dump(entry, f)
 
     @staticmethod
     def cache_grab():
         output = {}
-        c_path = os.path.join("cache", "reports")
+        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports")
         for existing in os.listdir(c_path):
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join("cache", "reports", existing)
+            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", existing)
             with open(t_path, "r") as f:
                 output[existing.replace(".json", "")] = json.load(f)
         return output
