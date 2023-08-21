@@ -1,3 +1,5 @@
+import random
+
 from core.extractors import Extractor
 import time
 import logging
@@ -22,6 +24,8 @@ class BuildingManager:
     max_queue_len = 2
     resman = None
     raw_template = None
+
+    can_build_three_min = False
 
     def __init__(self, wrapper, village_id):
         self.wrapper = wrapper
@@ -68,7 +72,7 @@ class BuildingManager:
         for e in tmp:
             tmp[e] = int(tmp[e])
         self.levels = tmp
-        existing_queue = self.get_existing_items(main_data)
+        existing_queue = Extractor.active_building_queue(main_data)
         if existing_queue == 0:
             self.waits = []
             self.waits_building = []
@@ -107,6 +111,7 @@ class BuildingManager:
         # Check for instant build after putting something in the queue
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
         if self.complete_actions(main_data.text):
+            self.can_build_three_min = True
             return self.start_update(build=build, set_village_name=set_village_name)
         return True
 
@@ -115,12 +120,12 @@ class BuildingManager:
             r'(?s)(\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text
         )
         if res and int(res.group(2)) <= time.time():
-            self.wrapper.get_url(
+            result = self.wrapper.get_url(
                 "game.php?village=%s&screen=main&ajaxaction=build_order_reduce&h=%s&id=%s&destroy=0"
                 % (self.village_id, self.wrapper.last_h, res.group(1))
             )
             self.logger.debug("Quick build action was completed, re-running function")
-            return True
+            return result
         return False
 
     def put_wait(self, wait_time):
@@ -143,10 +148,6 @@ class BuildingManager:
             if w < time.time():
                 self.waits.pop(0)
         return len(self.waits) >= self.max_queue_len
-
-    def get_existing_items(self, text):
-        waits = Extractor.active_building_queue(text)
-        return waits
 
     def has_enough(self, build_item):
         if (
@@ -270,8 +271,19 @@ class BuildingManager:
                 )
                 self.levels[entry] += 1
                 result = self.wrapper.get_url(check["build_link"].replace("amp;", ""))
+                if self.can_build_three_min:
+                    # Wait some random time
+                    time.sleep(random.randint(3, 7) / 10)
+                    result = self.complete_actions(text=result.text)
+                    if result:
+                        # Remove first item from the queue
+                        self.queue.pop(0)
+                        index -= 1
+                    # Building was completed, queueing another
                 self.game_state = Extractor.game_state(result)
                 self.costs = Extractor.building_data(result)
+                # Trigger function again because game state is changed
+                self.costs = self.create_update_links(self.costs)
                 if self.resman and "building" in self.resman.requested:
                     # Build something, remove request
                     self.resman.requested["building"] = {}

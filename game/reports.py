@@ -83,10 +83,12 @@ class ReportManager:
             self.logger.info("First run, re-reading cache entries")
             self.last_reports = ReportCache.cache_grab()
             self.logger.info("Got %d reports from cache" % len(self.last_reports))
-        url = "game.php?village=%s&screen=report&mode=all&from=%d" % (
-            self.village_id,
-            page * 12,
+        offset = page * 12
+        url = "game.php?village=%s&screen=report&mode=all" % (
+            self.village_id
         )
+        if page > 0:
+            url += "&from=%d" % offset
         result = self.wrapper.get_url(url)
         self.game_state = Extractor.game_state(result)
         new = 0

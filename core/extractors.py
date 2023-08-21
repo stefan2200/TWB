@@ -163,3 +163,15 @@ class Extractor:
             res = res.text
         data = re.findall(r'(?s)class="report-link" data-id="(\d+)"', res)
         return data
+
+    @staticmethod
+    def get_daily_reward(res):
+        if type(res) != str:
+            res = res.text
+        get_daily = re.search(r'DailyBonus.init\((\s+\{.*\}),', res)
+        res = json.loads(get_daily.group(1))
+        reward_count_unlocked = str(res["reward_count_unlocked"])
+        if reward_count_unlocked and res["chests"][reward_count_unlocked]["is_collected"]:
+            return reward_count_unlocked
+        else:
+            return None
