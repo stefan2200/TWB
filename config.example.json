@@ -51,6 +51,7 @@
     "trade_for_premium": false,
     "gather_enabled": false,
     "gather_selection": 1,
+    "advanced_gather": true,
     "snobs": 0,
     "evacuate_fragile_units_on_attack": false,
     "support_others": false,
