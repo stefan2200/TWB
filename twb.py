@@ -212,15 +212,19 @@ class TWB:
                 config["world"]["quests_enabled"] = False
 
         return changed, config
+    
+    def is_active_hours(self, config):
+    
+        active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
+        get_h = time.localtime().tm_hour
+        return get_h in range(active_h[0], active_h[1])
 
     def run(self):
         config = self.config()
         if not self.internet_online():
             print("Internet seems to be down, waiting till its back online...")
             sleep = 0
-            active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
-            get_h = time.localtime().tm_hour
-            if get_h in range(active_h[0], active_h[1]):
+            if self.is_active_hours(config=config):
                 sleep = config["bot"]["active_delay"]
             else:
                 if config["bot"]["inactive_still_active"]:
@@ -262,9 +266,7 @@ class TWB:
             if not self.internet_online():
                 print("Internet seems to be down, waiting till its back online...")
                 sleep = 0
-                active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
-                get_h = time.localtime().tm_hour
-                if get_h in range(active_h[0], active_h[1]):
+                if self.is_active_hours(config=config):
                     sleep = config["bot"]["active_delay"]
                 else:
                     if config["bot"]["inactive_still_active"]:
@@ -329,9 +331,7 @@ class TWB:
                         vil.def_man.my_other_villages = defense_states
 
                 sleep = 0
-                active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
-                get_h = time.localtime().tm_hour
-                if get_h in range(active_h[0], active_h[1]):
+                if self.is_active_hours(config=config):
                     sleep = config["bot"]["active_delay"]
                 else:
                     if config["bot"]["inactive_still_active"]:

@@ -456,6 +456,7 @@ class Village:
                     self.village_id, parameter="gather_selection", default=1
                 ),
                 disabled_units=disabled_units,
+                advanced_gather=self.get_village_config(self.village_id, parameter="advanced_gather", default=1)
             )
         # market management
         if self.get_config(
