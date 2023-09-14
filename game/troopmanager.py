@@ -82,7 +82,14 @@ class TroopManager:
                 "Recruitment: %s" % self.game_data["village"]["name"]
             )
         self.troops = {}
-        for u in Extractor.units_in_village(main_data):
+
+        get_all = (
+            "game.php?village=%s&screen=place&mode=units&display=units"
+            % self.village_id
+        )
+        result_all = self.wrapper.get_url(get_all)
+
+        for u in Extractor.units_in_village(result_all):
             k, v = u
             self.troops[k] = v
 
@@ -91,11 +98,6 @@ class TroopManager:
         if not self.can_recruit:
             return
 
-        get_all = (
-            "game.php?village=%s&screen=place&mode=units&display=units"
-            % self.village_id
-        )
-        result_all = self.wrapper.get_url(get_all)
         self.total_troops = {}
         for u in Extractor.units_in_total(result_all):
             k, v = u
@@ -336,6 +338,18 @@ class TroopManager:
 
         sleep = 0
         available_selection = 0
+
+        self.troops = {}
+
+        get_all = (
+            "game.php?village=%s&screen=place&mode=units&display=units"
+            % self.village_id
+        )
+        result_all = self.wrapper.get_url(get_all)
+
+        for u in Extractor.units_in_village(result_all):
+            k, v = u
+            self.troops[k] = v
 
         troops = dict(self.troops)
 
