@@ -104,7 +104,7 @@ class Extractor:
     def units_in_village(res):
         if type(res) != str:
             res = res.text
-        matches = re.search(r'<td>From this village</td>(.*?)</tr>', res, re.DOTALL) #We get the row saying "From this village", until the row is over (</tr>)
+        matches = re.search(r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL) #We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
         if matches:
             table_content = matches.group(1)
             unit_matches = re.findall(r'class=\'unit-item unit-item-(.*?)\'[^>]*>(\d+)</td>', table_content) #Find all the tuples (name, quantity) under the class "unit-item unit-item-*troop_name*"
