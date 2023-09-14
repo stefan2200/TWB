@@ -104,9 +104,14 @@ class Extractor:
     def units_in_village(res):
         if type(res) != str:
             res = res.text
-        res = re.sub('(?s)<table id="units_home".+?</table>', '', res)
-        data = re.findall(r'(?s)<a href="#" class="unit_link" data-unit="(\w+)".+?(\d+)</strong>', res)
-        return data
+        matches = re.search(r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL) #We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
+        if matches:
+            table_content = matches.group(1)
+            unit_matches = re.findall(r'class=\'unit-item unit-item-(.*?)\'[^>]*>(\d+)</td>', table_content) #Find all the tuples (name, quantity) under the class "unit-item unit-item-*troop_name*"
+            units = [(re.sub(r'\s*tooltip\s*', '', unit_name), unit_quantity) for unit_name, unit_quantity in unit_matches if int(unit_quantity) > 0] #Filter units with quantity = 0, also for the Paladin, the name would be "knight tooltip", so we had to remove that.
+            return units
+        else:
+            return []
 
     @staticmethod
     def active_building_queue(res):
