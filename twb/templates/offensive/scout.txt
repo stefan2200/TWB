@@ -1,0 +1,10 @@
+{
+    "village":"nearest",
+    "groups": [
+        {"units": {
+            "spy":150
+        },
+        "await":true
+        }
+    ]
+}
