@@ -66,6 +66,23 @@ class Village:
             return default
         return vdata[parameter]
 
+    def get_daily_reward(self, res):
+        is_daily_reward = Extractor.game_state(res)
+        if is_daily_reward and is_daily_reward.get("player", None) and \
+                is_daily_reward.get("player", {}).get("new_daily_bonus", None):
+            if is_daily_reward["player"]["new_daily_bonus"] == "1":
+                result_get = self.wrapper.get_url(
+                    "game.php?village=%s&screen=info_player&mode=daily_bonus" % self.village_id)
+                reward_count_unlocked = Extractor.get_daily_reward(result_get)
+                if reward_count_unlocked:
+                    self.logger.debug("Day %s reward is available" % reward_count_unlocked)
+                    self.wrapper.post_url(
+                        url="game.php?village=%s&screen=daily_bonus&ajaxaction=open"
+                            % self.village_id,
+                        data={"day": reward_count_unlocked, "h": self.wrapper.last_h, "from_screen": "profile"},
+                    )
+        return False
+
     def run(self, config=None, first_run=False):
         # setup and check if village still exists / is accessible
         self.config = config

@@ -50,10 +50,8 @@ class SnobManager:
         game_data = Extractor.game_state(result)
         self.resman.update(game_data)
 
-        can_recruit = re.search(
-            r"(?s)</th><th>(\d+)</th></tr>\s*</table><br />", result.text
-        )
-        if not can_recruit or int(can_recruit.group(1)) == 0:
+        can_recruit = "action=train" in result.text
+        if not can_recruit:
             nres = self.need_reserve(result.text)
             if nres > 0:
                 self.logger.debug(
@@ -72,11 +70,11 @@ class SnobManager:
                     self.logger.debug("Not enough resources available")
                     return False
         self.is_incomplete = False
-        r_num = int(can_recruit.group(1))
-        if r_num == 0:
+        if not self.has_resources(result.text):
             self.logger.debug(
-                "No more snobs available, awaiting snob creating, snob death or village loss"
+                "Insufficient resources available, requesting"
             )
+            self.is_incomplete = True
             return False
         train_snob_url = "game.php?village=%s&screen=snob&action=train&h=%s" % (
             self.village_id,
@@ -84,6 +82,18 @@ class SnobManager:
         )
         self.wrapper.get_url(train_snob_url)
         return True
+
+    def has_resources(self, result):
+        storage_re = re.search(r"train\.next_snob\s*=\s*(\{.+?\})", result)
+        if not storage_re:
+            self.logger.warning(
+                "Snob recruit is called but storage data not on page, error?"
+            )
+            return False
+        raw_coin = storage_re.group(1)
+        data = json.loads(raw_coin)
+
+        return self.has_enough(data)
 
     def storage_item(self, result):
         storage_re = re.search(r"train\.storage_item = (\{.+?\})", result)

@@ -534,8 +534,6 @@ class TroopManager:
             req = resources[res] * (wanted_times - has_times)
             self.resman.request(source=f"recruitment_{unit_type}", resource=res, amount=req)
 
-
-
     def readable_ts(self, seconds):
         seconds -= time.time()
         seconds = seconds % (24 * 3600)

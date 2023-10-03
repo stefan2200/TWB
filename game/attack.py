@@ -55,7 +55,7 @@ class AttackManager:
             return False
         self.get_targets()
         ignored = []
-        for target in self.targets[0 : self.max_farms]:
+        for target in self.targets[0:self.max_farms]:
             if type(self.template) == list:
                 f = False
                 for template in self.template:
@@ -302,8 +302,10 @@ class AttackManager:
             return False
         return cache_entry
 
-    def has_troops_available(self, troops):
+    def has_troops_available(self, troops, ignored_troops=None):
         for t in troops:
+            if ignored_troops and t in ignored_troops:
+                continue
             if (
                 t not in self.troopmanager.troops
                 or int(self.troopmanager.troops[t]) < troops[t]

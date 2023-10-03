@@ -12,4 +12,10 @@ class TemplateManager:
                 if output_json:
                     return json.load(f)
                 return f.read().strip().split()
+        t_path = os.path.join(os.path.dirname(__file__), "..", "templates", category, template + ".json")
+        if os.path.exists(t_path):
+            with open(t_path, 'r') as f:
+                if output_json:
+                    return json.load(f)
+                return f.read().strip().split()
         return None
