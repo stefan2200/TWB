@@ -2,3 +2,4 @@ requests
 coloredlogs
 psutil
 flask
+pyquery
