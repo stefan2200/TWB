@@ -16,7 +16,7 @@ from game.snobber import SnobManager
 
 from core.extractors import Extractor
 from core.templates import TemplateManager
-from core.twplus import TwPlus
+from core.twstats import TwStats
 
 
 class Village:
@@ -37,7 +37,7 @@ class Village:
     config = None
     village_set_name = None
 
-    twp = TwPlus()
+    twp = TwStats()
 
     def __init__(self, village_id=None, wrapper=None):
         self.village_id = village_id
@@ -113,9 +113,9 @@ class Village:
         if not self.get_config(section="villages", parameter=self.village_id):
             return None
         if self.get_config(
-            section="server", parameter="server_on_twplus", default=False
+            section="server", parameter="server_on_twstats", default=False
         ):
-            self.twp.run(world=self.get_config(section="server", parameter="world"))
+            self.twp.run(world=self.get_config(section="server", parameter="server"))
 
         vdata = self.get_config(section="villages", parameter=self.village_id)
         if not self.get_village_config(

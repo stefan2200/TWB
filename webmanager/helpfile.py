@@ -2,7 +2,7 @@ help_file = {
     'server': 'Configure the world the bot should play on',
     'server.server': 'The server endpoint to use (the world)',
     'server.endpoint': 'Endpoint server to use (the full url)',
-    'server.server_on_twplus': 'Is the server listed on twplus.org?',
+    'server.server_on_twstats': 'Is the server listed on twstats.com?',
     'reporting': 'Enable advanced reporting features',
     'reporting.enabled': 'Enable the reporting feature',
     'reporting.connection_string': 'Could be of type file://filename or mysql://user:password@host:port/database_name',
