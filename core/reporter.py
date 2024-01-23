@@ -4,13 +4,13 @@ import time
 
 try:
     import pymysql
+
     has_pymysql = True
 except ImportError:
     has_pymysql = False
 
 
 class RemoteReporter:
-
     def report(self, connection, village_id, action, data):
         return
 
@@ -25,9 +25,8 @@ class RemoteReporter:
 
 
 class FileReporter:
-
     def report(self, connection, village_id, action, data):
-        with open(connection, 'a') as f:
+        with open(connection, "a") as f:
             f.write("%d - %s - %s - %s\n" % (time.time(), village_id, action, data))
         return
 
@@ -38,19 +37,27 @@ class FileReporter:
         return
 
     def setup(self, connection):
-        with open(connection, 'w') as f:
+        with open(connection, "w") as f:
             f.write("Starting bot at %d\n" % time.time())
 
 
 class MySQLReporter(RemoteReporter):
-
     def connection_from_object(self, cobj):
-        return pymysql.connect(host=cobj['host'], port=cobj['port'], user=cobj['user'], password=cobj['password'], database=cobj['database'])
+        return pymysql.connect(
+            host=cobj["host"],
+            port=cobj["port"],
+            user=cobj["user"],
+            password=cobj["password"],
+            database=cobj["database"],
+        )
 
     def report(self, connection, village_id, action, data):
         con = self.connection_from_object(connection)
         cur = con.cursor()
-        cur.execute("INSERT INTO twb_logs (village, action, data, ts) VALUES (%s, %s, %s, NOW())", (village_id, action, data))
+        cur.execute(
+            "INSERT INTO twb_logs (village, action, data, ts) VALUES (%s, %s, %s, NOW())",
+            (village_id, action, data),
+        )
         con.commit()
         cur.close()
         con.close()
@@ -58,12 +65,20 @@ class MySQLReporter(RemoteReporter):
     def add_data(self, connection, village_id, data_type, data):
         con = self.connection_from_object(connection)
         cur = con.cursor()
-        cur.execute("SELECT * FROM twb_data WHERE village_id = %s AND data_type = %s", (village_id, data_type))
+        cur.execute(
+            "SELECT * FROM twb_data WHERE village_id = %s AND data_type = %s",
+            (village_id, data_type),
+        )
         if cur.rowcount > 0:
-            cur.execute("UPDATE twb_data SET data = %s, last_update = NOW() WHERE village_id = %s AND data_type = %s", (data, village_id, data_type))
+            cur.execute(
+                "UPDATE twb_data SET data = %s, last_update = NOW() WHERE village_id = %s AND data_type = %s",
+                (data, village_id, data_type),
+            )
         else:
-            cur.execute("INSERT INTO twb_data (village_id, data_type, data, last_update) VALUES (%s, %s, %s, NOW())",
-                        (village_id, data_type, data))
+            cur.execute(
+                "INSERT INTO twb_data (village_id, data_type, data, last_update) VALUES (%s, %s, %s, NOW())",
+                (village_id, data_type, data),
+            )
         con.commit()
         cur.close()
         con.close()
@@ -113,30 +128,38 @@ class ReporterObject:
             self.setup(connection_string=connection_string)
 
     def setup(self, connection_string):
-        if connection_string.startswith('mysql://'):
+        if connection_string.startswith("mysql://"):
             if not has_pymysql:
-                self.logger.error("pymysql is required for MYSQL logging\nYou can install it using pip install pymysql")
+                self.logger.error(
+                    "pymysql is required for MYSQL logging\nYou can install it using pip install pymysql"
+                )
                 self.enabled = False
                 return
 
-            parameters = connection_string.split('://')[1]
-            creds, host_and_db = parameters.split('@')
-            username, password = creds.split(':')
-            host, database = host_and_db.split('/')
+            parameters = connection_string.split("://")[1]
+            creds, host_and_db = parameters.split("@")
+            username, password = creds.split(":")
+            host, database = host_and_db.split("/")
             port = 3306
             if ":" in host:
                 host, port = host.split(":")
                 port = int(port)
-            self.connection = {"host": host, "port": port, "user": username, "password": password, "database": database}
+            self.connection = {
+                "host": host,
+                "port": port,
+                "user": username,
+                "password": password,
+                "database": database,
+            }
             self.object = MySQLReporter()
             if self.object.setup(self.connection):
                 self.logger.info("MySQL set-up complete")
             else:
                 self.logger.info("Unable to set-up MySQL logging, disabling!")
                 self.enabled = False
-        elif connection_string.startswith('file://'):
+        elif connection_string.startswith("file://"):
             outfile = connection_string.split("://")[1]
-            outfile = outfile.replace('{ts}', str(int(time.time())))
+            outfile = outfile.replace("{ts}", str(int(time.time())))
             self.connection = outfile
             self.object = FileReporter()
             self.object.setup(self.connection)
@@ -157,4 +180,3 @@ class ReporterObject:
         if self.enabled:
             return self.object.get_config(self.connection, village_id, action, data)
         return
-

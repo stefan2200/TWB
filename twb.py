@@ -86,7 +86,9 @@ class TWB:
                 print("Goodbye :)")
                 sys.exit(0)
             root_directory = os.path.dirname(__file__)
-            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
+            with open(
+                os.path.join(root_directory, "config.example.json"), "r"
+            ) as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
@@ -104,7 +106,9 @@ class TWB:
         template = None
         root_directory = os.path.dirname(__file__)
         if os.path.exists(os.path.join(root_directory, "config.example.json")):
-            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
+            with open(
+                os.path.join(root_directory, "config.example.json"), "r"
+            ) as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
@@ -212,9 +216,8 @@ class TWB:
                 config["world"]["quests_enabled"] = False
 
         return changed, config
-    
+
     def is_active_hours(self, config):
-    
         active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
@@ -276,7 +279,8 @@ class TWB:
                 dtn = datetime.datetime.now()
                 dt_next = dtn + datetime.timedelta(0, sleep)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)"
+                    % (sleep / 60, dt_next.time())
                 )
                 time.sleep(sleep)
             else:
@@ -286,7 +290,9 @@ class TWB:
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
+                    with open(
+                        os.path.join(os.path.dirname(__file__), "config.json"), "w"
+                    ) as newcf:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
@@ -306,7 +312,11 @@ class TWB:
                         and config["bot"]["auto_set_village_names"]
                     ):
                         template = config["bot"]["village_name_template"]
-                        fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
+                        fs = (
+                            "%0"
+                            + str(config["bot"]["village_name_number_length"])
+                            + "d"
+                        )
                         num_pad = fs % vnum
                         template = template.replace("{num}", num_pad)
                         vil.village_set_name = template
@@ -344,7 +354,8 @@ class TWB:
 
                 VillageManager.farm_manager(verbose=True)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)"
+                    % (sleep / 60, dt_next.time())
                 )
                 sys.stdout.flush()
                 time.sleep(sleep)

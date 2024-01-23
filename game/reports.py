@@ -121,6 +121,7 @@ class ReportManager:
             )
             return self.read(page, full_run=full_run)
 
+
     def re_unit(self, inp):
         output = {}
         for row in inp:
