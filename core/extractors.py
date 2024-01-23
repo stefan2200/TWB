@@ -14,7 +14,7 @@ class Extractor:
 
     @staticmethod
     def game_state(res):
-        if type(res) != str:
+        if res is not None and not isinstance(res, str):
             res = res.text
         grabber = re.search(r"TribalWars\.updateGameData\((.+?)\);", res)
         if grabber:
