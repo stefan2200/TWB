@@ -65,65 +65,75 @@ class Village:
             )
             return default
         return vdata[parameter]
+    
+    def setup_village_configuration(self, data):
+        """Sets up the village configuration and loads village data."""
+
+        # Setting up logger with the village name
+        village_name = self.game_data["village"]["name"]
+        self.village_id = str(self.game_data["village"]["id"])
+        self.logger = logging.getLogger(f"Village {village_name}")
+        self.logger.info("Read game state for village")
+
+        # Starting reporting if village ID is available
+        if self.village_id:
+            self.wrapper.reporter.report(
+                self.village_id,
+                "TWB_START",
+                f"Starting run for village: {village_name}"
+            )
+
+        # Set logger name to village name if configured
+        if self.village_set_name and village_name != self.village_set_name:
+            self.logger.name = f"Village {self.village_set_name}"
+
+        # Checking for village configuration
+        if not self.get_config(section="villages", parameter=self.village_id):
+            logging.warning(f"No configuration found for village {self.village_id}")
+            return False
+
+        # Checking TWStats if enabled
+        if self.get_config(section="server", parameter="server_on_twstats", default=False):
+            self.twp.run(world=self.get_config(section="server", parameter="server"))
+
+        # Checking if the village is configured to be managed
+        if not self.get_village_config(self.village_id, parameter="managed", default=False):
+            logging.info(f"Village {self.village_id} is not configured for management")
+            return False
+
+        return True
 
     def run(self, config=None, first_run=False):
-        # setup and check if village still exists / is accessible
         self.config = config
+
+        # Setting the delay factor based on configuration
         self.wrapper.delay = self.get_config(
             section="bot", parameter="delay_factor", default=1.0
         )
-        if not self.village_id:
-            data = self.wrapper.get_url("game.php?screen=overview&intro")
-            if data:
-                self.game_data = Extractor.game_state(data)
-            if self.game_data:
-                self.village_id = str(self.game_data["village"]["id"])
-                self.logger = logging.getLogger(
-                    "Village %s" % self.game_data["village"]["name"]
-                )
-                self.logger.info("Read game state for village")
-        else:
-            data = self.wrapper.get_url(
-                "game.php?village=%s&screen=overview" % self.village_id
-            )
-            if data:
-                self.game_data = Extractor.game_state(data)
-                self.logger = logging.getLogger(
-                    "Village %s" % self.game_data["village"]["name"]
-                )
-                self.logger.info("Read game state for village")
-                self.wrapper.reporter.report(
-                    self.village_id,
-                    "TWB_START",
-                    "Starting run for village: %s" % self.game_data["village"]["name"],
-                )
 
+        # Constructing the URL for fetching village data
+        url = "game.php?screen=overview"
+        url += f"&village={self.village_id}" if self.village_id else "&intro"
+
+        # Retrieving data from the constructed URL
+        data = self.wrapper.get_url(url)
+        if not data:
+            logging.error(f"No data retrieved from URL: {url}")
+            return False
+
+        # Extracting game state from the data
+        self.game_data = Extractor.game_state(data)
         if not self.game_data:
-            self.logger.error(
-                "Error reading game data for village %s" % self.village_id
-            )
-            return None
-
-        if (
-            self.village_set_name
-            and self.game_data["village"]["name"] != self.village_set_name
-        ):
-            self.logger.name = "Village %s" % self.village_set_name
-
-        if not self.get_config(section="villages", parameter=self.village_id):
-            return None
-        if self.get_config(
-            section="server", parameter="server_on_twstats", default=False
-        ):
-            self.twp.run(world=self.get_config(section="server", parameter="server"))
-
+            logging.error(f"Error reading game data for village {self.village_id}")
+            return False
+        
+        # setup and check if village still exists / is accessible
+        if not self.setup_village_configuration(data):
+            return False
+        
+        # Get vdata for reporting, already checked if it exists in setup_village_configuration
         vdata = self.get_config(section="villages", parameter=self.village_id)
-        if not self.get_village_config(
-            self.village_id, parameter="managed", default=False
-        ):
-            return False
-        if not self.game_data:
-            return False
+
         if not self.resman:
             self.resman = ResourceManager(
                 wrapper=self.wrapper, village_id=self.village_id
