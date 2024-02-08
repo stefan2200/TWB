@@ -12,17 +12,17 @@ from pyquery import PyQuery as pq
 
 class TwStats:
     max_levels = {
-        'main': 30,
-        'barracks': 25,
-        'stable': 20,
-        'garage': 15,
-        'smith': 20,
-        'snob': 3,
-        'market': 25,
-        'wood': 30,
-        'stone': 30,
-        'iron': 30,
-        'wall': 20
+        "main": 30,
+        "barracks": 25,
+        "stable": 20,
+        "garage": 15,
+        "smith": 20,
+        "snob": 3,
+        "market": 25,
+        "wood": 30,
+        "stone": 30,
+        "iron": 30,
+        "wall": 20,
     }
 
     output = {}
@@ -38,7 +38,10 @@ class TwStats:
     def get_building_data(self, world):
         output = defaultdict(dict)
         for upgrade_building in self.max_levels:
-            geturl = "http://twstats.com/%s/index.php?page=buildings&detail=%s" % (world, upgrade_building)
+            geturl = "http://twstats.com/%s/index.php?page=buildings&detail=%s" % (
+                world,
+                upgrade_building,
+            )
             res = requests.get(geturl)
             table = pq(res.content).find("table.vis")
 
@@ -48,10 +51,10 @@ class TwStats:
                 output[upgrade_building][building_level] = village_population
 
         try:
-            with open('cache/world/buildings_%s.json' % world, 'w') as f:
+            with open("cache/world/buildings_%s.json" % world, "w") as f:
                 f.write(json.dumps(output))
         except:
-            with open('../cache/world/buildings_%s.json' % world, 'w') as f:
+            with open("../cache/world/buildings_%s.json" % world, "w") as f:
                 f.write(json.dumps(output))
         self.output = output
         return output
@@ -72,15 +75,17 @@ class TwsCache:
     def get_cache(world):
         t_path = os.path.join("cache", "world", "buildings_%s" % world + ".json")
         if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
+            with open(t_path, "r") as f:
                 return json.load(f)
         else:
-            t_path = os.path.join("../", "cache", "world", "buildings_%s" % world + ".json")
+            t_path = os.path.join(
+                "../", "cache", "world", "buildings_%s" % world + ".json"
+            )
             if os.path.exists(t_path):
-                with open(t_path, 'r') as f:
+                with open(t_path, "r") as f:
                     return json.load(f)
         return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     TwStats().run(world=sys.argv[1])

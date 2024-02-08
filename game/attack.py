@@ -228,10 +228,12 @@ class AttackManager:
             last_attack = datetime.fromtimestamp(cache_entry["last_attack"])
             now = datetime.now()
             if last_attack < now - timedelta(hours=12):
-                self.logger.debug(f"Attacked long ago({last_attack}), trying scout attack")
+                self.logger.debug(
+                    f"Attacked long ago({last_attack}), trying scout attack"
+                )
                 if self.scout(vid):
                     return False
-        
+
         if not cache_entry:
             status = self.repman.safe_to_engage(vid)
             if status == 1:
@@ -255,8 +257,12 @@ class AttackManager:
                     )
                     return False
                 if status == 0:
-                    if cache_entry["last_attack"] + self.farm_low_prio_wait * 2 > int(time.time()):
-                        self.logger.info(f"{vid}: Old scout report found ({cache_entry['last_attack']}), re-scouting")
+                    if cache_entry["last_attack"] + self.farm_low_prio_wait * 2 > int(
+                        time.time()
+                    ):
+                        self.logger.info(
+                            f"{vid}: Old scout report found ({cache_entry['last_attack']}), re-scouting"
+                        )
                         self.scout(vid)
                         return False
                     else:
@@ -283,15 +289,17 @@ class AttackManager:
             min_time = self.farm_high_prio_wait
         if "low_profile" in cache_entry and cache_entry["low_profile"]:
             min_time = self.farm_low_prio_wait
-        
+
         if cache_entry and self.repman:
             res_left, res = self.repman.has_resources_left(vid)
             total_loot = 0
             for x in res:
                 total_loot += int(res[x])
-            
+
             if res_left and total_loot > 100:
-                self.logger.debug(f"Draining farm of resources! Sending attack to get {res}.")
+                self.logger.debug(
+                    f"Draining farm of resources! Sending attack to get {res}."
+                )
                 min_time = int(self.farm_high_prio_wait / 2)
 
         if cache_entry["last_attack"] + min_time > int(time.time()):
@@ -332,13 +340,19 @@ class AttackManager:
 
         confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
         conf = self.wrapper.post_url(url=confirm_url, data=pre_data)
-        if '<div class="error_box">' in conf.text:
+        if (
+            conf is not None
+            and hasattr(conf, "text")
+            and '<div class="error_box">' in conf.text
+        ):
             return False
         duration = Extractor.attack_duration(conf)
         if self.forced_peace_time:
             now = datetime.now()
             if now + timedelta(seconds=duration) > self.forced_peace_time:
-                self.logger.info("Attack would arrive after the forced peace timer, not sending attack!")
+                self.logger.info(
+                    "Attack would arrive after the forced peace timer, not sending attack!"
+                )
                 return "forced_peace"
 
         self.logger.info(
@@ -371,7 +385,9 @@ class AttackManager:
 class AttackCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json"
+        )
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -379,7 +395,9 @@ class AttackCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json"
+        )
         with open(t_path, "w") as f:
             return json.dump(entry, f)
 
@@ -390,7 +408,9 @@ class AttackCache:
         for existing in os.listdir(c_path):
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", existing)
+            t_path = os.path.join(
+                os.path.dirname(__file__), "..", "cache", "attacks", existing
+            )
             with open(t_path, "r") as f:
                 output[existing.replace(".json", "")] = json.load(f)
         return output

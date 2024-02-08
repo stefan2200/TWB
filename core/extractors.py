@@ -3,21 +3,20 @@ import json
 
 
 class Extractor:
-
     @staticmethod
     def village_data(res):
         if type(res) != str:
             res = res.text
-        grabber = re.search(r'var village = (.+);', res)
+        grabber = re.search(r"var village = (.+);", res)
         if grabber:
             data = grabber.group(1)
             return json.loads(data, strict=False)
 
     @staticmethod
     def game_state(res):
-        if type(res) != str:
+        if res is not None and not isinstance(res, str):
             res = res.text
-        grabber = re.search(r'TribalWars\.updateGameData\((.+?)\);', res)
+        grabber = re.search(r"TribalWars\.updateGameData\((.+?)\);", res)
         if grabber:
             data = grabber.group(1)
             return json.loads(data, strict=False)
@@ -26,7 +25,7 @@ class Extractor:
     def building_data(res):
         if type(res) != str:
             res = res.text
-        dre = re.search(r'(?s)BuildingMain.buildings = (\{.+?\});', res)
+        dre = re.search(r"(?s)BuildingMain.buildings = (\{.+?\});", res)
         if dre:
             return json.loads(dre.group(1), strict=False)
 
@@ -36,12 +35,12 @@ class Extractor:
     def get_quests(res):
         if type(res) != str:
             res = res.text
-        get_quests = re.search(r'Quests.setQuestData\((\{.+?\})\);', res)
+        get_quests = re.search(r"Quests.setQuestData\((\{.+?\})\);", res)
         if get_quests:
             result = json.loads(get_quests.group(1), strict=False)
             for quest in result:
                 data = result[quest]
-                if data['goals_completed'] == data['goals_total']:
+                if data["goals_completed"] == data["goals_total"]:
                     return quest
         return None
 
@@ -49,12 +48,12 @@ class Extractor:
     def get_quest_rewards(res):
         if type(res) != str:
             res = res.text
-        get_rewards = re.search(r'RewardSystem\.setRewards\(\s*(\[\{.+?\}\]),', res)
+        get_rewards = re.search(r"RewardSystem\.setRewards\(\s*(\[\{.+?\}\]),", res)
         rewards = []
         if get_rewards:
             result = json.loads(get_rewards.group(1), strict=False)
             for reward in result:
-                if reward['status'] == "unlocked":
+                if reward["status"] == "unlocked":
                     rewards.append(reward)
         # Return all off them
         return rewards
@@ -63,7 +62,7 @@ class Extractor:
     def map_data(res):
         if type(res) != str:
             res = res.text
-        data = re.search(r'(?s)TWMap.sectorPrefech = (\[(.+?)\]);', res)
+        data = re.search(r"(?s)TWMap.sectorPrefech = (\[(.+?)\]);", res)
         if data:
             result = json.loads(data.group(1), strict=False)
             return result
@@ -72,7 +71,7 @@ class Extractor:
     def smith_data(res):
         if type(res) != str:
             res = res.text
-        data = re.search(r'(?s)BuildingSmith.techs = (\{.+?\});', res)
+        data = re.search(r"(?s)BuildingSmith.techs = (\{.+?\});", res)
         if data:
             result = json.loads(data.group(1), strict=False)
             return result
@@ -82,7 +81,7 @@ class Extractor:
     def premium_data(res):
         if type(res) != str:
             res = res.text
-        data = re.search(r'(?s)PremiumExchange.receiveData\((.+?)\);', res)
+        data = re.search(r"(?s)PremiumExchange.receiveData\((.+?)\);", res)
         if data:
             result = json.loads(data.group(1), strict=False)
             return result
@@ -92,10 +91,10 @@ class Extractor:
     def recruit_data(res):
         if type(res) != str:
             res = res.text
-        data = re.search(r'(?s)unit_managers.units = (\{.+?\});', res)
+        data = re.search(r"(?s)unit_managers.units = (\{.+?\});", res)
         if data:
             raw = data.group(1)
-            quote_keys_regex = r'([\{\s,])(\w+)(:)'
+            quote_keys_regex = r"([\{\s,])(\w+)(:)"
             processed = re.sub(quote_keys_regex, r'\1"\2"\3', raw)
             result = json.loads(processed, strict=False)
             return result
@@ -104,11 +103,19 @@ class Extractor:
     def units_in_village(res):
         if type(res) != str:
             res = res.text
-        matches = re.search(r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL) #We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
+        matches = re.search(
+            r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL
+        )  # We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
         if matches:
             table_content = matches.group(1)
-            unit_matches = re.findall(r'class=\'unit-item unit-item-(.*?)\'[^>]*>(\d+)</td>', table_content) #Find all the tuples (name, quantity) under the class "unit-item unit-item-*troop_name*"
-            units = [(re.sub(r'\s*tooltip\s*', '', unit_name), unit_quantity) for unit_name, unit_quantity in unit_matches if int(unit_quantity) > 0] #Filter units with quantity = 0, also for the Paladin, the name would be "knight tooltip", so we had to remove that.
+            unit_matches = re.findall(
+                r"class=\'unit-item unit-item-(.*?)\'[^>]*>(\d+)</td>", table_content
+            )  # Find all the tuples (name, quantity) under the class "unit-item unit-item-*troop_name*"
+            units = [
+                (re.sub(r"\s*tooltip\s*", "", unit_name), unit_quantity)
+                for unit_name, unit_quantity in unit_matches
+                if int(unit_quantity) > 0
+            ]  # Filter units with quantity = 0, also for the Paladin, the name would be "knight tooltip", so we had to remove that.
             return units
         else:
             return []
@@ -127,7 +134,7 @@ class Extractor:
     def active_recruit_queue(res):
         if type(res) != str:
             res = res.text
-        builder = re.findall(r'(?s)TrainOverview\.cancelOrder\((\d+)\)', res)
+        builder = re.findall(r"(?s)TrainOverview\.cancelOrder\((\d+)\)", res)
         return builder
 
     @staticmethod
@@ -142,14 +149,17 @@ class Extractor:
         if type(res) != str:
             res = res.text
         # hide units from other villages
-        res = re.sub(r'(?s)<span class="village_anchor.+?</tr>', '', res)
-        data = re.findall(r'(?s)class=\Wunit-item unit-item-([a-z]+)\W.+?(\d+)</td>', res)
+        res = re.sub(r'(?s)<span class="village_anchor.+?</tr>', "", res)
+        data = re.findall(
+            r"(?s)class=\Wunit-item unit-item-([a-z]+)\W.+?(\d+)</td>", res
+        )
         return data
 
     @staticmethod
     def attack_form(res):
         if type(res) != str:
-            res = res.text
+            if res:
+                res = res.text
         data = re.findall(r'(?s)<input.+?name="(.+?)".+?value="(.*?)"', res)
         return data
 
@@ -173,10 +183,13 @@ class Extractor:
     def get_daily_reward(res):
         if type(res) != str:
             res = res.text
-        get_daily = re.search(r'DailyBonus.init\((\s+\{.*\}),', res)
+        get_daily = re.search(r"DailyBonus.init\((\s+\{.*\}),", res)
         res = json.loads(get_daily.group(1))
         reward_count_unlocked = str(res["reward_count_unlocked"])
-        if reward_count_unlocked and res["chests"][reward_count_unlocked]["is_collected"]:
+        if (
+            reward_count_unlocked
+            and res["chests"][reward_count_unlocked]["is_collected"]
+        ):
             return reward_count_unlocked
         else:
             return None
