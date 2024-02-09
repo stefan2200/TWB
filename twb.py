@@ -224,25 +224,25 @@ class TWB:
         return get_h in range(active_h[0], active_h[1])
 
     def run(self):
-        config = self.config()
-        if not self.internet_online():
-            print("Internet seems to be down, waiting till its back online...")
-            sleep = 0
-            if self.is_active_hours(config=config):
-                sleep = config["bot"]["active_delay"]
+        while self.should_run:
+            if not self.internet_online():
+                self.wait_for_internet()
             else:
-                if config["bot"]["inactive_still_active"]:
-                    sleep = config["bot"]["inactive_delay"]
+                config = self.config()
+                self.process_config_and_villages(config)
+                self.manage_defense_states(config)
+                self.manage_sleep(config)
+                self.runs += 1
 
-            sleep += random.randint(20, 120)
-            dtn = datetime.datetime.now()
-            dt_next = dtn + datetime.timedelta(0, sleep)
-            print(
-                "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
-            )
-            time.sleep(sleep)
-            return False
+    def wait_for_internet(self):
+        print("Internet seems to be down, waiting till it's back online...")
+        config = self.config()
+        sleep = self.calculate_sleep_time(config)
+        dt_next = datetime.datetime.now() + datetime.timedelta(0, sleep)
+        print("Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time()))
+        time.sleep(sleep)
 
+    def process_config_and_villages(self, config):
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
             server=config["server"]["server"],
@@ -250,117 +250,71 @@ class TWB:
             reporter_enabled=config["reporting"]["enabled"],
             reporter_constr=config["reporting"]["connection_string"],
         )
-
         self.wrapper.start()
+
         if not config["bot"].get("user_agent", None):
-            print(
-                "No custom user agent was supplied, this will likely get you banned."
-                "Please set the bot -> user_agent parameter to your browsers one. "
-                "Just google what is my user agent"
-            )
+            print("No custom user agent was supplied, this will likely get you banned."
+                  "Please set the bot -> user_agent parameter to your browser's one. "
+                  "Just google what is my user agent")
             return
+
         self.wrapper.headers["user-agent"] = config["bot"]["user_agent"]
         for vid in config["villages"]:
             v = Village(wrapper=self.wrapper, village_id=vid)
             self.villages.append(copy.deepcopy(v))
-        # setup additional builder
-        rm = None
+
+    def manage_defense_states(self, config):
         defense_states = {}
-        while self.should_run:
-            if not self.internet_online():
-                print("Internet seems to be down, waiting till its back online...")
-                sleep = 0
-                if self.is_active_hours(config=config):
-                    sleep = config["bot"]["active_delay"]
-                else:
-                    if config["bot"]["inactive_still_active"]:
-                        sleep = config["bot"]["inactive_delay"]
-
-                sleep += random.randint(20, 120)
-                dtn = datetime.datetime.now()
-                dt_next = dtn + datetime.timedelta(0, sleep)
-                print(
-                    "Dead for %f.2 minutes (next run at: %s)"
-                    % (sleep / 60, dt_next.time())
-                )
-                time.sleep(sleep)
+        result_villages, res_text, config = self.get_overview(config)
+        has_changed, new_cf = self.get_world_options(res_text.text, config)
+        if has_changed:
+            print("Updated world options")
+            config = self.merge_configs(config, new_cf)
+            with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
+                json.dump(config, newcf, indent=2, sort_keys=False)
+                print("Deployed new configuration file")
+        vnum = 1
+        for vil in self.villages:
+            if result_villages and vil.village_id not in result_villages:
+                print("Village %s will be ignored because it is not available anymore" % vil.village_id)
+                continue
+            if not self.rep_man:
+                self.rep_man = vil.rep_man
             else:
-                config = self.config()
-                result_villages, res_text, config = self.get_overview(config)
-                has_changed, new_cf = self.get_world_options(res_text.text, config)
-                if has_changed:
-                    print("Updated world options")
-                    config = self.merge_configs(config, new_cf)
-                    with open(
-                        os.path.join(os.path.dirname(__file__), "config.json"), "w"
-                    ) as newcf:
-                        json.dump(config, newcf, indent=2, sort_keys=False)
-                        print("Deployed new configuration file")
-                vnum = 1
-                for vil in self.villages:
-                    if result_villages and vil.village_id not in result_villages:
-                        print(
-                            "Village %s will be ignored because it is not available anymore"
-                            % vil.village_id
-                        )
-                        continue
-                    if not rm:
-                        rm = vil.rep_man
-                    else:
-                        vil.rep_man = rm
-                    if (
-                        "auto_set_village_names" in config["bot"]
-                        and config["bot"]["auto_set_village_names"]
-                    ):
-                        template = config["bot"]["village_name_template"]
-                        fs = (
-                            "%0"
-                            + str(config["bot"]["village_name_number_length"])
-                            + "d"
-                        )
-                        num_pad = fs % vnum
-                        template = template.replace("{num}", num_pad)
-                        vil.village_set_name = template
-
-                    vil.run(config=config, first_run=vnum == 1)
-                    if (
-                        vil.get_config(
-                            section="units", parameter="manage_defence", default=False
-                        )
-                        and vil.def_man
-                    ):
-                        defense_states[vil.village_id] = (
-                            vil.def_man.under_attack
-                            if vil.def_man.allow_support_recv
-                            else False
-                        )
-                    vnum += 1
-
-                if len(defense_states) and config["farms"]["farm"]:
-                    for vil in self.villages:
-                        print("Syncing attack states")
-                        vil.def_man.my_other_villages = defense_states
-
-                sleep = 0
-                if self.is_active_hours(config=config):
-                    sleep = config["bot"]["active_delay"]
-                else:
-                    if config["bot"]["inactive_still_active"]:
-                        sleep = config["bot"]["inactive_delay"]
-
-                sleep += random.randint(20, 120)
-                dtn = datetime.datetime.now()
-                dt_next = dtn + datetime.timedelta(0, sleep)
-                self.runs += 1
-
-                VillageManager.farm_manager(verbose=True)
-                print(
-                    "Dead for %f.2 minutes (next run at: %s)"
-                    % (sleep / 60, dt_next.time())
+                vil.rep_man = self.rep_man
+            if "auto_set_village_names" in config["bot"] and config["bot"]["auto_set_village_names"]:
+                template = config["bot"]["village_name_template"]
+                fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
+                num_pad = fs % vnum
+                template = template.replace("{num}", num_pad)
+                vil.village_set_name = template
+            vil.run(config=config, first_run=vnum == 1)
+            if vil.get_config(section="units", parameter="manage_defence", default=False) and vil.def_man:
+                defense_states[vil.village_id] = (
+                    vil.def_man.under_attack if vil.def_man.allow_support_recv else False
                 )
-                sys.stdout.flush()
-                time.sleep(sleep)
+            vnum += 1
+        if defense_states and config["farms"]["farm"]:
+            for vil in self.villages:
+                print("Syncing attack states")
+                vil.def_man.my_other_villages = defense_states
 
+    def manage_sleep(self, config):
+        sleep = self.calculate_sleep_time(config)
+        dt_next = datetime.datetime.now() + datetime.timedelta(0, sleep)
+        VillageManager.farm_manager(verbose=True)
+        print("Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time()))
+        sys.stdout.flush()
+        time.sleep(sleep)
+
+    def calculate_sleep_time(self, config):
+        sleep = 0
+        if self.is_active_hours(config=config):
+            sleep = config["bot"]["active_delay"]
+        elif config["bot"]["inactive_still_active"]:
+            sleep = config["bot"]["inactive_delay"]
+        sleep += random.randint(20, 120)
+        return sleep
     def start(self):
         root_directory = os.path.dirname(__file__)
         if not os.path.exists(os.path.join(root_directory, "cache")):
