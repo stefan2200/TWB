@@ -1,6 +1,6 @@
-import time
-import logging
 import datetime
+import logging
+import time
 
 from core.extractors import Extractor
 from game.simulator import Simulator

@@ -1,22 +1,21 @@
-from codecs import decode
-from datetime import datetime
-import logging
 import json
+import logging
 import os
 import time
-
-from game.buildingmanager import BuildingManager
-from game.troopmanager import TroopManager
-from game.attack import AttackManager
-from game.map import Map
-from game.resources import ResourceManager
-from game.defence_manager import DefenceManager
-from game.reports import ReportManager
-from game.snobber import SnobManager
+from codecs import decode
+from datetime import datetime
 
 from core.extractors import Extractor
 from core.templates import TemplateManager
 from core.twstats import TwStats
+from game.attack import AttackManager
+from game.buildingmanager import BuildingManager
+from game.defence_manager import DefenceManager
+from game.map import Map
+from game.reports import ReportManager
+from game.resources import ResourceManager
+from game.snobber import SnobManager
+from game.troopmanager import TroopManager
 
 
 class Village:
@@ -88,15 +87,27 @@ class Village:
             )
             if data:
                 self.game_data = Extractor.game_state(data)
-                self.logger = logging.getLogger(
-                    "Village %s" % self.game_data["village"]["name"]
-                )
-                self.logger.info("Read game state for village")
-                self.wrapper.reporter.report(
-                    self.village_id,
-                    "TWB_START",
-                    "Starting run for village: %s" % self.game_data["village"]["name"],
-                )
+
+                # Check if self.game_data is not None and "village" key exists
+                if self.game_data and "village" in self.game_data:
+
+                    # Check if self.game_data["village"] is not None and "name" key exists
+                    if self.game_data["village"] and "name" in self.game_data["village"]:
+                        village_name = self.game_data["village"]["name"]
+                        self.logger = logging.getLogger("Village %s" % village_name)
+                        self.logger.info("Read game state for village")
+                        self.wrapper.reporter.report(
+                            self.village_id,
+                            "TWB_START",
+                            "Starting run for village: %s" % village_name,
+                        )
+                    else:
+                        print(
+                            "Error: Unable to retrieve village name. Check the structure of self.game_data['village'].")
+                else:
+                    print("Error: Unable to retrieve village data. Check if self.game_data is properly initialized.")
+            else:
+                print("Error: No data available to extract game state.")
 
         if not self.game_data:
             self.logger.error(
@@ -360,7 +371,7 @@ class Village:
             if all(res == 0 for res in self.resman.requested[x].values()):
                 # remove empty requests!
                 to_dell.append(x)
-        
+
         for x in to_dell:
             self.resman.requested.pop(x)
 
@@ -368,7 +379,9 @@ class Village:
         self.logger.debug("Requested resources: %s" % str(self.resman.requested))
 
         # Forced peace?
-        forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
+        forced_peace_times = self.get_config(
+            section="farms", parameter="forced_peace_times", default=[]
+        )
         forced_peace = False
         forced_peace_today = False
         forced_peace_today_start = None
@@ -380,7 +393,9 @@ class Village:
                 forced_peace_today = True
                 forced_peace_today_start = start_dt
             if start_dt < now < end_dt:
-                self.logger.debug("Currently in a forced peace time! No attacks will be send.")
+                self.logger.debug(
+                    "Currently in a forced peace time! No attacks will be send."
+                )
                 forced_peace = True
                 break
 
@@ -456,7 +471,9 @@ class Village:
                     self.village_id, parameter="gather_selection", default=1
                 ),
                 disabled_units=disabled_units,
-                advanced_gather=self.get_village_config(self.village_id, parameter="advanced_gather", default=1)
+                advanced_gather=self.get_village_config(
+                    self.village_id, parameter="advanced_gather", default=1
+                ),
             )
         # market management
         if self.get_config(
@@ -492,7 +509,7 @@ class Village:
             # Set the parameter correctly when the config says so.
             self.resman.do_premium_trade = True
             self.resman.do_premium_stuff()
-        
+
         self.set_cache_vars()
         self.logger.info("Village cycle done, returning to overview")
         self.wrapper.reporter.report(
@@ -533,27 +550,34 @@ class Village:
 
     def get_quest_rewards(self):
         result = self.wrapper.get_api_data(
-                action="quest_popup",
-                village_id=self.village_id,
-                params={"screen": 'new_quests', "tab": "main-tab", "quest": 0},
-            )
+            action="quest_popup",
+            village_id=self.village_id,
+            params={"screen": "new_quests", "tab": "main-tab", "quest": 0},
+        )
         # The data is escaped for JS, so unescape it before sending it to the extractor.
-        rewards = Extractor.get_quest_rewards(decode(result["response"]["dialog"], 'unicode-escape'))
+        rewards = Extractor.get_quest_rewards(
+            decode(result["response"]["dialog"], "unicode-escape")
+        )
         for reward in rewards:
             # First check if there is enough room for storing the reward
             for t_resource in reward["reward"]:
-                if self.resman.storage - self.resman.actual[t_resource] < reward["reward"][t_resource]:
-                    self.logger.info(f"Not enough room to store the {t_resource} part of the reward")
+                if (
+                    self.resman.storage - self.resman.actual[t_resource]
+                    < reward["reward"][t_resource]
+                ):
+                    self.logger.info(
+                        f"Not enough room to store the {t_resource} part of the reward"
+                    )
                     return False
 
             qres = self.wrapper.post_api_data(
                 action="claim_reward",
                 village_id=self.village_id,
                 params={"screen": "new_quests"},
-                data={"reward_id": reward["id"]}
+                data={"reward_id": reward["id"]},
             )
             if qres:
-                if qres['response'] == False:
+                if qres["response"] == False:
                     self.logger.debug(f"Error getting reward! {qres}")
                     return False
                 else:
@@ -580,6 +604,8 @@ class Village:
         self.set_cache(self.village_id, entry=village_entry)
 
     def set_cache(self, village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "managed", village_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "managed", village_id + ".json"
+        )
         with open(t_path, "w") as f:
             return json.dump(entry, f)

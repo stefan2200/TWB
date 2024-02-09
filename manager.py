@@ -1,10 +1,10 @@
 import json
-import os
 import logging
+import os
 import sys
 
-from game.reports import ReportCache
 from game.attack import AttackCache
+from game.reports import ReportCache
 
 
 class VillageManager:
@@ -56,7 +56,12 @@ class VillageManager:
             if verbose:
                 logger.info(
                     "%sFarm village %s attacked %d times - Total loot: %s - Total units lost: %s (%s)",
-                    perf, farm, len(num_attack), str(loot), str(total_loss_count), str(percentage_lost)
+                    perf,
+                    farm,
+                    len(num_attack),
+                    str(loot),
+                    str(total_loss_count),
+                    str(percentage_lost),
                 )
             if len(num_attack):
                 total = 0
@@ -69,7 +74,8 @@ class VillageManager:
                         if verbose:
                             logger.info(
                                 "Farm %s has very low resources (%d avg total), extending farm time",
-                                farm, total / len(num_attack)
+                                farm,
+                                total / len(num_attack),
                             )
                         data["low_profile"] = True
                         AttackCache.set_cache(farm, data)
@@ -79,18 +85,23 @@ class VillageManager:
                         if verbose:
                             logger.info(
                                 "Farm %s has very high resources (%d avg total), setting to high profile",
-                                farm, total / len(num_attack)
+                                farm,
+                                total / len(num_attack),
                             )
                         data["high_profile"] = True
                         AttackCache.set_cache(farm, data)
 
             if percentage_lost > 20 and not data["low_profile"]:
-                logger.warning(f"Dangerous {percentage_lost} percentage lost units! Extending farm time")
+                logger.warning(
+                    f"Dangerous {percentage_lost} percentage lost units! Extending farm time"
+                )
                 data["low_profile"] = True
                 data["high_profile"] = False
                 AttackCache.set_cache(farm, data)
             if percentage_lost > 50 and len(num_attack) > 10:
-                logger.critical("Farm seems too dangerous/ unprofitable to farm. Setting safe to false!")
+                logger.critical(
+                    "Farm seems too dangerous/ unprofitable to farm. Setting safe to false!"
+                )
                 data["safe"] = False
                 AttackCache.set_cache(farm, data)
 
@@ -98,8 +109,10 @@ class VillageManager:
             logger.info("Total loot: %s" % t)
 
         if clean_reports:
-            list_of_files = sorted(["./cache/reports/" + f for f in os.listdir("./cache/reports/")],
-                                   key=os.path.getctime)
+            list_of_files = sorted(
+                ["./cache/reports/" + f for f in os.listdir("./cache/reports/")],
+                key=os.path.getctime,
+            )
 
             logger.info(f"Found {len(list_of_files)} files")
 

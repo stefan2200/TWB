@@ -1,11 +1,21 @@
 import logging
-import time
 import re
+import time
+
 from core.extractors import Extractor
 
 
 class PremiumExchange:
-    def __init__(self, wrapper, stock: dict, capacity: dict, tax: dict, constants: dict, duration: int, merchants: int):
+    def __init__(
+        self,
+        wrapper,
+        stock: dict,
+        capacity: dict,
+        tax: dict,
+        constants: dict,
+        duration: int,
+        merchants: int,
+    ):
         self.wrapper = wrapper
         self.stock = stock
         self.capacity = capacity
@@ -20,13 +30,23 @@ class PremiumExchange:
         n = self.capacity[item]
 
         # tax = self.tax["buy"] if a >= 0 else self.tax["sell"]
-        tax = self.tax["sell"] # twb never buys on premium exchange
+        tax = self.tax["sell"]  # twb never buys on premium exchange
 
-        return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
+        return (
+            (1 + tax)
+            * (
+                self.calculate_marginal_price(t, n)
+                + self.calculate_marginal_price(t - a, n)
+            )
+            * a
+            / 2
+        )
 
     def calculate_marginal_price(self, e, a):
         c = self.constants
-        return c["resource_base_price"] - c["resource_price_elasticity"] * e / (a + c["stock_size_modifier"])
+        return c["resource_base_price"] - c["resource_price_elasticity"] * e / (
+            a + c["stock_size_modifier"]
+        )
 
     def calculate_rate_for_one_point(self, item: str):
         a = self.stock[item]
@@ -40,12 +60,11 @@ class PremiumExchange:
             r -= 1
             i += 1
             c = self.calculate_cost(item, r)
-            
+
         return r
-    
+
     @staticmethod
     def optimize_n(amount, sell_price, merchants, size=1000):
-
         def _ratio(a, b, size=1000):
             a = (size * b) - a
             return a / size
@@ -63,11 +82,11 @@ class PremiumExchange:
         r = {
             "merchants": offers[0][0],
             "ratio": offers[0][1],
-            "n_to_sell": offers[0][2]
+            "n_to_sell": offers[0][2],
         }
 
         return r
-    
+
 
 class ResourceManager:
     actual = {}
@@ -121,7 +140,7 @@ class ResourceManager:
                 tax=data["tax"],
                 constants=data["constants"],
                 duration=data["duration"],
-                merchants=data["merchants"]
+                merchants=data["merchants"],
             )
 
             cost_per_point = premium_exchange.calculate_rate_for_one_point(gpl)
@@ -133,7 +152,7 @@ class ResourceManager:
                 self.logger.warning("Error reading premium data!")
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
-            
+
             for p in price_fetch:
                 prices[p] = data["stock"][p] * data["rates"][p]
 
@@ -156,10 +175,12 @@ class ResourceManager:
                     amount=prices[gpl],
                     sell_price=cost_per_point,
                     merchants=data["merchants"],
-                    size=1000
+                    size=1000,
                 )
 
-                self.logger.debug(f"Optimized trade: {gpl} {gpl_data} {gpl_data['n_to_sell'] * cost_per_point}")
+                self.logger.debug(
+                    f"Optimized trade: {gpl} {gpl_data} {gpl_data['n_to_sell'] * cost_per_point}"
+                )
 
                 if gpl_data["ratio"] > 0.4:
                     self.logger.info("Not worth trading!")
@@ -178,7 +199,7 @@ class ResourceManager:
                     trade_data = {
                         "sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point),
                         "rate_hash": _rate_hash,
-                        "mb": "1"
+                        "mb": "1",
                     }
 
                     result = self.wrapper.get_api_action(

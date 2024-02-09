@@ -1,6 +1,6 @@
 import logging
-import warnings
 import time
+import warnings
 
 try:
     import pymysql

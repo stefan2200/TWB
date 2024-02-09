@@ -1,8 +1,9 @@
-import math
-from core.extractors import Extractor
-import os
 import json
+import math
+import os
 import time
+
+from core.extractors import Extractor
 
 
 class Map:
@@ -32,7 +33,7 @@ class Map:
                 x = int(data["x"])
                 y = int(data["y"])
                 vdata = data["villages"]
-                # Fix broken parsing                 
+                # Fix broken parsing
                 if type(vdata) is dict:
                     cdata = [{}] * 20
                     for k, v in vdata.items():
@@ -138,7 +139,9 @@ class Map:
 class MapCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json"
+        )
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -146,6 +149,8 @@ class MapCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json"
+        )
         with open(t_path, "w") as f:
             return f.write(json.dumps(entry))

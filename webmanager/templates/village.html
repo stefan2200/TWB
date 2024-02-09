@@ -8,14 +8,15 @@
     <div class="col-lg-4">
         <h4>Villages</h4>
         <ul class="list-group">
-                {% for village in data.bot %}
-                <li class="list-group-item {% if current_select == village %} active {% endif %} ">
-                    <a class="list-group-item-action" href="/village?id={{data.bot[village].public.id}}">{{data.bot[village].public.name}} ({{data.bot[village].public.location}})</a>
-                    {% if current_select == village %}
-                        <button id="save_config" class="btn btn-success btn-sm float-right disabled">Save</button>
-                    {% endif %}
-                </li>
-                {% endfor %}
+            {% for village in data.bot %}
+            <li class="list-group-item {% if current_select == village %} active {% endif %} ">
+                <a class="list-group-item-action" href="/village?id={{data.bot[village].public.id}}">{{data.bot[village].public.name}}
+                    ({{data.bot[village].public.location}})</a>
+                {% if current_select == village %}
+                <button class="btn btn-success btn-sm float-right disabled" id="save_config">Save</button>
+                {% endif %}
+            </li>
+            {% endfor %}
 
         </ul>
     </div>
@@ -101,5 +102,6 @@
 		  setTimeout(function(){location.reload()}, 500);
 		});
 	});
+
 </script>
 {% endblock %}

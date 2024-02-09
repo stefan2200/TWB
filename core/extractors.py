@@ -1,5 +1,5 @@
-import re
 import json
+import re
 
 
 class Extractor:
@@ -101,11 +101,15 @@ class Extractor:
 
     @staticmethod
     def units_in_village(res):
-        if type(res) != str:
+        if res is not None and type(res) != str:
             res = res.text
-        matches = re.search(
-            r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL
-        )  # We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
+        if isinstance(res, (str, bytes)):
+            matches = re.search(
+                r'<table id="units_home".*?</tr>(.*?)</tr>', res, re.DOTALL
+            )
+        else:
+            matches = None
+            # We get the start of the table and grab the 2nd row (Where "From this village" troops are located)
         if matches:
             table_content = matches.group(1)
             unit_matches = re.findall(
@@ -139,10 +143,15 @@ class Extractor:
 
     @staticmethod
     def village_ids_from_overview(res):
-        if type(res) != str:
-            res = res.text
-        villages = re.findall(r'<span class="quickedit-vn" data-id="(\d+)"', res)
-        return list(set(villages))
+        if res is not None:
+            if not isinstance(res, (str, bytes)):
+                res = res.text if hasattr(res, 'text') else str(res)
+
+            villages = re.findall(r'<span class="quickedit-vn" data-id="(\d+)"', res)
+            return list(set(villages))
+        else:
+            print("Error: Input 'res' is None.")
+            return []
 
     @staticmethod
     def units_in_total(res):
@@ -157,15 +166,14 @@ class Extractor:
 
     @staticmethod
     def attack_form(res):
-        if type(res) != str:
-            if res:
-                res = res.text
+        if res and type(res) != str:
+            res = res.text
         data = re.findall(r'(?s)<input.+?name="(.+?)".+?value="(.*?)"', res)
         return data
 
     @staticmethod
     def attack_duration(res):
-        if type(res) != str:
+        if res is not None and type(res) != str:
             res = res.text
         data = re.search(r'<span class="relative_time" data-duration="(\d+)"', res)
         if data:

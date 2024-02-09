@@ -1,13 +1,11 @@
-import time
-import os
 import json
-from core.extractors import Extractor
 import logging
+import os
 import time
 from datetime import datetime
 from datetime import timedelta
 
-from game.reports import ReportCache
+from core.extractors import Extractor
 
 
 class AttackManager:

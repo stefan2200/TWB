@@ -1,9 +1,9 @@
+import logging
 import random
+import re
+import time
 
 from core.extractors import Extractor
-import time
-import logging
-import re
 
 
 class BuildingManager:

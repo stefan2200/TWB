@@ -1,14 +1,15 @@
-import logging
-import time
-import datetime
-import random
-import coloredlogs
-import sys
-import json
-import copy
-import os
 import collections
+import copy
+import datetime
+import json
+import logging
+import os
+import random
+import sys
+import time
 import traceback
+
+import coloredlogs
 import requests
 
 from core.extractors import Extractor
