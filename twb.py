@@ -300,17 +300,17 @@ class TWB:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
-                for vil in self.villages:
-                    if result_villages and vil.village_id not in result_villages:
+                for village in self.villages:
+                    if result_villages and village.village_id not in result_villages:
                         print(
                             "Village %s will be ignored because it is not available anymore"
-                            % vil.village_id
+                            % village.village_id
                         )
                         continue
-                    if not rm:
-                        rm = vil.rep_man
+                    if not self.report_manager:
+                        self.report_manager = village.report_manager
                     else:
-                        vil.rep_man = rm
+                        village.report_manager = self.report_manager
                     if (
                         "auto_set_village_names" in config["bot"]
                         and config["bot"]["auto_set_village_names"]
@@ -319,26 +319,26 @@ class TWB:
                         fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
                         num_pad = fs % vnum
                         template = template.replace("{num}", num_pad)
-                        vil.village_set_name = template
+                        village.village_set_name = template
 
-                    vil.run(config=config, first_run=vnum == 1)
+                    village.run(config=config, first_run=vnum == 1)
                     if (
-                        vil.get_config(
+                        village.get_config(
                             section="units", parameter="manage_defence", default=False
                         )
-                        and vil.def_man
+                        and village.def_man
                     ):
-                        defense_states[vil.village_id] = (
-                            vil.def_man.under_attack
-                            if vil.def_man.allow_support_recv
+                        defense_states[village.village_id] = (
+                            village.def_man.under_attack
+                            if village.def_man.allow_support_recv
                             else False
                         )
                     vnum += 1
 
                 if len(defense_states) and config["farms"]["farm"]:
-                    for vil in self.villages:
+                    for village in self.villages:
                         print("Syncing attack states")
-                        vil.def_man.my_other_villages = defense_states
+                        village.def_man.my_other_villages = defense_states
 
                 sleep = 0
                 if self.is_active_hours(config=config):
