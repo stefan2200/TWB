@@ -35,7 +35,11 @@ class TWB:
     should_run = True
     runs = 0
 
-    def internet_online(self):
+    def __init__(self):
+        self.report_manager = None
+
+    @staticmethod
+    def internet_online():
         try:
             requests.get("https://github.com/stefan2200/TWB", timeout=(10, 60))
             return True
@@ -43,13 +47,15 @@ class TWB:
             return False
 
     def manual_config(self):
-        print("Hello and welcome, it looks like you don't have a config file (yet)")
+        logging.info(
+            "Hello and welcome, it looks like you don't have a config file (yet)"
+        )
         if not os.path.exists("config.example.json"):
-            print(
+            logging.error(
                 "Oh no, config.example.json and config.json do not exist. You broke something didn't you?"
             )
             return False
-        print(
+        logging.info(
             "Please enter the current (logged-in) URL of the world you are playing on (or q to exit)"
         )
         input_url = input("URL: ")
@@ -58,8 +64,8 @@ class TWB:
         server = input_url.split("://")[1].split("/")[0]
         game_endpoint = input_url.split("?")[0]
         sub_parts = server.split(".")[0]
-        print("Game endpoint: %s" % game_endpoint)
-        print("World: %s" % sub_parts.upper())
+        logging.info("Game endpoint: %s" % game_endpoint)
+        logging.info("World: %s" % sub_parts.upper())
         check = input("Does this look correct? [nY]")
         if "y" in check.lower():
             browser_ua = input(
@@ -67,7 +73,7 @@ class TWB:
                 "(to lower detection rates). Just google what is my user agent> "
             )
             if browser_ua and len(browser_ua) < 10:
-                print(
+                logging.error(
                     "It should start with Chrome, Firefox or something. Please try again"
                 )
                 return self.manual_config()
@@ -79,12 +85,12 @@ class TWB:
             PS. make sure to regularly (1-2 per day) logout/login using the browser session and supply the new cookie string. 
             Using a single session for 24h straight will probably result in a ban
             """
-            print(disclaimer)
+            logging.info(disclaimer)
             final_check = input(
                 "Do you understand this and still wish to continue, please type: yes and press enter> "
             )
             if "yes" not in final_check.lower():
-                print("Goodbye :)")
+                logging.info("Goodbye :)")
                 sys.exit(0)
             root_directory = os.path.dirname(__file__)
             with open(
@@ -98,9 +104,11 @@ class TWB:
                 template["bot"]["user_agent"] = browser_ua
                 with open(os.path.join(root_directory, "config.json"), "w") as newcf:
                     json.dump(template, newcf, indent=2, sort_keys=False)
-                    print("Deployed new configuration file")
+                    logging.info("Deployed new configuration file")
                     return True
-        print("Make sure your url starts with https:// and contains the game.php? part")
+        logging.info(
+            "Make sure your url starts with https:// and contains the game.php? part"
+        )
         return self.manual_config()
 
     def config(self):
@@ -117,13 +125,12 @@ class TWB:
             if self.manual_config():
                 return self.config()
             else:
-                print("Unable to start without a valid config file")
+                logging.error("Unable to start without a valid config file")
                 sys.exit(1)
-        config = None
         with open(os.path.join(root_directory, "config.json"), "r") as f:
             config = json.load(f, object_pairs_hook=collections.OrderedDict)
         if template and config["build"]["version"] != template["build"]["version"]:
-            print(
+            logging.info(
                 "Outdated config file found, merging (old copy saved as config.bak)\n"
                 "Remove config.example.json to disable this behaviour"
             )
@@ -132,7 +139,7 @@ class TWB:
             config = self.merge_configs(config, template)
             with open(os.path.join(root_directory, "config.json"), "w") as newcf:
                 json.dump(config, newcf, indent=2, sort_keys=False)
-                print("Deployed new configuration file")
+                logging.info("Deployed new configuration file")
         return config
 
     def merge_configs(self, old_config, new_config):
@@ -161,7 +168,7 @@ class TWB:
             result_villages = Extractor.village_ids_from_overview(result_get)
             for found_vid in result_villages:
                 if found_vid not in config["villages"]:
-                    print(
+                    logging.info(
                         "Village %s was found but no config entry was found. Adding automatically"
                         % found_vid
                     )
@@ -178,16 +185,19 @@ class TWB:
         with open(os.path.join(root_directory, "config.bak"), "w") as backup:
             json.dump(original, backup, indent=2, sort_keys=False)
         if not template and "village_template" not in original:
-            print("Village entry %s could not be added to the config file!" % vid)
+            logging.error(
+                "Village entry %s could not be added to the config file!" % vid
+            )
             return
         original["villages"][vid] = (
             template if template else original["village_template"]
         )
         with open(os.path.join(root_directory, "config.json"), "w") as newcf:
             json.dump(original, newcf, indent=2, sort_keys=False)
-            print("Deployed new configuration file")
+            logging.info("Deployed new configuration file")
 
-    def get_world_options(self, overview_page, config):
+    @staticmethod
+    def get_world_options(overview_page, config):
         changed = False
         if config["world"]["flags_enabled"] is None:
             changed = True
@@ -218,7 +228,8 @@ class TWB:
 
         return changed, config
 
-    def is_active_hours(self, config):
+    @staticmethod
+    def is_active_hours(config):
         active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
@@ -235,11 +246,13 @@ class TWB:
                 self.runs += 1
 
     def wait_for_internet(self):
-        print("Internet seems to be down, waiting till it's back online...")
+        logging.info("Internet seems to be down, waiting till it's back online...")
         config = self.config()
         sleep = self.calculate_sleep_time(config)
         dt_next = datetime.datetime.now() + datetime.timedelta(0, sleep)
-        print("Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time()))
+        logging.info(
+            "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+        )
         time.sleep(sleep)
 
     def process_config_and_villages(self, config):
@@ -253,9 +266,11 @@ class TWB:
         self.wrapper.start()
 
         if not config["bot"].get("user_agent", None):
-            print("No custom user agent was supplied, this will likely get you banned."
-                  "Please set the bot -> user_agent parameter to your browser's one. "
-                  "Just google what is my user agent")
+            logging.error(
+                "No custom user agent was supplied, this will likely get you banned."
+                "Please set the bot -> user_agent parameter to your browser's one. "
+                "Just google what is my user agent"
+            )
             return
 
         self.wrapper.headers["user-agent"] = config["bot"]["user_agent"]
@@ -268,42 +283,59 @@ class TWB:
         result_villages, res_text, config = self.get_overview(config)
         has_changed, new_cf = self.get_world_options(res_text.text, config)
         if has_changed:
-            print("Updated world options")
+            logging.info("Updated world options")
             config = self.merge_configs(config, new_cf)
-            with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
+            with open(
+                os.path.join(os.path.dirname(__file__), "config.json"), "w"
+            ) as newcf:
                 json.dump(config, newcf, indent=2, sort_keys=False)
-                print("Deployed new configuration file")
+                logging.info("Deployed new configuration file")
         vnum = 1
-        for vil in self.villages:
-            if result_villages and vil.village_id not in result_villages:
-                print("Village %s will be ignored because it is not available anymore" % vil.village_id)
+        for village in self.villages:
+            if result_villages and village.village_id not in result_villages:
+                logging.info(
+                    "Village %s will be ignored because it is not available anymore"
+                    % village.village_id
+                )
                 continue
-            if not self.rep_man:
-                self.rep_man = vil.report_manager
+            if not self.report_manager:
+                self.report_manager = village.report_manager
             else:
-                vil.report_manager = self.rep_man
-            if "auto_set_village_names" in config["bot"] and config["bot"]["auto_set_village_names"]:
+                village.report_manager = self.report_manager
+            if (
+                "auto_set_village_names" in config["bot"]
+                and config["bot"]["auto_set_village_names"]
+            ):
                 template = config["bot"]["village_name_template"]
                 fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
                 num_pad = fs % vnum
                 template = template.replace("{num}", num_pad)
-                vil.village_set_name = template
-            vil.run(config=config, first_run=vnum == 1)
-            if vil.get_config(section="units", parameter="manage_defence", default=False) and vil.def_man:
-                defense_states[vil.village_id] = (
-                    vil.def_man.under_attack if vil.def_man.allow_support_recv else False
+                village.village_set_name = template
+            village.run(config=config, first_run=vnum == 1)
+            if (
+                village.get_config(
+                    section="units", parameter="manage_defence", default=False
+                )
+                and village.def_man
+            ):
+                defense_states[village.village_id] = (
+                    village.def_man.under_attack
+                    if village.def_man.allow_support_recv
+                    else False
                 )
             vnum += 1
         if defense_states and config["farms"]["farm"]:
-            for vil in self.villages:
-                print("Syncing attack states")
-                vil.def_man.my_other_villages = defense_states
+            for village in self.villages:
+                logging.info("Syncing attack states")
+                village.def_man.my_other_villages = defense_states
 
     def manage_sleep(self, config):
         sleep = self.calculate_sleep_time(config)
         dt_next = datetime.datetime.now() + datetime.timedelta(0, sleep)
         VillageManager.farm_manager(verbose=True)
-        print("Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time()))
+        logging.info(
+            "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+        )
         sys.stdout.flush()
         time.sleep(sleep)
 
@@ -315,6 +347,7 @@ class TWB:
             sleep = config["bot"]["inactive_delay"]
         sleep += random.randint(20, 120)
         return sleep
+
     def start(self):
         root_directory = os.path.dirname(__file__)
         if not os.path.exists(os.path.join(root_directory, "cache")):
