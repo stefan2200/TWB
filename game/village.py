@@ -82,8 +82,8 @@ class Village:
             return False
 
         self.manage_resources()
-        self.manage_defense()
         self.manage_reports()
+        self.manage_defense()
         self.manage_buildings()
         self.manage_units()
         self.manage_snobs()
