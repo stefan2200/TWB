@@ -258,13 +258,13 @@ class Village:
         self.units.template = TemplateManager.get_template(
             category="troops", template=unit_config, output_json=True
         )
-        entry = self.units.get_template_action(self.builder.levels)
+        self.entry = self.units.get_template_action(self.builder.levels)
 
-        if entry and self.units.wanted != entry["build"]:
+        if self.entry and self.units.wanted != self.entry["build"]:
             self.logger.info(
-                "%s as wanted units for current village" % (str(entry["build"]))
+                "%s as wanted units for current village" % (str(self.entry["build"]))
             )
-            self.units.wanted = entry["build"]
+            self.units.wanted = self.entry["build"]
 
         if self.units.wanted_levels != {}:
             for disabled in self.disabled_units:
