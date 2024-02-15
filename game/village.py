@@ -40,7 +40,7 @@ class Village:
 
     def __init__(self, village_id=None, wrapper=None):
         self.entry = None
-        self.disabled_units = None
+        self.disabled_units = []
         self.data = None
         self.village_id = village_id
         self.wrapper = wrapper
@@ -82,8 +82,8 @@ class Village:
             return False
 
         self.manage_resources()
-        self.manage_reports()
         self.manage_defense()
+        self.manage_reports()
         self.manage_buildings()
         self.manage_units()
         self.manage_snobs()
