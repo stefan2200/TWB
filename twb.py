@@ -9,6 +9,8 @@ import copy
 import os
 import collections
 import traceback
+
+import coloredlogs
 import requests
 
 from core.extractors import Extractor
@@ -34,7 +36,11 @@ class TWB:
     should_run = True
     runs = 0
 
-    def internet_online(self):
+    def __init__(self):
+        self.report_manager = None
+
+    @staticmethod
+    def internet_online():
         try:
             requests.get("https://github.com/stefan2200/TWB", timeout=(10, 60))
             return True
@@ -42,13 +48,15 @@ class TWB:
             return False
 
     def manual_config(self):
-        print("Hello and welcome, it looks like you don't have a config file (yet)")
+        logging.info(
+            "Hello and welcome, it looks like you don't have a config file (yet)"
+        )
         if not os.path.exists("config.example.json"):
-            print(
+            logging.error(
                 "Oh no, config.example.json and config.json do not exist. You broke something didn't you?"
             )
             return False
-        print(
+        logging.info(
             "Please enter the current (logged-in) URL of the world you are playing on (or q to exit)"
         )
         input_url = input("URL: ")
@@ -57,8 +65,8 @@ class TWB:
         server = input_url.split("://")[1].split("/")[0]
         game_endpoint = input_url.split("?")[0]
         sub_parts = server.split(".")[0]
-        print("Game endpoint: %s" % game_endpoint)
-        print("World: %s" % sub_parts.upper())
+        logging.info("Game endpoint: %s" % game_endpoint)
+        logging.info("World: %s" % sub_parts.upper())
         check = input("Does this look correct? [nY]")
         if "y" in check.lower():
             browser_ua = input(
@@ -66,7 +74,7 @@ class TWB:
                 "(to lower detection rates). Just google what is my user agent> "
             )
             if browser_ua and len(browser_ua) < 10:
-                print(
+                logging.error(
                     "It should start with Chrome, Firefox or something. Please try again"
                 )
                 return self.manual_config()
@@ -78,12 +86,12 @@ class TWB:
             PS. make sure to regularly (1-2 per day) logout/login using the browser session and supply the new cookie string. 
             Using a single session for 24h straight will probably result in a ban
             """
-            print(disclaimer)
+            logging.info(disclaimer)
             final_check = input(
                 "Do you understand this and still wish to continue, please type: yes and press enter> "
             )
             if "yes" not in final_check.lower():
-                print("Goodbye :)")
+                logging.info("Goodbye :)")
                 sys.exit(0)
             root_directory = os.path.dirname(__file__)
             with open(
@@ -106,9 +114,7 @@ class TWB:
         template = None
         root_directory = os.path.dirname(__file__)
         if os.path.exists(os.path.join(root_directory, "config.example.json")):
-            with open(
-                os.path.join(root_directory, "config.example.json"), "r"
-            ) as template_file:
+            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
@@ -216,8 +222,9 @@ class TWB:
                 config["world"]["quests_enabled"] = False
 
         return changed, config
-
+    
     def is_active_hours(self, config):
+    
         active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
@@ -279,8 +286,7 @@ class TWB:
                 dtn = datetime.datetime.now()
                 dt_next = dtn + datetime.timedelta(0, sleep)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)"
-                    % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
                 )
                 time.sleep(sleep)
             else:
@@ -290,9 +296,7 @@ class TWB:
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open(
-                        os.path.join(os.path.dirname(__file__), "config.json"), "w"
-                    ) as newcf:
+                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
@@ -312,11 +316,7 @@ class TWB:
                         and config["bot"]["auto_set_village_names"]
                     ):
                         template = config["bot"]["village_name_template"]
-                        fs = (
-                            "%0"
-                            + str(config["bot"]["village_name_number_length"])
-                            + "d"
-                        )
+                        fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
                         num_pad = fs % vnum
                         template = template.replace("{num}", num_pad)
                         vil.village_set_name = template
@@ -354,8 +354,7 @@ class TWB:
 
                 VillageManager.farm_manager(verbose=True)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)"
-                    % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
                 )
                 sys.stdout.flush()
                 time.sleep(sleep)

@@ -1,6 +1,6 @@
+import json
 import logging
 import re
-import json
 
 from core.extractors import Extractor
 
@@ -8,7 +8,7 @@ from core.extractors import Extractor
 class SnobManager:
     wrapper = None
     village_id = None
-    resman = None
+    resource_manager = None
     can_snob = True
     troop_manager = None
     wanted = 1
@@ -48,7 +48,7 @@ class SnobManager:
         if '"id":"coin"' in result.text:
             self.using_coin_system = True
         game_data = Extractor.game_state(result)
-        self.resman.update(game_data)
+        self.resource_manager.update(game_data)
 
         can_recruit = re.search(
             r"(?s)</th><th>(\d+)</th></tr>\s*</table><br />", result.text
@@ -127,17 +127,17 @@ class SnobManager:
 
     def has_enough(self, build_item):
         r = True
-        if build_item["wood"] > self.resman.actual["wood"]:
-            req = build_item["wood"] - self.resman.actual["wood"]
-            self.resman.request(source="snob", resource="wood", amount=req)
+        if build_item["wood"] > self.resource_manager.actual["wood"]:
+            req = build_item["wood"] - self.resource_manager.actual["wood"]
+            self.resource_manager.request(source="snob", resource="wood", amount=req)
             r = False
-        if build_item["stone"] > self.resman.actual["stone"]:
-            req = build_item["stone"] - self.resman.actual["stone"]
-            self.resman.request(source="snob", resource="stone", amount=req)
+        if build_item["stone"] > self.resource_manager.actual["stone"]:
+            req = build_item["stone"] - self.resource_manager.actual["stone"]
+            self.resource_manager.request(source="snob", resource="stone", amount=req)
             r = False
-        if build_item["iron"] > self.resman.actual["iron"]:
-            req = build_item["iron"] - self.resman.actual["iron"]
-            self.resman.request(source="snob", resource="iron", amount=req)
+        if build_item["iron"] > self.resource_manager.actual["iron"]:
+            req = build_item["iron"] - self.resource_manager.actual["iron"]
+            self.resource_manager.request(source="snob", resource="iron", amount=req)
             r = False
         return r
 

@@ -1,11 +1,10 @@
+import json
 import math
 import os
-import json
 
 
 # Tribalwars simulator class, based on real math stuff I guess
 class Simulator:
-
     pool = {
         "spear": {
             "name": "spear",

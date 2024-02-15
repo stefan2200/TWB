@@ -1,12 +1,10 @@
-import requests
-import re
 import json
+import logging
 import os
 import sys
-import logging
-from contextlib import suppress
 from collections import defaultdict
-from pathlib import Path
+
+import requests
 from pyquery import PyQuery as pq
 
 
@@ -38,6 +36,7 @@ class TwStats:
     def get_building_data(self, world):
         output = defaultdict(dict)
         for upgrade_building in self.max_levels:
+            # https://www.twstats.com/pl195/index.php?page=village&id=57223&utm_source=pl&utm_medium=village&utm_campaign=dsref
             geturl = "http://twstats.com/%s/index.php?page=buildings&detail=%s" % (
                 world,
                 upgrade_building,

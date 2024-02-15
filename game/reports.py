@@ -1,10 +1,10 @@
-import os
 import json
-import re
 import logging
+import os
+import re
+from datetime import datetime
 
 from core.extractors import Extractor
-from datetime import datetime
 
 
 class ReportManager:
@@ -24,17 +24,19 @@ class ReportManager:
             entry = self.last_reports[repid]
             if vid == entry["dest"] and entry["extra"].get("when", None):
                 possible_reports.append(entry)
-        #self.logger.debug(f"Considered {len(possible_reports)} reports")
+        # self.logger.debug(f"Considered {len(possible_reports)} reports")
         if len(possible_reports) == 0:
             return False, {}
 
         def highest_when(attack):
             return datetime.fromtimestamp(int(attack["extra"]["when"]))
 
-        #self.logger.debug(f"Reports: {possible_reports}")
+        # self.logger.debug(f"Reports: {possible_reports}")
         entry = max(possible_reports, key=highest_when)
-        self.logger.debug(f'This is the newest? {datetime.fromtimestamp(int(entry["extra"]["when"]))}')
-        #self.logger.debug(f'{entry["extra"]["when"]} seems to be the last attack.')
+        self.logger.debug(
+            f'This is the newest? {datetime.fromtimestamp(int(entry["extra"]["when"]))}'
+        )
+        # self.logger.debug(f'{entry["extra"]["when"]} seems to be the last attack.')
         # last_loot = entry["extra"]["loot"] if "loot" in entry["extra"] else None
         if entry["extra"].get("resources", None):
             return True, entry["extra"]["resources"]
@@ -56,7 +58,7 @@ class ReportManager:
                     )
                 ):
                     return 1
-                
+
                 if entry["losses"] != {}:
                     # Acceptable losses for attacks
                     print(f'Units sent: {entry["extra"]["units_sent"]}')
@@ -66,13 +68,13 @@ class ReportManager:
                     amount = entry["extra"]["units_sent"][sent_type]
                     if sent_type in entry["losses"]:
                         if amount == entry["losses"][sent_type]:
-                            return 0 # Lost all units!
+                            return 0  # Lost all units!
                         elif entry["losses"][sent_type] <= 1:
                             # Allow to lose 1 unit (luck depended)
-                            return 1 # Lost 'just' one unit
+                            return 1  # Lost 'just' one unit
 
                 if entry["losses"] != {}:
-                    return 0 # Disengage if anything was lost!
+                    return 0  # Disengage if anything was lost!
         return -1
 
     def read(self, page=0, full_run=False):
@@ -84,9 +86,7 @@ class ReportManager:
             self.last_reports = ReportCache.cache_grab()
             self.logger.info("Got %d reports from cache" % len(self.last_reports))
         offset = page * 12
-        url = "game.php?village=%s&screen=report&mode=all" % (
-            self.village_id
-        )
+        url = "game.php?village=%s&screen=report&mode=all" % (self.village_id)
         if page > 0:
             url += "&from=%d" % offset
         result = self.wrapper.get_url(url)
@@ -150,9 +150,14 @@ class ReportManager:
 
         losses = {}
 
-        attacked = re.search(r'(\d{2}\.\d{2}\.\d{2} \d{2}\:\d{2}\:\d{2})<span class=\"small grey\">', report)
+        attacked = re.search(
+            r"(\d{2}\.\d{2}\.\d{2} \d{2}\:\d{2}\:\d{2})<span class=\"small grey\">",
+            report,
+        )
         if attacked:
-            extra["when"] = int(datetime.strptime(attacked.group(1), "%d.%m.%y %H:%M:%S").timestamp())
+            extra["when"] = int(
+                datetime.strptime(attacked.group(1), "%d.%m.%y %H:%M:%S").timestamp()
+            )
 
         attacker = re.search(r'(?s)(<table id="attack_info_att".+?</table>)', report)
         if attacker:
@@ -226,7 +231,8 @@ class ReportManager:
                 extra["buildings"] = self.re_building(json.loads(raw))
             found_res = {}
             for loot_entry in re.findall(
-                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', scout_results.group(1)
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)',
+                scout_results.group(1),
             ):
                 found_res[loot_entry[0]] = loot_entry[1]
             extra["resources"] = found_res
@@ -270,7 +276,9 @@ class ReportManager:
 class ReportCache:
     @staticmethod
     def get_cache(report_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json"
+        )
         if os.path.exists(t_path):
             with open(t_path, "r") as f:
                 return json.load(f)
@@ -278,7 +286,9 @@ class ReportCache:
 
     @staticmethod
     def set_cache(report_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
+        t_path = os.path.join(
+            os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json"
+        )
         with open(t_path, "w") as f:
             return json.dump(entry, f)
 
@@ -289,7 +299,9 @@ class ReportCache:
         for existing in os.listdir(c_path):
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", existing)
+            t_path = os.path.join(
+                os.path.dirname(__file__), "..", "cache", "reports", existing
+            )
             with open(t_path, "r") as f:
                 output[existing.replace(".json", "")] = json.load(f)
         return output

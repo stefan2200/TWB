@@ -1,6 +1,7 @@
-import logging
 import json
+import logging
 import re
+
 from core.extractors import Extractor
 
 
@@ -51,7 +52,6 @@ class DefenceManager:
         self.logger = logging.getLogger("Defence Manager")
 
     def support_other(self, requesting_village):
-
         if self.under_attack or not self.allow_support_send:
             return False
         if not self.units:
