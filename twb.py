@@ -311,7 +311,7 @@ class TWB:
                 num_pad = fs % vnum
                 template = template.replace("{num}", num_pad)
                 village.village_set_name = template
-            village.run(config=config, first_run=vnum == 1)
+            village.run(config=config)
             if (
                 village.get_config(
                     section="units", parameter="manage_defence", default=False
