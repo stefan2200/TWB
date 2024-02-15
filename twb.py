@@ -279,9 +279,9 @@ class TWB:
                 print("Village %s will be ignored because it is not available anymore" % vil.village_id)
                 continue
             if not self.rep_man:
-                self.rep_man = vil.rep_man
+                self.rep_man = vil.report_manager
             else:
-                vil.rep_man = self.rep_man
+                vil.report_manager = self.rep_man
             if "auto_set_village_names" in config["bot"] and config["bot"]["auto_set_village_names"]:
                 template = config["bot"]["village_name_template"]
                 fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"

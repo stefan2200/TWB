@@ -18,11 +18,11 @@ class AttackManager:
     max_farms = 15
     template = {}
     extra_farm = []
-    repman = None
+    report_manager = None
     target_high_points = False
     farm_radius = 50
-    farm_minpoints = 0
-    farm_maxpoints = 1000
+    farm_min_points = 0
+    farm_max_points = 1000
     ignored = []
 
     forced_peace_time = None
@@ -138,19 +138,19 @@ class AttackManager:
                     self.ignored.append(vid)
                 continue
             if my_village and "points" in my_village and "points" in village:
-                if village["points"] >= self.farm_maxpoints:
+                if village["points"] >= self.farm_max_points:
                     if vid not in self.ignored:
                         self.logger.debug(
                             "Ignoring village %s because points %d exceeds limit %d"
-                            % (vid, village["points"], self.farm_maxpoints)
+                            % (vid, village["points"], self.farm_max_points)
                         )
                         self.ignored.append(vid)
                     continue
-                if village["points"] <= self.farm_minpoints:
+                if village["points"] <= self.farm_min_points:
                     if vid not in self.ignored:
                         self.logger.debug(
                             "Ignoring village %s because points %d below limit %d"
-                            % (vid, village["points"], self.farm_minpoints)
+                            % (vid, village["points"], self.farm_min_points)
                         )
                         self.ignored.append(vid)
                     continue
@@ -233,7 +233,7 @@ class AttackManager:
                     return False
 
         if not cache_entry:
-            status = self.repman.safe_to_engage(vid)
+            status = self.report_manager.safe_to_engage(vid)
             if status == 1:
                 return True
 
@@ -247,8 +247,8 @@ class AttackManager:
             return True
 
         if not cache_entry["safe"] or clear:
-            if cache_entry["scout"] and self.repman:
-                status = self.repman.safe_to_engage(vid)
+            if cache_entry["scout"] and self.report_manager:
+                status = self.report_manager.safe_to_engage(vid)
                 if status == -1:
                     self.logger.info(
                         "Checking %s: scout report not yet available" % vid
@@ -288,8 +288,8 @@ class AttackManager:
         if "low_profile" in cache_entry and cache_entry["low_profile"]:
             min_time = self.farm_low_prio_wait
 
-        if cache_entry and self.repman:
-            res_left, res = self.repman.has_resources_left(vid)
+        if cache_entry and self.report_manager:
+            res_left, res = self.report_manager.has_resources_left(vid)
             total_loot = 0
             for x in res:
                 total_loot += int(res[x])

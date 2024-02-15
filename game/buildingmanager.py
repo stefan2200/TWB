@@ -22,7 +22,7 @@ class BuildingManager:
     village_id = None
     game_state = {}
     max_queue_len = 2
-    resman = None
+    resource_manager = None
     raw_template = None
 
     can_build_three_min = False
@@ -55,11 +55,11 @@ class BuildingManager:
         self.costs = Extractor.building_data(main_data)
         self.costs = self.create_update_links(self.costs)
 
-        if self.resman:
-            self.resman.update(self.game_state)
-            if "building" in self.resman.requested:
+        if self.resource_manager:
+            self.resource_manager.update(self.game_state)
+            if "building" in self.resource_manager.requested:
                 # new run, remove request
-                self.resman.requested["building"] = {}
+                self.resource_manager.requested["building"] = {}
         if set_village_name and vname != set_village_name:
             self.wrapper.post_url(
                 url="game.php?village=%s&screen=main&action=change_name"
@@ -151,9 +151,9 @@ class BuildingManager:
 
     def has_enough(self, build_item):
         if (
-            build_item["iron"] > self.resman.storage
-            or build_item["wood"] > self.resman.storage
-            or build_item["stone"] > self.resman.storage
+            build_item["iron"] > self.resource_manager.storage
+            or build_item["wood"] > self.resource_manager.storage
+            or build_item["stone"] > self.resource_manager.storage
         ):
             build_data = "storage:%d" % (int(self.levels["storage"]) + 1)
             if (
@@ -170,15 +170,15 @@ class BuildingManager:
         r = True
         if build_item["wood"] > self.game_state["village"]["wood"]:
             req = build_item["wood"] - self.game_state["village"]["wood"]
-            self.resman.request(source="building", resource="wood", amount=req)
+            self.resource_manager.request(source="building", resource="wood", amount=req)
             r = False
         if build_item["stone"] > self.game_state["village"]["stone"]:
             req = build_item["stone"] - self.game_state["village"]["stone"]
-            self.resman.request(source="building", resource="stone", amount=req)
+            self.resource_manager.request(source="building", resource="stone", amount=req)
             r = False
         if build_item["iron"] > self.game_state["village"]["iron"]:
             req = build_item["iron"] - self.game_state["village"]["iron"]
-            self.resman.request(source="building", resource="iron", amount=req)
+            self.resource_manager.request(source="building", resource="iron", amount=req)
             r = False
         if build_item["pop"] > (
             self.game_state["village"]["pop_max"] - self.game_state["village"]["pop"]
@@ -187,10 +187,10 @@ class BuildingManager:
                 self.game_state["village"]["pop_max"]
                 - self.game_state["village"]["pop"]
             )
-            self.resman.request(source="building", resource="pop", amount=req)
+            self.resource_manager.request(source="building", resource="pop", amount=req)
             r = False
         if not r:
-            self.logger.debug(f"Requested resources: {self.resman.requested}")
+            self.logger.debug(f"Requested resources: {self.resource_manager.requested}")
         return r
 
     def get_level(self, building):
@@ -218,7 +218,7 @@ class BuildingManager:
             self.logger.debug("Not building because of queued items: %s" % self.waits)
             return False
 
-        if self.resman and self.resman.in_need_of("pop"):
+        if self.resource_manager and self.resource_manager.in_need_of("pop"):
             build_data = "farm:%d" % (int(self.levels["farm"]) + 1)
             if (
                 len(self.queue)
@@ -284,9 +284,9 @@ class BuildingManager:
                 self.costs = Extractor.building_data(result)
                 # Trigger function again because game state is changed
                 self.costs = self.create_update_links(self.costs)
-                if self.resman and "building" in self.resman.requested:
+                if self.resource_manager and "building" in self.resource_manager.requested:
                     # Build something, remove request
-                    self.resman.requested["building"] = {}
+                    self.resource_manager.requested["building"] = {}
                 return True
             else:
                 return self.get_next_building_action(index + 1)

@@ -53,15 +53,15 @@ class TroopManager:
 
     last_gather = 0
 
-    resman = None
+    resource_manager = None
     template = None
 
     def __init__(self, wrapper=None, village_id=None):
         self.wrapper = wrapper
         self.village_id = village_id
         self.wait_for[village_id] = {"barracks": 0, "stable": 0, "garage": 0}
-        if not self.resman:
-            self.resman = ResourceManager(
+        if not self.resource_manager:
+            self.resource_manager = ResourceManager(
                 wrapper=self.wrapper, village_id=self.village_id
             )
 
@@ -71,10 +71,10 @@ class TroopManager:
         )
         self.game_data = Extractor.game_state(main_data)
 
-        if self.resman:
-            if "research" in self.resman.requested:
+        if self.resource_manager:
+            if "research" in self.resource_manager.requested:
                 # new run, remove request
-                self.resman.requested["research"] = {}
+                self.resource_manager.requested["research"] = {}
 
         if not self.logger:
             self.logger = logging.getLogger(
@@ -232,19 +232,19 @@ class TroopManager:
                     r = True
                     if data["wood"] > self.game_data["village"]["wood"]:
                         req = data["wood"] - self.game_data["village"]["wood"]
-                        self.resman.request(
+                        self.resource_manager.request(
                             source="research", resource="wood", amount=req
                         )
                         r = False
                     if data["stone"] > self.game_data["village"]["stone"]:
                         req = data["stone"] - self.game_data["village"]["stone"]
-                        self.resman.request(
+                        self.resource_manager.request(
                             source="research", resource="stone", amount=req
                         )
                         r = False
                     if data["iron"] > self.game_data["village"]["iron"]:
                         req = data["iron"] - self.game_data["village"]["iron"]
-                        self.resman.request(
+                        self.resource_manager.request(
                             source="research", resource="iron", amount=req
                         )
                         r = False
@@ -293,15 +293,15 @@ class TroopManager:
                 r = True
                 if data["wood"] > self.game_data["village"]["wood"]:
                     req = data["wood"] - self.game_data["village"]["wood"]
-                    self.resman.request(source="research", resource="wood", amount=req)
+                    self.resource_manager.request(source="research", resource="wood", amount=req)
                     r = False
                 if data["stone"] > self.game_data["village"]["stone"]:
                     req = data["stone"] - self.game_data["village"]["stone"]
-                    self.resman.request(source="research", resource="stone", amount=req)
+                    self.resource_manager.request(source="research", resource="stone", amount=req)
                     r = False
                 if data["iron"] > self.game_data["village"]["iron"]:
                     req = data["iron"] - self.game_data["village"]["iron"]
-                    self.resman.request(source="research", resource="iron", amount=req)
+                    self.resource_manager.request(source="research", resource="iron", amount=req)
                     r = False
                 if not r:
                     self.logger.debug("Research needs resources")
@@ -620,8 +620,8 @@ class TroopManager:
 
         if not needed_reserve:
             # No need to reserve resources anymore!
-            if f"recruitment_{unit_type}" in self.resman.requested:
-                self.resman.requested.pop(f"recruitment_{unit_type}", None)
+            if f"recruitment_{unit_type}" in self.resource_manager.requested:
+                self.resource_manager.requested.pop(f"recruitment_{unit_type}", None)
 
         result = self.wrapper.get_api_action(
             village_id=self.village_id,
@@ -630,7 +630,7 @@ class TroopManager:
             data={"units[%s]" % unit_type: str(amount)},
         )
         if "game_data" in result:
-            self.resman.update(result["game_data"])
+            self.resource_manager.update(result["game_data"])
             self.wait_for[self.village_id][building] = int(time.time()) + (
                 amount * int(resources["build_time"])
             )
@@ -665,7 +665,7 @@ class TroopManager:
         )
         for res in ["wood", "stone", "iron"]:
             req = resources[res] * (wanted_times - has_times)
-            self.resman.request(
+            self.resource_manager.request(
                 source=f"recruitment_{unit_type}", resource=res, amount=req
             )
 
