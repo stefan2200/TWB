@@ -182,34 +182,20 @@ class TWB:
             json.dump(original, newcf, indent=2, sort_keys=False)
             print("Deployed new configuration file")
 
-    def get_world_options(self, overview_page, config):
+    @staticmethod
+    def get_world_options(overview_page, config):
+        def check_and_set(option_key, check_string):
+            nonlocal changed
+            if config["world"][option_key] is None:
+                changed = True
+                config["world"][option_key] = check_string in overview_page
+
         changed = False
-        if config["world"]["flags_enabled"] is None:
-            changed = True
-            if "screen=flags" in overview_page:
-                config["world"]["flags_enabled"] = True
-            else:
-                config["world"]["flags_enabled"] = False
-        if config["world"]["knight_enabled"] is None:
-            changed = True
-            if "screen=statue" in overview_page:
-                config["world"]["knight_enabled"] = True
-            else:
-                config["world"]["knight_enabled"] = False
 
-        if config["world"]["boosters_enabled"] is None:
-            changed = True
-            if "screen=inventory" in overview_page:
-                config["world"]["boosters_enabled"] = True
-            else:
-                config["world"]["boosters_enabled"] = False
-
-        if config["world"]["quests_enabled"] is None:
-            changed = True
-            if "Quests.setQuestData" in overview_page:
-                config["world"]["quests_enabled"] = True
-            else:
-                config["world"]["quests_enabled"] = False
+        check_and_set("flags_enabled", "screen=flags")
+        check_and_set("knight_enabled", "screen=statue")
+        check_and_set("boosters_enabled", "screen=inventory")
+        check_and_set("quests_enabled", "screen=quests")
 
         return changed, config
     
