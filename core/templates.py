@@ -1,15 +1,10 @@
-import os
-import json
+from core.filemanager import FileManager
 
 
 class TemplateManager:
-
     @staticmethod
     def get_template(category, template="basic", output_json=False):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "templates", category, template + ".txt")
-        if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
-                if output_json:
-                    return json.load(f)
-                return f.read().strip().split()
-        return None
+        path = f"templates/{category}/{template}.txt"
+        if output_json:
+            return FileManager.load_json_file(path)
+        return FileManager.read_file(path).strip().split()
