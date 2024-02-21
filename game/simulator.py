@@ -410,7 +410,7 @@ class SimCache:
 
     @staticmethod
     def set_cache(world, entry):
-        FileManager.save_json_file(f"cache/stats_{world}.json", entry)
+        FileManager.save_json_file(entry, f"cache/stats_{world}.json")
 
     @staticmethod
     def grab_cache(world, session, village_id):

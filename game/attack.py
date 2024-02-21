@@ -372,7 +372,7 @@ class AttackCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        return FileManager.save_json_file(f"cache/attacks/{village_id}.json", entry)
+        return FileManager.save_json_file(entry, f"cache/attacks/{village_id}.json")
 
     @staticmethod
     def cache_grab():

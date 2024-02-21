@@ -142,4 +142,4 @@ class MapCache:
 
     @staticmethod
     def set_cache(village_id, entry):
-        FileManager.save_json_file(f"cache/villages/{village_id}.json", entry)
+        FileManager.save_json_file(entry, f"cache/villages/{village_id}.json")

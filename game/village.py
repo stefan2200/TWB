@@ -580,4 +580,4 @@ class Village:
         self.set_cache(self.village_id, entry=village_entry)
 
     def set_cache(self, village_id, entry):
-        FileManager.save_json_file(f"cache/managed/{village_id}.json", entry)
+        FileManager.save_json_file(entry, f"cache/managed/{village_id}.json")

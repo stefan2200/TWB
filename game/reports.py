@@ -275,7 +275,7 @@ class ReportCache:
 
     @staticmethod
     def set_cache(report_id, entry):
-        FileManager.save_json_file(f"cache/reports/{report_id}.json", entry)
+        FileManager.save_json_file(entry, f"cache/reports/{report_id}.json")
 
     @staticmethod
     def cache_grab():
