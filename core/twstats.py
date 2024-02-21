@@ -9,6 +9,8 @@ from collections import defaultdict
 from pathlib import Path
 from pyquery import PyQuery as pq
 
+from core.filemanager import FileManager
+
 
 class TwStats:
     max_levels = {
@@ -70,15 +72,13 @@ class TwStats:
 class TwsCache:
     @staticmethod
     def get_cache(world):
-        t_path = os.path.join("cache", "world", "buildings_%s" % world + ".json")
-        if os.path.exists(t_path):
-            with open(t_path, 'r') as f:
-                return json.load(f)
-        else:
-            t_path = os.path.join("../", "cache", "world", "buildings_%s" % world + ".json")
-            if os.path.exists(t_path):
-                with open(t_path, 'r') as f:
-                    return json.load(f)
+        cache_path = "cache/world/buildings_%s.json" % world
+        alt_cache_path = "../cache/world/buildings_%s.json" % world
+
+        if FileManager.path_exists(cache_path):
+            return FileManager.load_json_file(cache_path)
+        elif FileManager.path_exists(alt_cache_path):
+            return FileManager.load_json_file(alt_cache_path)
         return None
 
 
