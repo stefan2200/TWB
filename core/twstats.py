@@ -1,12 +1,8 @@
 import requests
-import re
 import json
-import os
 import sys
 import logging
-from contextlib import suppress
 from collections import defaultdict
-from pathlib import Path
 from pyquery import PyQuery as pq
 
 from core.filemanager import FileManager

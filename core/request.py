@@ -10,8 +10,6 @@ import logging
 import re
 import time
 import random
-import json
-import os
 from core.reporter import ReporterObject
 
 

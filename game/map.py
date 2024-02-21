@@ -1,8 +1,8 @@
 import math
 from core.extractors import Extractor
-import os
-import json
 import time
+
+from core.filemanager import FileManager
 
 
 class Map:
@@ -138,14 +138,8 @@ class Map:
 class MapCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
-        if os.path.exists(t_path):
-            with open(t_path, "r") as f:
-                return json.load(f)
-        return None
+        return FileManager.load_json_file(f"cache/villages/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "villages", village_id + ".json")
-        with open(t_path, "w") as f:
-            return f.write(json.dumps(entry))
+        FileManager.save_json_file(f"cache/villages/{village_id}.json", entry)

@@ -1,6 +1,3 @@
-import time
-import os
-import json
 from core.extractors import Extractor
 import logging
 import time
@@ -8,7 +5,6 @@ from datetime import datetime
 from datetime import timedelta
 
 from core.filemanager import FileManager
-from game.reports import ReportCache
 
 
 class AttackManager:
