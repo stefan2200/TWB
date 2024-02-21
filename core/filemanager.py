@@ -54,6 +54,17 @@ class FileManager:
         return open(full_path, mode)
 
     @staticmethod
+    def read_file(path):
+        """Reads the contents of a file and returns the data. Returns None if the file does not exist."""
+        full_path = os.path.join(FileManager.get_root(), path)
+
+        if not FileManager.path_exists(full_path):
+            return None
+
+        with FileManager.open_file(full_path) as file:
+            return file.read()
+
+    @staticmethod
     def remove_file(path):
         """Removes a file if it exists."""
         full_path = os.path.join(FileManager.get_root(), path)
