@@ -2,9 +2,9 @@ from codecs import decode
 from datetime import datetime
 import logging
 import json
-import os
 import time
 
+from core.filemanager import FileManager
 from game.buildingmanager import BuildingManager
 from game.troopmanager import TroopManager
 from game.attack import AttackManager
@@ -580,6 +580,4 @@ class Village:
         self.set_cache(self.village_id, entry=village_entry)
 
     def set_cache(self, village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "managed", village_id + ".json")
-        with open(t_path, "w") as f:
-            return json.dump(entry, f)
+        FileManager.save_json_file(f"cache/managed/{village_id}.json", entry)

@@ -6,6 +6,8 @@ import logging
 from core.extractors import Extractor
 from datetime import datetime
 
+from core.filemanager import FileManager
+
 
 class ReportManager:
     wrapper = None
@@ -269,26 +271,16 @@ class ReportManager:
 class ReportCache:
     @staticmethod
     def get_cache(report_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
-        if os.path.exists(t_path):
-            with open(t_path, "r") as f:
-                return json.load(f)
-        return None
+        return FileManager.load_json_file(f"cache/reports/{report_id}.json")
 
     @staticmethod
     def set_cache(report_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", report_id + ".json")
-        with open(t_path, "w") as f:
-            return json.dump(entry, f)
+        FileManager.save_json_file(f"cache/reports/{report_id}.json", entry)
 
     @staticmethod
     def cache_grab():
         output = {}
-        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports")
-        for existing in os.listdir(c_path):
-            if not existing.endswith(".json"):
-                continue
-            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "reports", existing)
-            with open(t_path, "r") as f:
-                output[existing.replace(".json", "")] = json.load(f)
+
+        for existing in FileManager.list_directory("cache/reports", ends_with=".json"):
+            output[existing.replace(".json", "")] = FileManager.load_json_file(f"cache/reports/{existing}")
         return output
