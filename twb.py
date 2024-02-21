@@ -162,7 +162,7 @@ class TWB:
                         "Village %s was found but no config entry was found. Adding automatically"
                         % found_vid
                     )
-                    self.add_village(vid=found_vid)
+                    self.add_village(village_id=found_vid)
                     has_new_villages = True
             if has_new_villages:
                 return self.get_overview(self.config())
@@ -272,10 +272,9 @@ class TWB:
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
-                        json.dump(config, newcf, indent=2, sort_keys=False)
-                        print("Deployed new configuration file")
-                vnum = 1
+                    FileManager.save_json_file(config, "config.json")
+                    print("Deployed new configuration file")
+                village_number = 1
                 for vil in self.villages:
                     if result_villages and vil.village_id not in result_villages:
                         print(
@@ -293,11 +292,11 @@ class TWB:
                     ):
                         template = config["bot"]["village_name_template"]
                         fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
-                        num_pad = fs % vnum
+                        num_pad = fs % village_number
                         template = template.replace("{num}", num_pad)
                         vil.village_set_name = template
 
-                    vil.run(config=config, first_run=vnum == 1)
+                    vil.run(config=config, first_run=village_number == 1)
                     if (
                         vil.get_config(
                             section="units", parameter="manage_defence", default=False
@@ -309,7 +308,7 @@ class TWB:
                             if vil.def_man.allow_support_recv
                             else False
                         )
-                    vnum += 1
+                    village_number += 1
 
                 if len(defense_states) and config["farms"]["farm"]:
                     for vil in self.villages:
