@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
+from core.filemanager import FileManager
 from game.reports import ReportCache
 
 
@@ -371,26 +372,16 @@ class AttackManager:
 class AttackCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
-        if os.path.exists(t_path):
-            with open(t_path, "r") as f:
-                return json.load(f)
-        return None
+        return FileManager.load_json_file(f"cache/attacks/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
-        with open(t_path, "w") as f:
-            return json.dump(entry, f)
+        return FileManager.save_json_file(f"cache/attacks/{village_id}.json", entry)
 
     @staticmethod
     def cache_grab():
         output = {}
-        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks")
-        for existing in os.listdir(c_path):
-            if not existing.endswith(".json"):
-                continue
-            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", existing)
-            with open(t_path, "r") as f:
-                output[existing.replace(".json", "")] = json.load(f)
+
+        for existing in FileManager.list_directory("cache/attacks", ends_with=".json"):
+            output[existing.replace(".json", "")] = FileManager.load_json_file(f"cache/attacks/{existing}")
         return output
