@@ -270,18 +270,18 @@ class BuildingManager:
                     ),
                 )
                 self.levels[entry] += 1
-                result = self.wrapper.get_url(check["build_link"].replace("amp;", ""))
+                response = self.wrapper.get_url(check["build_link"].replace("amp;", ""))
                 if self.can_build_three_min:
                     # Wait some random time
                     time.sleep(random.randint(3, 7) / 10)
-                    result = self.complete_actions(text=result.text)
+                    result = self.complete_actions(text=response.text)
                     if result:
                         # Remove first item from the queue
                         self.queue.pop(0)
                         index -= 1
                     # Building was completed, queueing another
-                self.game_state = Extractor.game_state(result)
-                self.costs = Extractor.building_data(result)
+                self.game_state = Extractor.game_state(response)
+                self.costs = Extractor.building_data(response)
                 # Trigger function again because game state is changed
                 self.costs = self.create_update_links(self.costs)
                 if self.resource_manager and "building" in self.resource_manager.requested:

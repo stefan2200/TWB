@@ -1,13 +1,13 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.6",
+    "version": "1.7",
     "author": "stefan2200"
   },
   "server": {
     "server": "nlc1",
     "endpoint": "https://nlc1.tribalwars.nl/game.php",
-    "server_on_twplus": false
+    "server_on_twstats": false
   },
   "reporting": {
     "enabled": false,
