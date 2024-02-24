@@ -1,22 +1,21 @@
-import logging
-import time
-import datetime
-import random
-import coloredlogs
-import sys
-import json
-import copy
-import os
 import collections
+import copy
+import datetime
+import json
+import logging
+import os
+import random
+import sys
+import time
 import traceback
 
 import coloredlogs
 import requests
 
-from core.extractors import Extractor
 from core.request import WebWrapper
 from game.village import Village
 from manager import VillageManager
+from pages.overview import OverviewPage
 
 coloredlogs.install(
     level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
@@ -114,7 +113,9 @@ class TWB:
         template = None
         root_directory = os.path.dirname(__file__)
         if os.path.exists(os.path.join(root_directory, "config.example.json")):
-            with open(os.path.join(root_directory, "config.example.json"), "r") as template_file:
+            with open(
+                os.path.join(root_directory, "config.example.json"), "r"
+            ) as template_file:
                 template = json.load(
                     template_file, object_pairs_hook=collections.OrderedDict
                 )
@@ -159,23 +160,17 @@ class TWB:
         return new_config
 
     def get_overview(self, config):
-        result_get = self.wrapper.get_url("game.php?screen=overview_villages")
-        result_villages = None
-        has_new_villages = False
+        overview_page = OverviewPage(self.wrapper)
         if config["bot"].get("add_new_villages", False):
-            result_villages = Extractor.village_ids_from_overview(result_get)
-            for found_vid in result_villages:
+            for found_vid in overview_page.villages_data.keys():
                 if found_vid not in config["villages"]:
                     print(
                         "Village %s was found but no config entry was found. Adding automatically"
                         % found_vid
                     )
                     self.add_village(vid=found_vid)
-                    has_new_villages = True
-            if has_new_villages:
-                return self.get_overview(self.config())
 
-        return result_villages, result_get, config
+        return overview_page, config
 
     def add_village(self, vid, template=None):
         original = self.config()
@@ -192,39 +187,32 @@ class TWB:
             json.dump(original, newcf, indent=2, sort_keys=False)
             print("Deployed new configuration file")
 
-    def get_world_options(self, overview_page, config):
+    @staticmethod
+    def get_world_options(overview_page: OverviewPage, config):
         changed = False
-        if config["world"]["flags_enabled"] is None:
-            changed = True
-            if "screen=flags" in overview_page:
-                config["world"]["flags_enabled"] = True
-            else:
-                config["world"]["flags_enabled"] = False
-        if config["world"]["knight_enabled"] is None:
-            changed = True
-            if "screen=statue" in overview_page:
-                config["world"]["knight_enabled"] = True
-            else:
-                config["world"]["knight_enabled"] = False
 
-        if config["world"]["boosters_enabled"] is None:
-            changed = True
-            if "screen=inventory" in overview_page:
-                config["world"]["boosters_enabled"] = True
-            else:
-                config["world"]["boosters_enabled"] = False
+        world_settings = overview_page.world_settings
+        world_config = config["world"]
 
-        if config["world"]["quests_enabled"] is None:
+        if world_config["flags_enabled"] is None:
+            world_config["flags_enabled"] = world_settings.flags
             changed = True
-            if "Quests.setQuestData" in overview_page:
-                config["world"]["quests_enabled"] = True
-            else:
-                config["world"]["quests_enabled"] = False
+
+        if world_config["knight_enabled"] is None:
+            world_config["knight_enabled"] = world_settings.knight
+            changed = True
+
+        if world_config["boosters_enabled"] is None:
+            world_config["boosters_enabled"] = world_settings.boosters
+            changed = True
+
+        if world_config["quests_enabled"] is None:
+            world_config["quests_enabled"] = world_settings.quests
+            changed = True
 
         return changed, config
-    
+
     def is_active_hours(self, config):
-    
         active_h = [int(x) for x in config["bot"]["active_hours"].split("-")]
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
@@ -286,22 +274,25 @@ class TWB:
                 dtn = datetime.datetime.now()
                 dt_next = dtn + datetime.timedelta(0, sleep)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)"
+                    % (sleep / 60, dt_next.time())
                 )
                 time.sleep(sleep)
             else:
                 config = self.config()
-                result_villages, res_text, config = self.get_overview(config)
-                has_changed, new_cf = self.get_world_options(res_text.text, config)
+                overview_page, config = self.get_overview(config)
+                has_changed, new_cf = self.get_world_options(overview_page, config)
                 if has_changed:
                     print("Updated world options")
                     config = self.merge_configs(config, new_cf)
-                    with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as newcf:
+                    with open(
+                        os.path.join(os.path.dirname(__file__), "config.json"), "w"
+                    ) as newcf:
                         json.dump(config, newcf, indent=2, sort_keys=False)
                         print("Deployed new configuration file")
                 vnum = 1
                 for village in self.villages:
-                    if result_villages and village.village_id not in result_villages:
+                    if overview_page.villages_data and village.village_id not in overview_page.villages_data:
                         print(
                             "Village %s will be ignored because it is not available anymore"
                             % village.village_id
@@ -316,7 +307,11 @@ class TWB:
                         and config["bot"]["auto_set_village_names"]
                     ):
                         template = config["bot"]["village_name_template"]
-                        fs = "%0" + str(config["bot"]["village_name_number_length"]) + "d"
+                        fs = (
+                            "%0"
+                            + str(config["bot"]["village_name_number_length"])
+                            + "d"
+                        )
                         num_pad = fs % vnum
                         template = template.replace("{num}", num_pad)
                         village.village_set_name = template
@@ -354,7 +349,8 @@ class TWB:
 
                 VillageManager.farm_manager(verbose=True)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                    "Dead for %f.2 minutes (next run at: %s)"
+                    % (sleep / 60, dt_next.time())
                 )
                 sys.stdout.flush()
                 time.sleep(sleep)
@@ -389,4 +385,3 @@ for x in range(3):
         t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
         print("I crashed :(   %s" % str(e))
         traceback.print_exc()
-        pass
