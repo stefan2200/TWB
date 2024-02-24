@@ -1,5 +1,7 @@
-requests
-coloredlogs
-psutil
-flask
-pyquery
+requests~=2.31.0
+coloredlogs~=15.0.1
+psutil~=5.9.7
+flask~=3.0.0
+pyquery~=2.0.0
+
+beautifulsoup4~=4.12.3
