@@ -35,9 +35,6 @@ class TWB:
     should_run = True
     runs = 0
 
-    def __init__(self):
-        self.report_manager = None
-
     @staticmethod
     def internet_online():
         try:
@@ -299,10 +296,10 @@ class TWB:
                             % village.village_id
                         )
                         continue
-                    if not self.report_manager:
-                        self.report_manager = village.report_manager
+                    if not rm:
+                        rm = village.rep_man
                     else:
-                        village.report_manager = self.report_manager
+                        village.rep_man = rm
                     if (
                         "auto_set_village_names" in config["bot"]
                         and config["bot"]["auto_set_village_names"]
