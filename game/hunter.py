@@ -1,6 +1,6 @@
-import time
-import logging
 import datetime
+import logging
+import time
 
 from core.extractors import Extractor
 from game.simulator import Simulator
@@ -47,7 +47,7 @@ class Hunter:
                 return v
 
     def send_attack_chain(
-        self, source, item, exact_send_time=0, min_sleep_amount_millis=100
+            self, source, item, exact_send_time=0, min_sleep_amount_millis=100
     ):
         data = self.schedule[item]
         attack_set = []

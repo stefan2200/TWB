@@ -1,7 +1,9 @@
-from flask import Flask, jsonify, send_from_directory, request, render_template
+import json
 import os
 import sys
-import json
+
+from flask import Flask, jsonify, send_from_directory, request, render_template
+
 try:
     from webmanager.helpfile import help_file, buildings
     from webmanager.utils import DataReader, BotManager, MapBuilder, BuildingTemplateManager
@@ -18,9 +20,11 @@ app.config["DEBUG"] = True
 def pre_process_bool(key, value, village_id=None):
     if village_id:
         if value:
-            return '<button class="btn btn-sm btn-block btn-success" data-village-id="%s" data-type-option="%s" data-type="toggle">Enabled</button>' % (village_id, key)
+            return '<button class="btn btn-sm btn-block btn-success" data-village-id="%s" data-type-option="%s" data-type="toggle">Enabled</button>' % (
+            village_id, key)
         else:
-            return '<button class="btn btn-sm btn-block btn-danger" data-village-id="%s" data-type-option="%s" data-type="toggle">Disabled</button>' % (village_id, key)
+            return '<button class="btn btn-sm btn-block btn-danger" data-village-id="%s" data-type-option="%s" data-type="toggle">Disabled</button>' % (
+            village_id, key)
     if value:
         return '<button class="btn btn-sm btn-block btn-success" data-type-option="%s" data-type="toggle">Enabled</button>' % key
     else:
@@ -30,7 +34,8 @@ def pre_process_bool(key, value, village_id=None):
 def preprocess_select(key, value, templates, village_id=None):
     output = '<select data-type-option="%s" data-type="select" class="form-control">' % key
     if village_id:
-        output = '<select data-type-option="%s" data-village-id="%s" data-type="select" class="form-control">' % (key, village_id)
+        output = '<select data-type-option="%s" data-village-id="%s" data-type="select" class="form-control">' % (
+        key, village_id)
 
     for template in DataReader.template_grab(templates):
         output += '<option value="%s" %s>%s</option>' % (template, 'selected' if template == value else '', template)
@@ -50,29 +55,34 @@ def pre_process_string(key, value, village_id=None):
     if key in templates:
         return preprocess_select(key, value, templates[key], village_id)
     if village_id:
-        return '<input type="text" class="form-control" data-village-id="%s" data-type="text" value="%s" data-type-option="%s" />' % (village_id, value, key)
+        return '<input type="text" class="form-control" data-village-id="%s" data-type="text" value="%s" data-type-option="%s" />' % (
+        village_id, value, key)
     else:
         return '<input type="text" class="form-control" data-type="text" value="%s" data-type-option="%s" />' % (
-        value, key)
+            value, key)
 
 
 def pre_process_number(key, value, village_id=None):
     if village_id:
-        return '<input type="number" data-type="number" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (village_id, value, key)
-    return '<input type="number" data-type="number" class="form-control" value="%s" data-type-option="%s" />' % (value, key)
+        return '<input type="number" data-type="number" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (
+        village_id, value, key)
+    return '<input type="number" data-type="number" class="form-control" value="%s" data-type-option="%s" />' % (
+    value, key)
 
 
 def pre_process_list(key, value, village_id=None):
     if village_id:
-        return '<input type="text" data-type="list" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (village_id, ', '.join(value), key)
-    return '<input type="number" data-type="list" class="form-control" value="%s" data-type-option="%s" />' % (', '.join(value), key)
+        return '<input type="text" data-type="list" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (
+        village_id, ', '.join(value), key)
+    return '<input type="number" data-type="list" class="form-control" value="%s" data-type-option="%s" />' % (
+    ', '.join(value), key)
 
 
 def fancy(key):
     name = key
     if '.' in name:
         name = name.split('.')[1]
-    name = name[0].upper()+name[1:]
+    name = name[0].upper() + name[1:]
     out = '<hr /><strong>%s</strong>' % name
     help_txt = None
     help_key = key

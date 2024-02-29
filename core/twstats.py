@@ -1,8 +1,9 @@
-import requests
 import json
-import sys
 import logging
+import sys
 from collections import defaultdict
+
+import requests
 from pyquery import PyQuery as pq
 
 from core.filemanager import FileManager

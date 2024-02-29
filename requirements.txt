@@ -3,3 +3,4 @@ coloredlogs
 psutil
 flask
 pyquery
+beautifulsoup4

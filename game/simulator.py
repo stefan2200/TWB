@@ -1,10 +1,10 @@
 import math
+
 from core.filemanager import FileManager
 
 
 # Tribalwars simulator class, based on real math stuff I guess
 class Simulator:
-
     pool = {
         "spear": {
             "name": "spear",
@@ -280,10 +280,10 @@ class Simulator:
         return result if result >= 0 else 0
 
     def post_wall(
-        self,
-        attacker,
-        defender,
-        wall,
+            self,
+            attacker,
+            defender,
+            wall,
     ):
         rams = attacker["quantity"]["ram"]
         wall = wall if wall else 0
@@ -364,11 +364,11 @@ class Simulator:
 
                 ratio = attackFood[attackType] / attackFoodSum
                 defense = (
-                    def_strength[attackType.replace("attack", "defense")]
-                    * ratio
-                    * wallBonus
-                    * nightbonus
-                    + wallDefense * ratio
+                        def_strength[attackType.replace("attack", "defense")]
+                        * ratio
+                        * wallBonus
+                        * nightbonus
+                        + wallDefense * ratio
                 )
                 a = attack_strength[attackType] * moral * luck / defense
                 if a < 1:

@@ -1,6 +1,6 @@
+import json
 import logging
 import re
-import json
 
 from core.extractors import Extractor
 
@@ -97,7 +97,7 @@ class SnobManager:
 
         if self.has_enough(data):
             get_post = (
-                "game.php?village=%s&screen=snob&action=reserve" % self.village_id
+                    "game.php?village=%s&screen=snob&action=reserve" % self.village_id
             )
             data = {"factor": "1", "h": self.wrapper.last_h}
             self.wrapper.post_url(url=get_post, data=data)

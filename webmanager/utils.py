@@ -1,6 +1,6 @@
-import os
-import json
 import collections
+import json
+import os
 import subprocess
 from json import JSONDecodeError
 

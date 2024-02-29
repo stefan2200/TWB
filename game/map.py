@@ -1,7 +1,7 @@
 import math
-from core.extractors import Extractor
 import time
 
+from core.extractors import Extractor
 from core.filemanager import FileManager
 
 
