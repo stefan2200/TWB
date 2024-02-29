@@ -1,10 +1,10 @@
 import json
-import os
 import logging
+import os
 import sys
 
-from game.reports import ReportCache
 from game.attack import AttackCache
+from game.reports import ReportCache
 
 
 class VillageManager:
@@ -64,7 +64,7 @@ class VillageManager:
                     total += loot[k]
                 if len(num_attack) > 3:
                     if total / len(num_attack) < 100 and (
-                        "low_profile" not in data or not data["low_profile"]
+                            "low_profile" not in data or not data["low_profile"]
                     ):
                         if verbose:
                             logger.info(
@@ -74,7 +74,7 @@ class VillageManager:
                         data["low_profile"] = True
                         AttackCache.set_cache(farm, data)
                     elif total / len(num_attack) > 500 and (
-                        "high_profile" not in data or not data["high_profile"]
+                            "high_profile" not in data or not data["high_profile"]
                     ):
                         if verbose:
                             logger.info(

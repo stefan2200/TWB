@@ -1,9 +1,10 @@
 import logging
-import warnings
 import time
+import warnings
 
 try:
     import pymysql
+
     has_pymysql = True
 except ImportError:
     has_pymysql = False
@@ -45,12 +46,14 @@ class FileReporter:
 class MySQLReporter(RemoteReporter):
 
     def connection_from_object(self, cobj):
-        return pymysql.connect(host=cobj['host'], port=cobj['port'], user=cobj['user'], password=cobj['password'], database=cobj['database'])
+        return pymysql.connect(host=cobj['host'], port=cobj['port'], user=cobj['user'], password=cobj['password'],
+                               database=cobj['database'])
 
     def report(self, connection, village_id, action, data):
         con = self.connection_from_object(connection)
         cur = con.cursor()
-        cur.execute("INSERT INTO twb_logs (village, action, data, ts) VALUES (%s, %s, %s, NOW())", (village_id, action, data))
+        cur.execute("INSERT INTO twb_logs (village, action, data, ts) VALUES (%s, %s, %s, NOW())",
+                    (village_id, action, data))
         con.commit()
         cur.close()
         con.close()
@@ -60,7 +63,8 @@ class MySQLReporter(RemoteReporter):
         cur = con.cursor()
         cur.execute("SELECT * FROM twb_data WHERE village_id = %s AND data_type = %s", (village_id, data_type))
         if cur.rowcount > 0:
-            cur.execute("UPDATE twb_data SET data = %s, last_update = NOW() WHERE village_id = %s AND data_type = %s", (data, village_id, data_type))
+            cur.execute("UPDATE twb_data SET data = %s, last_update = NOW() WHERE village_id = %s AND data_type = %s",
+                        (data, village_id, data_type))
         else:
             cur.execute("INSERT INTO twb_data (village_id, data_type, data, last_update) VALUES (%s, %s, %s, NOW())",
                         (village_id, data_type, data))
@@ -157,4 +161,3 @@ class ReporterObject:
         if self.enabled:
             return self.object.get_config(self.connection, village_id, action, data)
         return
-

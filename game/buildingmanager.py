@@ -1,9 +1,9 @@
+import logging
 import random
+import re
+import time
 
 from core.extractors import Extractor
-import time
-import logging
-import re
 
 
 class BuildingManager:
@@ -63,7 +63,7 @@ class BuildingManager:
         if set_village_name and vname != set_village_name:
             self.wrapper.post_url(
                 url="game.php?village=%s&screen=main&action=change_name"
-                % self.village_id,
+                    % self.village_id,
                 data={"name": set_village_name, "h": self.wrapper.last_h},
             )
 
@@ -151,16 +151,16 @@ class BuildingManager:
 
     def has_enough(self, build_item):
         if (
-            build_item["iron"] > self.resman.storage
-            or build_item["wood"] > self.resman.storage
-            or build_item["stone"] > self.resman.storage
+                build_item["iron"] > self.resman.storage
+                or build_item["wood"] > self.resman.storage
+                or build_item["stone"] > self.resman.storage
         ):
             build_data = "storage:%d" % (int(self.levels["storage"]) + 1)
             if (
-                len(self.queue)
-                and "storage"
-                not in [x.split(":")[0] for x in self.queue[0 : self.max_lookahead]]
-                and int(self.levels["storage"]) != 30
+                    len(self.queue)
+                    and "storage"
+                    not in [x.split(":")[0] for x in self.queue[0: self.max_lookahead]]
+                    and int(self.levels["storage"]) != 30
             ):
                 self.queue.insert(0, build_data)
                 self.logger.info(
@@ -181,11 +181,11 @@ class BuildingManager:
             self.resman.request(source="building", resource="iron", amount=req)
             r = False
         if build_item["pop"] > (
-            self.game_state["village"]["pop_max"] - self.game_state["village"]["pop"]
+                self.game_state["village"]["pop_max"] - self.game_state["village"]["pop"]
         ):
             req = build_item["pop"] - (
-                self.game_state["village"]["pop_max"]
-                - self.game_state["village"]["pop"]
+                    self.game_state["village"]["pop_max"]
+                    - self.game_state["village"]["pop"]
             )
             self.resman.request(source="building", resource="pop", amount=req)
             r = False
@@ -221,10 +221,10 @@ class BuildingManager:
         if self.resman and self.resman.in_need_of("pop"):
             build_data = "farm:%d" % (int(self.levels["farm"]) + 1)
             if (
-                len(self.queue)
-                and "farm"
-                not in [x.split(":")[0] for x in self.queue[0 : self.max_lookahead]]
-                and int(self.levels["farm"]) != 30
+                    len(self.queue)
+                    and "farm"
+                    not in [x.split(":")[0] for x in self.queue[0: self.max_lookahead]]
+                    and int(self.levels["farm"]) != 30
             ):
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding farm in front of queue because low on pop")

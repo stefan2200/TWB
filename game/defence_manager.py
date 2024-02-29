@@ -1,6 +1,7 @@
-import logging
 import json
+import logging
 import re
+
 from core.extractors import Extractor
 
 
@@ -92,9 +93,9 @@ class DefenceManager:
                     self.logger.debug("Already supported 2 villages, ignoring")
                     break
                 if (
-                    not self.under_attack
-                    and self.my_other_villages[vil]
-                    and self.allow_support_send
+                        not self.under_attack
+                        and self.my_other_villages[vil]
+                        and self.allow_support_send
                 ):
                     if vil in self.supported:
                         continue
@@ -143,9 +144,9 @@ class DefenceManager:
             return
         self._sf_logged = False
         if (
-            not self.current_flag
-            or self.current_flag[0] is not set_flag
-            or self.get_highest_flag_possible(flag_id=set_flag) > self.current_flag[1]
+                not self.current_flag
+                or self.current_flag[0] is not set_flag
+                or self.get_highest_flag_possible(flag_id=set_flag) > self.current_flag[1]
         ):
             self.flag_set(
                 set_flag, level=self.get_highest_flag_possible(flag_id=set_flag)

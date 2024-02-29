@@ -1,13 +1,10 @@
-import time
-import os
-import json
 from core.extractors import Extractor
 import logging
 import time
 from datetime import datetime
 from datetime import timedelta
 
-from game.reports import ReportCache
+from core.filemanager import FileManager
 
 
 class AttackManager:
@@ -55,7 +52,7 @@ class AttackManager:
             return False
         self.get_targets()
         ignored = []
-        for target in self.targets[0 : self.max_farms]:
+        for target in self.targets[0: self.max_farms]:
             if type(self.template) == list:
                 f = False
                 for template in self.template:
@@ -157,8 +154,8 @@ class AttackManager:
                         self.ignored.append(vid)
                     continue
                 if (
-                    village["points"] >= my_village["points"]
-                    and not self.target_high_points
+                        village["points"] >= my_village["points"]
+                        and not self.target_high_points
                 ):
                     if vid not in self.ignored:
                         self.logger.debug(
@@ -197,7 +194,7 @@ class AttackManager:
         self.targets = sorted(output, key=lambda x: x[1])
 
     def attacked(
-        self, vid, scout=False, high_profile=False, safe=True, low_profile=False
+            self, vid, scout=False, high_profile=False, safe=True, low_profile=False
     ):
         cache_entry = {
             "scout": scout,
@@ -210,8 +207,8 @@ class AttackManager:
 
     def scout(self, vid):
         if (
-            "spy" not in self.troopmanager.troops
-            or int(self.troopmanager.troops["spy"]) < 5
+                "spy" not in self.troopmanager.troops
+                or int(self.troopmanager.troops["spy"]) < 5
         ):
             self.logger.debug(
                 "Cannot scout %s at the moment because insufficient unit: spy" % vid
@@ -231,7 +228,7 @@ class AttackManager:
                 self.logger.debug(f"Attacked long ago({last_attack}), trying scout attack")
                 if self.scout(vid):
                     return False
-        
+
         if not cache_entry:
             status = self.repman.safe_to_engage(vid)
             if status == 1:
@@ -283,13 +280,13 @@ class AttackManager:
             min_time = self.farm_high_prio_wait
         if "low_profile" in cache_entry and cache_entry["low_profile"]:
             min_time = self.farm_low_prio_wait
-        
+
         if cache_entry and self.repman:
             res_left, res = self.repman.has_resources_left(vid)
             total_loot = 0
             for x in res:
                 total_loot += int(res[x])
-            
+
             if res_left and total_loot > 100:
                 self.logger.debug(f"Draining farm of resources! Sending attack to get {res}.")
                 min_time = int(self.farm_high_prio_wait / 2)
@@ -305,8 +302,8 @@ class AttackManager:
     def has_troops_available(self, troops):
         for t in troops:
             if (
-                t not in self.troopmanager.troops
-                or int(self.troopmanager.troops[t]) < troops[t]
+                    t not in self.troopmanager.troops
+                    or int(self.troopmanager.troops[t]) < troops[t]
             ):
                 return False
         return True
@@ -371,26 +368,16 @@ class AttackManager:
 class AttackCache:
     @staticmethod
     def get_cache(village_id):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
-        if os.path.exists(t_path):
-            with open(t_path, "r") as f:
-                return json.load(f)
-        return None
+        return FileManager.load_json_file(f"cache/attacks/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
-        t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", village_id + ".json")
-        with open(t_path, "w") as f:
-            return json.dump(entry, f)
+        return FileManager.save_json_file(entry, f"cache/attacks/{village_id}.json")
 
     @staticmethod
     def cache_grab():
         output = {}
-        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks")
-        for existing in os.listdir(c_path):
-            if not existing.endswith(".json"):
-                continue
-            t_path = os.path.join(os.path.dirname(__file__), "..", "cache", "attacks", existing)
-            with open(t_path, "r") as f:
-                output[existing.replace(".json", "")] = json.load(f)
+
+        for existing in FileManager.list_directory("cache/attacks", ends_with=".json"):
+            output[existing.replace(".json", "")] = FileManager.load_json_file(f"cache/attacks/{existing}")
         return output

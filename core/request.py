@@ -1,4 +1,7 @@
 import requests
+
+from core.filemanager import FileManager
+
 try:
     from urllib.parse import urljoin, urlencode
 except ImportError:
@@ -7,8 +10,6 @@ import logging
 import re
 import time
 import random
-import json
-import os
 from core.reporter import ReporterObject
 
 
@@ -87,16 +88,15 @@ class WebWrapper:
             return None
 
     def start(self, ):
-        session_file = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
-        if os.path.exists(session_file):
-            with open(session_file) as f:
-                session_data = json.load(f)
-                self.web.cookies.update(session_data['cookies'])
-                get_test = self.get_url("game.php?screen=overview")
-                if "game.php" in get_test.url:
-                    return True
-                else:
-                    self.logger.warning("Current session cache not valid")
+        session_data = FileManager.load_json_file("cache/session.json")
+
+        self.web.cookies.update(session_data['cookies'])
+        get_test = self.get_url("game.php?screen=overview")
+        if "game.php" in get_test.url:
+            return True
+        else:
+            self.logger.warning("Current session cache not valid")
+
         self.web.cookies.clear()
         cinp = input("Enter browser cookie string> ")
         cookies = {}
@@ -113,13 +113,11 @@ class WebWrapper:
         for c in self.web.cookies:
             cookies[c.name] = c.value
 
-        with open(session_file, 'w') as f:
-            session = {
-                'endpoint': self.endpoint,
-                'server': self.server,
-                'cookies': cookies
-            }
-            json.dump(session, f)
+        FileManager.save_json_file({
+            'endpoint': self.endpoint,
+            'server': self.server,
+            'cookies': cookies
+        }, "cache/session.json")
 
     def get_action(self, village_id, action):
         url = "game.php?village=%s&screen=%s" % (village_id, action)
@@ -148,7 +146,6 @@ class WebWrapper:
                 return res
 
     def post_api_data(self, village_id, action, params={}, data={}):
-
         custom = dict(self.headers)
         custom['accept'] = "application/json, text/javascript, */*; q=0.01"
         custom['x-requested-with'] = "XMLHttpRequest"

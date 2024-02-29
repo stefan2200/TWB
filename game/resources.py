@@ -1,6 +1,7 @@
 import logging
-import time
 import re
+import time
+
 from core.extractors import Extractor
 
 
@@ -20,7 +21,7 @@ class PremiumExchange:
         n = self.capacity[item]
 
         # tax = self.tax["buy"] if a >= 0 else self.tax["sell"]
-        tax = self.tax["sell"] # twb never buys on premium exchange
+        tax = self.tax["sell"]  # twb never buys on premium exchange
 
         return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
 
@@ -40,9 +41,9 @@ class PremiumExchange:
             r -= 1
             i += 1
             c = self.calculate_cost(item, r)
-            
+
         return r
-    
+
     @staticmethod
     def optimize_n(amount, sell_price, merchants, size=1000):
 
@@ -67,7 +68,7 @@ class PremiumExchange:
         }
 
         return r
-    
+
 
 class ResourceManager:
     actual = {}
@@ -96,7 +97,7 @@ class ResourceManager:
         self.actual["stone"] = game_state["village"]["stone"]
         self.actual["iron"] = game_state["village"]["iron"]
         self.actual["pop"] = (
-            game_state["village"]["pop_max"] - game_state["village"]["pop"]
+                game_state["village"]["pop_max"] - game_state["village"]["pop"]
         )
         self.storage = game_state["village"]["storage_max"]
         self.check_state()
@@ -133,7 +134,7 @@ class ResourceManager:
                 self.logger.warning("Error reading premium data!")
             price_fetch = ["wood", "stone", "iron"]
             prices = {}
-            
+
             for p in price_fetch:
                 prices[p] = data["stock"][p] * data["rates"][p]
 
@@ -271,8 +272,8 @@ class ResourceManager:
             types = self.requested[x]
             for obj_type in types:
                 if (
-                    self.requested[x][obj_type] > 0
-                    and self.requested[x][obj_type] > needed_amount
+                        self.requested[x][obj_type] > 0
+                        and self.requested[x][obj_type] > needed_amount
                 ):
                     needed_amount = self.requested[x][obj_type]
                     needed_the_most = obj_type
@@ -296,8 +297,8 @@ class ResourceManager:
             "h": self.wrapper.last_h,
         }
         post_url = (
-            "game.php?village=%s&screen=market&mode=own_offer&action=new_offer"
-            % self.village_id
+                "game.php?village=%s&screen=market&mode=own_offer&action=new_offer"
+                % self.village_id
         )
         self.wrapper.post_url(post_url, data=payload)
         self.last_trade = int(time.time())
@@ -311,8 +312,8 @@ class ResourceManager:
             offer, village = entry
             if village == str(self.village_id):
                 post_url = (
-                    "game.php?village=%s&screen=market&mode=all_own_offer&action=delete_offers"
-                    % self.village_id
+                        "game.php?village=%s&screen=market&mode=all_own_offer&action=delete_offers"
+                        % self.village_id
                 )
                 post = {
                     "id_%s" % offer: "on",
@@ -353,8 +354,8 @@ class ResourceManager:
             if need:
                 # check incoming resources
                 url = (
-                    "game.php?village=%s&screen=market&mode=other_offer"
-                    % self.village_id
+                        "game.php?village=%s&screen=market&mode=other_offer"
+                        % self.village_id
                 )
                 res = self.wrapper.get_url(url=url)
                 p = re.compile(
@@ -448,10 +449,10 @@ class ResourceManager:
 
             offer = self.parse_res_offer(res_offer, off_id[0])
             if (
-                offer["offered"] == item
-                and offer["offer_amount"] >= how_many
-                and offer["wanted"] == sell
-                and offer["wanted_amount"] <= willing_to_sell
+                    offer["offered"] == item
+                    and offer["offer_amount"] >= how_many
+                    and offer["wanted"] == sell
+                    and offer["wanted_amount"] <= willing_to_sell
             ):
                 self.logger.info(
                     f"Good offer: {offer['offer_amount']} {offer['offered']} for {offer['wanted_amount']} {offer['wanted']}"
@@ -467,7 +468,7 @@ class ResourceManager:
                 self.wrapper.post_url(post_url, data=payload)
                 self.last_trade = int(time.time())
                 self.actual[offer["wanted"]] = (
-                    self.actual[offer["wanted"]] - offer["wanted_amount"]
+                        self.actual[offer["wanted"]] - offer["wanted_amount"]
                 )
                 return True
 

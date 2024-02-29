@@ -111,14 +111,14 @@ class Village:
     """Represents a village with its name, coordinates, and continent."""
 
     def __init__(
-        self,
-        village_id: str,
-        village_name: str,
-        coordinates: Point,
-        continent: str,
-        points: str,
-        storage: Storage,
-        farm: Farm,
+            self,
+            village_id: str,
+            village_name: str,
+            coordinates: Point,
+            continent: str,
+            points: str,
+            storage: Storage,
+            farm: Farm,
     ):
         """
         Initializes a Village object.
@@ -234,16 +234,18 @@ class OverviewPage:
             for row in rows:
                 if row.find_all("td"):
                     cells = row.find_all("td")
-                    village_id = cells[0].contents[1].attrs["data-id"]
+                    idx_offset = 1 if len(cells[0].contents) == 0 else 0  # Compatibility with premium account
+                    village_id = cells[idx_offset].contents[1].attrs["data-id"]
+
                     name, coordinates, continent = self._extract_name_cords_continent(
-                        cells[0].text.strip()
+                        cells[idx_offset].text.strip()
                     )
-                    points = cells[1].text.strip()
-                    resources = cells[2].text.strip()
-                    storage_capacity = cells[3].text.strip()
+                    points = cells[1 + idx_offset].text.strip()
+                    resources = cells[2 + idx_offset].text.strip()
+                    storage_capacity = cells[3 + idx_offset].text.strip()
 
                     storage = Storage(resources, storage_capacity)
-                    farm = Farm(cells[4].text.strip())
+                    farm = Farm(cells[4 + idx_offset].text.strip())
                     village = Village(
                         village_id, name, coordinates, continent, points, storage, farm
                     )
