@@ -1,6 +1,12 @@
 # Tribal Wars Bot (TWB)
 ## An open source bot for the Tribal Wars game
 
+## Update 1.8 notice
+If you experience issues starting the bot you might have to update the dependencies by running the following command in the bot folder:
+` python -m pip install --upgrade requirements.txt`
+
+We also created a [Discord](https://discord.gg/J3nrZbbu) server so you can seek help from other users.
+
 *Features:*
 - Cooperative mode (you can keep playing using the browser while the bot manages stuff in the background)
 - Building management
@@ -41,5 +47,3 @@ You need to use the cookie: header value
 A lot of new features will be added to the dashboard soon.*
 
 More information about configuring the bot can be found in the readme directory!
-
-
