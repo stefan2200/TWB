@@ -27,8 +27,9 @@ class FileManager:
             os.makedirs(directory)
 
     @staticmethod
-    def create_directories(root_directory, directories):
+    def create_directories(directories):
         """Creates a list of directories in the root directory if they do not exist."""
+        root_directory = FileManager.get_root()
         for directory in directories:
             directory = os.path.join(root_directory, directory)
             FileManager.create_directory(directory)

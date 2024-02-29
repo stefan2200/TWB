@@ -345,7 +345,6 @@ class TWB:
                 time.sleep(sleep)
 
     def start(self):
-        root_directory = os.path.dirname(__file__)
         directories = [
             "cache/attacks",
             "cache/reports",
@@ -355,7 +354,7 @@ class TWB:
             "cache/managed",
             "cache/hunter"
         ]
-        FileManager.create_directories(root_directory, directories)
+        FileManager.create_directories(directories)
 
         self.run()
 
