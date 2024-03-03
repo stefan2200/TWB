@@ -31,6 +31,7 @@ import traceback
 import coloredlogs
 import requests
 
+from core.updater import check_update
 from core.filemanager import FileManager
 from core.request import WebWrapper
 from game.village import Village
@@ -421,6 +422,7 @@ def main():
     """
     Python main entry function
     """
+    check_update()
     for _ in range(3):
         t = TWB()
         try:
@@ -442,7 +444,7 @@ def self_config_test():
     if not os.path.exists(file_location):
         return None
     try:
-        with open(file_location) as c_file:
+        with open(file_location, encoding="utf-8") as c_file:
             json.load(c_file)
             return True
     except Exception as e:

@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.8",
+    "version": "1.9",
     "author": "stefan2200"
   },
   "server": {
@@ -23,7 +23,8 @@
     "village_name_template": "Village {num}",
     "village_name_number_length": 3,
     "auto_set_village_names": false,
-    "user_agent": null
+    "user_agent": null,
+    "check_update": true
   },
   "building": {
     "manage_buildings": true,

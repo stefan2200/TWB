@@ -72,7 +72,7 @@ class AttackManager:
                     break
 
     def send_farm(self, target, template):
-        target, distance = target
+        target, _ = target
         missing = self.enough_in_village(template)
         if not missing:
             cached = self.can_attack(vid=target["id"], clear=False)
@@ -81,8 +81,7 @@ class AttackManager:
                 if attack_result == "forced_peace":
                     return 0
                 self.logger.info(
-                    "Attacking %s -> %s (%s)"
-                    % (self.village_id, target["id"], str(template))
+                    "Attacking %s -> %s (%s)" ,self.village_id, target["id"], str(template)
                 )
                 self.wrapper.reporter.report(
                     self.village_id,
@@ -109,12 +108,12 @@ class AttackManager:
                     return 1
                 else:
                     self.logger.debug(
-                        "Ignoring target %s because unable to attack" % target["id"]
+                        "Ignoring target %s because unable to attack", target["id"]
                     )
                     self._unknown_ignored.append(target["id"])
         else:
             self.logger.debug(
-                "Not sending additional farm because not enough units: %s" % missing
+                "Not sending additional farm because not enough units: %s", missing
             )
             return -1
         return 0
@@ -131,8 +130,7 @@ class AttackManager:
             if village["owner"] != "0" and vid not in self.extra_farm:
                 if vid not in self.ignored:
                     self.logger.debug(
-                        "Ignoring village %s because player owned, add to additional_farms to auto attack"
-                        % vid
+                        "Ignoring village %s because player owned, add to additional_farms to auto attack", vid
                     )
                     self.ignored.append(vid)
                 continue
@@ -140,16 +138,16 @@ class AttackManager:
                 if village["points"] >= self.farm_maxpoints:
                     if vid not in self.ignored:
                         self.logger.debug(
-                            "Ignoring village %s because points %d exceeds limit %d"
-                            % (vid, village["points"], self.farm_maxpoints)
+                            "Ignoring village %s because points %d exceeds limit %d",
+                            vid, village["points"], self.farm_maxpoints
                         )
                         self.ignored.append(vid)
                     continue
                 if village["points"] <= self.farm_minpoints:
                     if vid not in self.ignored:
                         self.logger.debug(
-                            "Ignoring village %s because points %d below limit %d"
-                            % (vid, village["points"], self.farm_minpoints)
+                            "Ignoring village %s because points %d below limit %d",
+                            vid, village["points"], self.farm_minpoints
                         )
                         self.ignored.append(vid)
                     continue
@@ -159,8 +157,8 @@ class AttackManager:
                 ):
                     if vid not in self.ignored:
                         self.logger.debug(
-                            "Ignoring village %s because of higher points %d -> %d"
-                            % (vid, my_village["points"], village["points"])
+                            "Ignoring village %s because of higher points %d -> %d",
+                            vid, my_village["points"], village["points"]
                         )
                         self.ignored.append(vid)
                     continue
@@ -170,16 +168,15 @@ class AttackManager:
                 get_h = time.localtime().tm_hour
                 if get_h in range(0, 8) or get_h == 23:
                     self.logger.debug(
-                        "Village %s will be ignored because it is player owned and attack between 23h-8h"
-                        % vid
+                        "Village %s will be ignored because it is player owned and attack between 23h-8h", vid
                     )
                     continue
             distance = self.map.get_dist(village["location"])
             if distance > self.farm_radius:
                 if vid not in self.ignored:
                     self.logger.debug(
-                        "Village %s will be ignored because it is too far away: distance is %f, max is %d"
-                        % (vid, distance, self.farm_radius)
+                        "Village %s will be ignored because it is too far away: distance is %f, max is %d",
+                        vid, distance, self.farm_radius
                     )
                     self.ignored.append(vid)
                 continue
@@ -189,13 +186,11 @@ class AttackManager:
 
             output.append([village, distance])
         self.logger.info(
-            "Farm targets: %d Ignored targets: %d" % (len(output), len(self.ignored))
+            "Farm targets: %d Ignored targets: %d", len(output), len(self.ignored)
         )
         self.targets = sorted(output, key=lambda x: x[1])
 
-    def attacked(
-            self, vid, scout=False, high_profile=False, safe=True, low_profile=False
-    ):
+    def attacked(self, vid, scout=False, high_profile=False, safe=True, low_profile=False):
         cache_entry = {
             "scout": scout,
             "safe": safe,
@@ -206,12 +201,9 @@ class AttackManager:
         AttackCache.set_cache(vid, cache_entry)
 
     def scout(self, vid):
-        if (
-                "spy" not in self.troopmanager.troops
-                or int(self.troopmanager.troops["spy"]) < 5
-        ):
+        if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < 5:
             self.logger.debug(
-                "Cannot scout %s at the moment because insufficient unit: spy" % vid
+                "Cannot scout %s at the moment because insufficient unit: spy", vid
             )
             return False
         troops = {"spy": 5}
@@ -238,8 +230,7 @@ class AttackManager:
                 self.scout(vid)
                 return False
             self.logger.warning(
-                "%s will be attacked but scouting is not possible (yet), going in blind!"
-                % vid
+                "%s will be attacked but scouting is not possible (yet), going in blind!", vid
             )
             return True
 
@@ -248,7 +239,7 @@ class AttackManager:
                 status = self.repman.safe_to_engage(vid)
                 if status == -1:
                     self.logger.info(
-                        "Checking %s: scout report not yet available" % vid
+                        "Checking %s: scout report not yet available", vid
                     )
                     return False
                 if status == 0:
@@ -258,11 +249,11 @@ class AttackManager:
                         return False
                     else:
                         self.logger.info(
-                            "%s: scout report noted enemy units, ignoring" % vid
+                            "%s: scout report noted enemy units, ignoring", vid
                         )
                         return False
                 self.logger.info(
-                    "%s: scout report noted no enemy units, attacking" % vid
+                    "%s: scout report noted no enemy units, attacking", vid
                 )
                 return True
 
