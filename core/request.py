@@ -89,13 +89,13 @@ class WebWrapper:
 
     def start(self, ):
         session_data = FileManager.load_json_file("cache/session.json")
-
-        self.web.cookies.update(session_data['cookies'])
-        get_test = self.get_url("game.php?screen=overview")
-        if "game.php" in get_test.url:
-            return True
-        else:
-            self.logger.warning("Current session cache not valid")
+        if session_data:
+            self.web.cookies.update(session_data['cookies'])
+            get_test = self.get_url("game.php?screen=overview")
+            if "game.php" in get_test.url:
+                return True
+            else:
+                self.logger.warning("Current session cache not valid")
 
         self.web.cookies.clear()
         cinp = input("Enter browser cookie string> ")
@@ -168,7 +168,6 @@ class WebWrapper:
                 return res
 
     def get_api_action(self, village_id, action, params={}, data={}):
-
         custom = dict(self.headers)
         custom['Accept'] = "application/json, text/javascript, */*; q=0.01"
         custom['X-Requested-With'] = "XMLHttpRequest"
