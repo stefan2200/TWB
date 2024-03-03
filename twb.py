@@ -1,3 +1,23 @@
+"""
+TWB - an open source Tribal Wars bot
+"""
+#
+# This file is part of the TWB distribution (https://github.com/stefan2200/TWB).
+# Copyright (c) 2024 Stefan2200
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+
 import collections
 import copy
 import datetime
@@ -29,6 +49,10 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 
 class TWB:
+    """
+    Core class that manages activating times, sleeps, general web wrapper
+    Also verifies, merges and updates the config file automatically
+    """
     res = None
     villages = []
     wrapper = None
@@ -37,6 +61,9 @@ class TWB:
 
     @staticmethod
     def internet_online():
+        """
+        Checks whether the bot has internet access
+        """
         try:
             requests.get("https://github.com/stefan2200/TWB", timeout=(10, 60))
             return True
@@ -44,6 +71,9 @@ class TWB:
             return False
 
     def manual_config(self):
+        """
+        Runs through manual steps of configuring the bot
+        """
         logging.info(
             "Hello and welcome, it looks like you don't have a config file (yet)"
         )
@@ -54,6 +84,8 @@ class TWB:
             return False
         logging.info(
             "Please enter the current (logged-in) URL of the world you are playing on (or q to exit)"
+            "The URL should look something like this:\n"
+            "https://nl01.tribalwars.nl/game.php?village=12345&screen=overview"
         )
         input_url = input("URL: ")
         if input_url.strip() == "q":
@@ -61,8 +93,8 @@ class TWB:
         server = input_url.split("://")[1].split("/")[0]
         game_endpoint = input_url.split("?")[0]
         sub_parts = server.split(".")[0]
-        logging.info("Game endpoint: %s" % game_endpoint)
-        logging.info("World: %s" % sub_parts.upper())
+        logging.info("Game endpoint: %s", game_endpoint)
+        logging.info("World: %s", sub_parts.upper())
         check = input("Does this look correct? [nY]")
         if "y" in check.lower():
             browser_ua = input(
@@ -110,6 +142,11 @@ class TWB:
         return self.manual_config()
 
     def config(self):
+        """
+        Fetches the config file
+        Or the example one of it doesn't exist
+        Also updates config file with template data in case of an update
+        """
         template = FileManager.load_json_file("config.example.json")
 
         if not FileManager.path_exists("config.json"):
@@ -137,6 +174,9 @@ class TWB:
 
     @staticmethod
     def merge_configs(old_config, new_config):
+        """
+        Merges sections of two config files, always ensuring the last version
+        """
         to_ignore = ["villages", "build"]
         for section in old_config:
             if section not in to_ignore:
@@ -155,19 +195,24 @@ class TWB:
         return new_config
 
     def get_overview(self, config):
+        """
+        Gets the overview page to automatically detect world options and owned villages
+        """
         overview_page = OverviewPage(self.wrapper)
         if config["bot"].get("add_new_villages", False):
-            for found_vid in overview_page.villages_data.keys():
+            for found_vid in overview_page.villages_data:
                 if found_vid not in config["villages"]:
                     print(
-                        "Village %s was found but no config entry was found. Adding automatically"
-                        % found_vid
+                        f"Village {found_vid} was found but no config entry was found. Adding automatically"
                     )
                     self.add_village(village_id=found_vid)
 
         return overview_page, config
 
     def add_village(self, village_id, template=None):
+        """
+        Adds a new village and sets the default template data
+        """
         original = self.config()
         FileManager.copy_file("config.json", "config.bak")
 
@@ -182,12 +227,15 @@ class TWB:
 
     @staticmethod
     def get_world_options(overview_page: OverviewPage, config):
+        """
+        Detects world options like flags and knight enabled from the overview page
+        """
         def check_and_set(option_key, setting, check_string=None):
             nonlocal changed
             if world_config[option_key] is None:
                 world_config[option_key] = setting
                 if check_string:
-                    world_config[option_key] = check_string in overview_page
+                    world_config[option_key] = check_string in overview_page.result_get.text
 
                 changed = True
 
@@ -204,11 +252,19 @@ class TWB:
 
     @staticmethod
     def is_active_hours(config):
+        """
+        Checks if the bot is within active hours
+        Allows the bot to run more productive during an active session and ensure stealth at night
+        """
         active_h = [int(hour) for hour in config["bot"]["active_hours"].split("-")]
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
 
     def run(self):
+        """
+        Run the bot
+        TODO: make less messy
+        """
         config = self.config()
         if not self.internet_online():
             print("Internet seems to be down, waiting till its back online...")
@@ -344,6 +400,9 @@ class TWB:
                 time.sleep(sleep)
 
     def start(self):
+        """
+        First run, verify if dirctory structure exist
+        """
         directories = [
             "cache/attacks",
             "cache/reports",
@@ -359,7 +418,10 @@ class TWB:
 
 
 def main():
-    for x in range(3):
+    """
+    Python main entry function
+    """
+    for _ in range(3):
         t = TWB()
         try:
             t.start()
@@ -367,10 +429,12 @@ def main():
             t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
             print("I crashed :(   %s" % str(e))
             traceback.print_exc()
-            pass
 
 
 def self_config_test():
+    """
+    Checks if the config file consists of valid json if it exists
+    """
     file_location = os.path.join(
         os.path.dirname(__file__),
         "config.json"
@@ -379,7 +443,7 @@ def self_config_test():
         return None
     try:
         with open(file_location) as c_file:
-            test_json = json.load(c_file)
+            json.load(c_file)
             return True
     except Exception as e:
         logging.error(e)

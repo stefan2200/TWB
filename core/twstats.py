@@ -1,3 +1,7 @@
+"""
+Detects certain building levels from TWStats
+"""
+
 import json
 import logging
 import sys
@@ -10,6 +14,9 @@ from core.filemanager import FileManager
 
 
 class TwStats:
+    """
+    Default max building levels
+    """
     max_levels = {
         'main': 30,
         'barracks': 25,
@@ -28,6 +35,9 @@ class TwStats:
     logger = logging.getLogger("TwStats")
 
     def buildings_to_farm_pop(self, buildings):
+        """
+        Detect max farm population per level
+        """
         total = 0
         for b in buildings:
             if b in self.max_levels:
@@ -35,9 +45,12 @@ class TwStats:
         return total
 
     def get_building_data(self, world):
+        """
+        Detects building data from TWStats
+        """
         output = defaultdict(dict)
         for upgrade_building in self.max_levels:
-            geturl = "http://twstats.com/%s/index.php?page=buildings&detail=%s" % (world, upgrade_building)
+            geturl = f"http://twstats.com/{world}/index.php?page=buildings&detail={upgrade_building}"
             res = requests.get(geturl)
             table = pq(res.content).find("table.vis")
 
@@ -50,12 +63,15 @@ class TwStats:
             with open('cache/world/buildings_%s.json' % world, 'w') as f:
                 f.write(json.dumps(output))
         except:
-            with open('../cache/world/buildings_%s.json' % world, 'w') as f:
+            with open(f"../cache/world/buildings_{world}.json", "w", encoding="utf-8") as f:
                 f.write(json.dumps(output))
         self.output = output
         return output
 
     def run(self, world):
+        """
+        Runs the update function
+        """
         if self.output == {}:
             template = TwsCache.get_cache(world=world)
             if not template:
@@ -67,10 +83,16 @@ class TwStats:
 
 
 class TwsCache:
+    """
+    Cache data for TWStats
+    """
     @staticmethod
     def get_cache(world):
-        cache_path = "cache/world/buildings_%s.json" % world
-        alt_cache_path = "../cache/world/buildings_%s.json" % world
+        """
+        Gets the current cache
+        """
+        cache_path = f"cache/world/buildings_{world}.json"
+        alt_cache_path = f"../cache/world/buildings_{world}.json"
 
         if FileManager.path_exists(cache_path):
             return FileManager.load_json_file(cache_path)
