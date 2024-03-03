@@ -8,7 +8,6 @@ import random
 import sys
 import time
 import traceback
-
 import coloredlogs
 import requests
 
@@ -359,12 +358,42 @@ class TWB:
         self.run()
 
 
-for x in range(3):
-    t = TWB()
+def main():
+    for x in range(3):
+        t = TWB()
+        try:
+            t.start()
+        except Exception as e:
+            t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
+            print("I crashed :(   %s" % str(e))
+            traceback.print_exc()
+            pass
+
+
+def self_config_test():
+    file_location = os.path.join(
+        os.path.dirname(__file__),
+        "config.json"
+    )
+    if not os.path.exists(file_location):
+        return None
     try:
-        t.start()
+        with open(file_location) as c_file:
+            test_json = json.load(c_file)
+            return True
     except Exception as e:
-        t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
-        print("I crashed :(   %s" % str(e))
-        traceback.print_exc()
-        pass
+        logging.error(e)
+        return False
+
+
+if __name__ == "__main__":
+    if "-i" in sys.argv:
+        logging.info("Bot integrity check passed")
+        check_conf = self_config_test()
+        if check_conf is True:
+            logging.info("Config integrity check passed")
+        if check_conf is False:
+            logging.info("Config integrity check failed")
+            sys.exit(1)
+        sys.exit(0)
+    main()
