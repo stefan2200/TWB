@@ -1,3 +1,8 @@
+"""
+Attack manager
+Sounds dangerous but it just sends farms
+"""
+
 from core.extractors import Extractor
 import logging
 import time
@@ -8,6 +13,9 @@ from core.filemanager import FileManager
 
 
 class AttackManager:
+    """
+    Attackmanager class
+    """
     map = None
     village_id = None
     troopmanager = None
@@ -29,29 +37,41 @@ class AttackManager:
     # blocks villages which cannot be attacked at the moment (too low points, beginners protection etc..)
     _unknown_ignored = []
 
+    # Don't mess with these they are in the config file
     farm_high_prio_wait = 1200
     farm_default_wait = 3600
     farm_low_prio_wait = 7200
 
     def __init__(self, wrapper=None, village_id=None, troopmanager=None, map=None):
+        """
+        Create the attack manager
+        """
         self.wrapper = wrapper
         self.village_id = village_id
         self.troopmanager = troopmanager
         self.map = map
 
     def enough_in_village(self, units):
-        for u in units:
-            if u not in self.troopmanager.troops:
-                return "%s (0/%d)" % (u, units[u])
-            if units[u] > int(self.troopmanager.troops[u]):
-                return "%s (%s/%d)" % (u, self.troopmanager.troops[u], units[u])
+        """
+        Checks if there are enough troops in a village
+        """
+        for unit in units:
+            if unit not in self.troopmanager.troops:
+                return f"{unit} (0/{units[unit]})"
+            if units[unit] > int(self.troopmanager.troops[unit]):
+                return f"{unit} ({self.troopmanager.troops[unit]}/{units[unit]})"
         return False
 
     def run(self):
+        """
+        Run the farming logic
+        """
         if not self.troopmanager.can_attack or self.troopmanager.troops == {}:
+            # Disable farming is disabled in config or no troops available
             return False
         self.get_targets()
         ignored = []
+        # Limits the amount of villages that are farmed from the current village
         for target in self.targets[0: self.max_farms]:
             if type(self.template) == list:
                 f = False
@@ -72,6 +92,9 @@ class AttackManager:
                     break
 
     def send_farm(self, target, template):
+        """
+        Send a farming run
+        """
         target, _ = target
         missing = self.enough_in_village(template)
         if not missing:
@@ -119,6 +142,9 @@ class AttackManager:
         return 0
 
     def get_targets(self):
+        """
+        Gets all possible farming targets based on distance
+        """
         output = []
         my_village = (
             self.map.villages[self.village_id]
@@ -181,7 +207,7 @@ class AttackManager:
                     self.ignored.append(vid)
                 continue
             if vid in self.ignored:
-                self.logger.debug("Removed %s from farm ignore list" % vid)
+                self.logger.debug("Removed %s from farm ignore list", vid)
                 self.ignored.remove(vid)
 
             output.append([village, distance])
@@ -191,6 +217,9 @@ class AttackManager:
         self.targets = sorted(output, key=lambda x: x[1])
 
     def attacked(self, vid, scout=False, high_profile=False, safe=True, low_profile=False):
+        """
+        The farm was sent and this is a callback on what happened
+        """
         cache_entry = {
             "scout": scout,
             "safe": safe,
@@ -201,6 +230,9 @@ class AttackManager:
         AttackCache.set_cache(vid, cache_entry)
 
     def scout(self, vid):
+        """
+        Attempt to send scouts to a farm
+        """
         if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < 5:
             self.logger.debug(
                 "Cannot scout %s at the moment because insufficient unit: spy", vid
@@ -211,13 +243,17 @@ class AttackManager:
             self.attacked(vid, scout=True, safe=False)
 
     def can_attack(self, vid, clear=False):
+        """
+        Checks if it is safe en engage
+        If not an amount of 5 scouts will be sent
+        """
         cache_entry = AttackCache.get_cache(vid)
 
         if cache_entry and cache_entry["last_attack"]:
             last_attack = datetime.fromtimestamp(cache_entry["last_attack"])
             now = datetime.now()
             if last_attack < now - timedelta(hours=12):
-                self.logger.debug(f"Attacked long ago({last_attack}), trying scout attack")
+                self.logger.debug(f"Attacked long ago %s, trying scout attack", {last_attack})
                 if self.scout(vid):
                     return False
 
@@ -258,8 +294,7 @@ class AttackManager:
                 return True
 
             self.logger.debug(
-                "%s will be ignored for attack because unsafe, set safe:true to override"
-                % vid
+                "%s will be ignored for attack because unsafe, set safe:true to override", vid
             )
             return False
 
@@ -284,8 +319,8 @@ class AttackManager:
 
         if cache_entry["last_attack"] + min_time > int(time.time()):
             self.logger.debug(
-                "%s will be ignored because of previous attack (%d sec delay between attacks)"
-                % (vid, min_time)
+                "%s will be ignored because of previous attack (%d sec delay between attacks)",
+                vid, min_time
             )
             return False
         return cache_entry
@@ -300,7 +335,10 @@ class AttackManager:
         return True
 
     def attack(self, vid, troops=None):
-        url = "game.php?village=%s&screen=place&target=%s" % (self.village_id, vid)
+        """
+        Send a TW attack
+        """
+        url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}
         for u in Extractor.attack_form(pre_attack):
@@ -318,7 +356,7 @@ class AttackManager:
         post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}
         pre_data.update(post_data)
 
-        confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
+        confirm_url = f"game.php?village={self.village_id}&screen=place&try=confirm"
         conf = self.wrapper.post_url(url=confirm_url, data=pre_data)
         if '<div class="error_box">' in conf.text:
             return False
@@ -330,8 +368,7 @@ class AttackManager:
                 return "forced_peace"
 
         self.logger.info(
-            "[Attack] %s -> %s duration %f.1 h"
-            % (self.village_id, vid, duration / 3600)
+            "[Attack] %s -> %s duration %f.1 h", self.village_id, vid, duration / 3600
         )
 
         confirm_data = {}
