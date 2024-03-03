@@ -1,3 +1,7 @@
+"""
+Map management, pls don't read this code.
+"""
+import logging
 import math
 import time
 
@@ -6,6 +10,9 @@ from core.filemanager import FileManager
 
 
 class Map:
+    """
+    Class to manage the world around you
+    """
     wrapper = None
     village_id = None
     map_data = []
@@ -16,10 +23,16 @@ class Map:
     fetch_delay = 8
 
     def __init__(self, wrapper=None, village_id=None):
+        """
+        Creates the map files
+        """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def get_map(self):
+        """
+        Fetch the map every 24ish hours and update the cache entries
+        """
         if self.last_fetch + (self.fetch_delay * 3600) > time.time():
             return
         self.last_fetch = time.time()
@@ -65,6 +78,9 @@ class Map:
         return True
 
     def get_map_old(self, game_state):
+        """
+        Old method of parsing the map, might work, might not, who knows
+        """
         if self.map_data:
             for tile in self.map_data:
                 data = tile["data"]
@@ -88,14 +104,17 @@ class Map:
                     game_state["village"]["y"],
                 ]
         if not self.map_data or not self.villages:
-            print(
-                "Error reading map state for village %s, farming might not work properly"
-                % self.village_id
+            logging.warning(
+                "Error reading map state for village %s, farming might not work properly",
+                self.village_id
             )
             return False
         return True
 
     def build_cache_entry(self, location, entry):
+        """
+        Builds a cache entry based on their weird data structure
+        """
         vid = entry[0]
         name = entry[2]
         points = int(entry[3].replace(".", ""))
@@ -124,10 +143,16 @@ class Map:
         self.villages[vid] = structure
 
     def in_cache(self, vid):
+        """
+        Checks if a village is already in the village cache
+        """
         entry = MapCache.get_cache(village_id=vid)
         return entry
 
     def get_dist(self, ext_loc):
+        """
+        Calculates distance from current village to coords
+        """
         distance = math.sqrt(
             ((self.my_location[0] - ext_loc[0]) ** 2)
             + ((self.my_location[1] - ext_loc[1]) ** 2)
@@ -136,10 +161,19 @@ class Map:
 
 
 class MapCache:
+    """
+    Holds a cache of all found villages within a certain distance
+    """
     @staticmethod
     def get_cache(village_id):
+        """
+        Get data from the cache
+        """
         return FileManager.load_json_file(f"cache/villages/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
+        """
+        Creates or updates a cache entry
+        """
         FileManager.save_json_file(entry, f"cache/villages/{village_id}.json")

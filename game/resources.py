@@ -1,3 +1,6 @@
+"""
+Anything with resources goes here
+"""
 import logging
 import re
 import time
@@ -6,6 +9,10 @@ from core.extractors import Extractor
 
 
 class PremiumExchange:
+    """
+    Logic for interaction with the premium exchange
+    """
+
     def __init__(self, wrapper, stock: dict, capacity: dict, tax: dict, constants: dict, duration: int, merchants: int):
         self.wrapper = wrapper
         self.stock = stock
@@ -17,6 +24,9 @@ class PremiumExchange:
 
     # do not call this anihilation (calculate_cost) - i dechipered it from tribalwars js
     def calculate_cost(self, item, a):
+        """
+        Stock exchange cost calculation
+        """
         t = self.stock[item]
         n = self.capacity[item]
 
@@ -26,10 +36,16 @@ class PremiumExchange:
         return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
 
     def calculate_marginal_price(self, e, a):
+        """
+        Math magic
+        """
         c = self.constants
         return c["resource_base_price"] - c["resource_price_elasticity"] * e / (a + c["stock_size_modifier"])
 
     def calculate_rate_for_one_point(self, item: str):
+        """
+        Math magic
+        """
         a = self.stock[item]
         t = self.capacity[item]
         n = self.calculate_marginal_price(a, t)
@@ -46,7 +62,9 @@ class PremiumExchange:
 
     @staticmethod
     def optimize_n(amount, sell_price, merchants, size=1000):
-
+        """
+        Math magic
+        """
         def _ratio(a, b, size=1000):
             a = (size * b) - a
             return a / size
@@ -71,6 +89,9 @@ class PremiumExchange:
 
 
 class ResourceManager:
+    """
+    Class to calculate, store and reserve resources for actions
+    """
     actual = {}
 
     requested = {}
@@ -89,10 +110,17 @@ class ResourceManager:
     do_premium_trade = False
 
     def __init__(self, wrapper=None, village_id=None):
+        """
+        Create the resource manager
+        Preferably used by anything that builds/recruits/sends/whatever
+        """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def update(self, game_state):
+        """
+        Update the current resources based on the game state
+        """
         self.actual["wood"] = game_state["village"]["wood"]
         self.actual["stone"] = game_state["village"]["stone"]
         self.actual["iron"] = game_state["village"]["iron"]
@@ -101,17 +129,19 @@ class ResourceManager:
         )
         self.storage = game_state["village"]["storage_max"]
         self.check_state()
-        self.logger = logging.getLogger(
-            "Resource Manager: %s" % game_state["village"]["name"]
-        )
+        store_state = game_state["village"]["name"]
+        self.logger = logging.getLogger(f"Resource Manager: {store_state}")
 
     def do_premium_stuff(self):
+        """
+        Does premium stuff
+        """
         gpl = self.get_plenty_off()
         self.logger.debug(
-            f"Trying premium trade: gpl {gpl} do? {self.do_premium_trade}"
+            "Trying premium trade: gpl %s do? %s", gpl, self.do_premium_trade
         )
         if gpl and self.do_premium_trade:
-            url = "game.php?village=%s&screen=market&mode=exchange" % self.village_id
+            url = f"game.php?village={self.village_id}&screen=market&mode=exchange"
             res = self.wrapper.get_url(url=url)
             data = Extractor.premium_data(res.text)
 
@@ -127,8 +157,8 @@ class ResourceManager:
 
             cost_per_point = premium_exchange.calculate_rate_for_one_point(gpl)
 
-            self.logger.debug(f"Cost per point: {cost_per_point}")
-            self.logger.info(f"Current {gpl} price: {self.actual[gpl]}")
+            self.logger.debug("Cost per point: %s", cost_per_point)
+            self.logger.info("Current %s price: ", self.actual[gpl])
 
             if not data:
                 self.logger.warning("Error reading premium data!")
@@ -138,11 +168,11 @@ class ResourceManager:
             for p in price_fetch:
                 prices[p] = data["stock"][p] * data["rates"][p]
 
-            self.logger.info("Actual premium prices: %s" % prices)
+            self.logger.info("Actual premium prices: %s",  prices)
 
             if gpl in prices and prices[gpl] * 1.1 < self.actual[gpl]:
                 self.logger.info(
-                    "Attempting trade of %d %s for premium point" % (prices[gpl], gpl)
+                    "Attempting trade of %d %s for premium point", prices[gpl], gpl
                 )
 
                 if data["merchants"] < 1:
@@ -170,7 +200,7 @@ class ResourceManager:
                     self.village_id,
                     action="exchange_begin",
                     params={"screen": "market"},
-                    data={"sell_%s" % gpl: (gpl_data["n_to_sell"] * cost_per_point)},
+                    data={f"sell_{gpl}": (gpl_data["n_to_sell"] * cost_per_point)},
                 )
 
                 if result:
@@ -195,23 +225,33 @@ class ResourceManager:
                         self.logger.info("Trade failed!")
                 else:
                     self.logger.debug(
-                        f"Trying to trade {gpl} for premium points - exchange_begin - failed"
+                        f"Trying to trade %s for premium points - exchange_begin - failed", gpl
                     )
                     self.logger.info("Trade failed!")
 
     def check_state(self):
+        """
+        Removes resource requests when the amount is met
+        """
         for source in self.requested:
             for res in self.requested[source]:
                 if self.requested[source][res] <= self.actual[res]:
                     self.requested[source][res] = 0
 
     def request(self, source="building", resource="wood", amount=1):
+        """
+        When called, resources can be taken from other actions
+
+        """
         if source in self.requested:
             self.requested[source][resource] = amount
         else:
             self.requested[source] = {resource: amount}
 
     def can_recruit(self):
+        """
+        Checks of population is sufficient for recruitment
+        """
         if self.actual["pop"] == 0:
             self.logger.info("Can't recruit, no room for pops!")
             for x in self.requested:
@@ -229,6 +269,9 @@ class ResourceManager:
         return True
 
     def get_plenty_off(self):
+        """
+        Checks of there is overcapacity in a village
+        """
         most_of = 0
         most = None
         for sub in self.actual:
@@ -251,6 +294,9 @@ class ResourceManager:
         return most
 
     def in_need_of(self, obj_type):
+        """
+        Checks if the village lacks a certain resource
+        """
         for x in self.requested:
             types = self.requested[x]
             if obj_type in types and self.requested[x][obj_type] > 0:
@@ -258,6 +304,9 @@ class ResourceManager:
         return False
 
     def in_need_amount(self, obj_type):
+        """
+        Checks what would be needed in order to match requirements
+        """
         amount = 0
         for x in self.requested:
             types = self.requested[x]
@@ -266,6 +315,9 @@ class ResourceManager:
         return amount
 
     def get_needs(self):
+        """
+        All of the above
+        """
         needed_the_most = None
         needed_amount = 0
         for x in self.requested:
@@ -282,7 +334,10 @@ class ResourceManager:
         return None
 
     def trade(self, me_item, me_amount, get_item, get_amount):
-        url = "game.php?village=%s&screen=market&mode=own_offer" % self.village_id
+        """
+        Creates a new trading offer
+        """
+        url = f"game.php?village={self.village_id}&screen=market&mode=own_offer"
         res = self.wrapper.get_url(url=url)
         if 'market_merchant_available_count">0' in res.text:
             self.logger.debug("Not trading because not enough merchants available")
@@ -296,25 +351,22 @@ class ResourceManager:
             "multi": 1,
             "h": self.wrapper.last_h,
         }
-        post_url = (
-                "game.php?village=%s&screen=market&mode=own_offer&action=new_offer"
-                % self.village_id
-        )
+        post_url = f"game.php?village={self.village_id}&screen=market&mode=own_offer&action=new_offer"
         self.wrapper.post_url(post_url, data=payload)
         self.last_trade = int(time.time())
         return True
 
     def drop_existing_trades(self):
-        url = "game.php?village=%s&screen=market&mode=all_own_offer" % self.village_id
+        """
+        Removes an existing trade if resources are needed elsewhere or it expired
+        """
+        url = f"game.php?village={self.village_id}&screen=market&mode=all_own_offer"
         data = self.wrapper.get_url(url)
         existing = re.findall(r'data-id="(\d+)".+?data-village="(\d+)"', data.text)
         for entry in existing:
             offer, village = entry
             if village == str(self.village_id):
-                post_url = (
-                        "game.php?village=%s&screen=market&mode=all_own_offer&action=delete_offers"
-                        % self.village_id
-                )
+                post_url = f"game.php?village={self.village_id}&screen=market&mode=all_own_offer&action=delete_offers"
                 post = {
                     "id_%s" % offer: "on",
                     "delete": "Verwijderen",
@@ -326,6 +378,9 @@ class ResourceManager:
                 )
 
     def readable_ts(self, seconds):
+        """
+        Human readable timestamp
+        """
         seconds -= int(time.time())
         seconds = seconds % (24 * 3600)
         hour = seconds // 3600
@@ -336,9 +391,13 @@ class ResourceManager:
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def manage_market(self, drop_existing=True):
+        """
+        Manages the market for you
+        """
         last = self.last_trade + int(3600 * self.trade_max_per_hour)
         if last > int(time.time()):
-            self.logger.debug("Won't trade for %s" % (self.readable_ts(last)))
+            rts = self.readable_ts(last)
+            self.logger.debug(f"Won't trade for {rts}")
             return
 
         get_h = time.localtime().tm_hour
@@ -353,10 +412,7 @@ class ResourceManager:
             need = self.get_needs()
             if need:
                 # check incoming resources
-                url = (
-                        "game.php?village=%s&screen=market&mode=other_offer"
-                        % self.village_id
-                )
+                url = f"game.php?village={self.village_id}&screen=market&mode=other_offer"
                 res = self.wrapper.get_url(url=url)
                 p = re.compile(
                     r"Aankomend:\s.+\"icon header (.+?)\".+?<\/span>(.+) ", re.M
@@ -368,7 +424,7 @@ class ResourceManager:
                         "".join([s for s in incoming[0][1] if s.isdigit()])
                     )
                     self.logger.info(
-                        f"There are resources incoming! {resource_incoming}"
+                        f"There are resources incoming! %s", resource_incoming
                     )
 
                 item, how_many = need
@@ -389,16 +445,14 @@ class ResourceManager:
                 if how_many > self.max_trade_amount:
                     how_many = self.max_trade_amount
                     self.logger.debug(
-                        "Lowering trade amount of %d to %d because of limitation"
-                        % (how_many, self.max_trade_amount)
+                        "Lowering trade amount of %d to %d because of limitation", how_many, self.max_trade_amount
                     )
                 biased = int(how_many * self.trade_bias)
                 if self.actual[plenty] < biased:
                     self.logger.debug("Cannot trade because insufficient resources")
                     return
                 self.logger.info(
-                    "Adding market trade of %d %s -> %d %s"
-                    % (how_many, item, biased, plenty)
+                    "Adding market trade of %d %s -> %d %s", how_many, item, biased, plenty
                 )
                 self.wrapper.reporter.report(
                     self.village_id,
@@ -410,7 +464,10 @@ class ResourceManager:
                 self.trade(plenty, biased, item, how_many)
 
     def check_other_offers(self, item, how_many, sell):
-        url = "game.php?village=%s&screen=market&mode=other_offer" % self.village_id
+        """
+        Checks if there are offers that match our needs
+        """
+        url = f"game.php?village={self.village_id}&screen=market&mode=other_offer"
         res = self.wrapper.get_url(url=url)
         p = re.compile(
             r"(?:<!-- insert the offer -->\n+)\s+<tr>(.*?)<\/tr>", re.S | re.M
@@ -476,6 +533,9 @@ class ResourceManager:
         return False
 
     def parse_res_offer(self, res_offer, id):
+        """
+        Parse an offer
+        """
         off, want, ratio = res_offer
         res_offer, res_offer_amount = off
         res_wanted, res_wanted_amount = want

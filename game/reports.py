@@ -1,3 +1,6 @@
+"""
+Report management
+"""
 import json
 import logging
 import re
@@ -8,6 +11,9 @@ from core.filemanager import FileManager
 
 
 class ReportManager:
+    """
+    Class to "efficiently" manage reports
+    """
     wrapper = None
     village_id = None
     game_state = None
@@ -15,10 +21,17 @@ class ReportManager:
     last_reports = {}
 
     def __init__(self, wrapper=None, village_id=None):
+        """
+        Creates the report manager
+        """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def has_resources_left(self, vid):
+        """
+        Checks if there are any resources left after farm
+        Used by the farm manager script
+        """
         possible_reports = []
         for repid in self.last_reports:
             entry = self.last_reports[repid]
@@ -29,18 +42,22 @@ class ReportManager:
             return False, {}
 
         def highest_when(attack):
+            """
+            Converts the date of an attack when resource gains were high
+            """
             return datetime.fromtimestamp(int(attack["extra"]["when"]))
 
-        # self.logger.debug(f"Reports: {possible_reports}")
         entry = max(possible_reports, key=highest_when)
-        self.logger.debug(f'This is the newest? {datetime.fromtimestamp(int(entry["extra"]["when"]))}')
-        # self.logger.debug(f'{entry["extra"]["when"]} seems to be the last attack.')
-        # last_loot = entry["extra"]["loot"] if "loot" in entry["extra"] else None
+        self.logger.debug("This is the newest? %s", datetime.fromtimestamp(int(entry["extra"]["when"])))
         if entry["extra"].get("resources", None):
             return True, entry["extra"]["resources"]
         return False, {}
 
     def safe_to_engage(self, vid):
+        """
+        Calculates if a village is safe to engage without custom interaction
+        Just sending a 0 losses attack overrides this behaviour
+        """
         for repid in self.last_reports:
             entry = self.last_reports[repid]
             if vid == entry["dest"]:
@@ -76,19 +93,20 @@ class ReportManager:
         return -1
 
     def read(self, page=0, full_run=False):
+        """
+        Read some (or all if you like) reports
+        """
         if not self.logger:
             self.logger = logging.getLogger("Reports")
 
         if len(self.last_reports) == 0:
             self.logger.info("First run, re-reading cache entries")
             self.last_reports = ReportCache.cache_grab()
-            self.logger.info("Got %d reports from cache" % len(self.last_reports))
+            self.logger.info("Got %d reports from cache", len(self.last_reports))
         offset = page * 12
-        url = "game.php?village=%s&screen=report&mode=all" % (
-            self.village_id
-        )
+        url = f"game.php?village={self.village_id}&screen=report&mode=all"
         if page > 0:
-            url += "&from=%d" % offset
+            url += f"&from={offset}"
         result = self.wrapper.get_url(url)
         self.game_state = Extractor.game_state(result)
         new = 0
@@ -98,10 +116,7 @@ class ReportManager:
             if report_id in self.last_reports:
                 continue
             new += 1
-            url = "game.php?village=%s&screen=report&mode=all&group_id=0&view=%s" % (
-                self.village_id,
-                report_id,
-            )
+            url = f"game.php?village={self.village_id}&screen=report&mode=all&group_id=0&view={report_id}"
             data = self.wrapper.get_url(url)
 
             get_type = re.search(r'class="report_(\w+)', data.text)
@@ -117,11 +132,15 @@ class ReportManager:
         if new == 12 or full_run and page < 20:
             page += 1
             self.logger.debug(
-                "%d new reports where added, also checking page %d" % (new, page)
+                "%d new reports where added, also checking page %d", new, page
             )
             return self.read(page, full_run=full_run)
 
     def re_unit(self, inp):
+        """
+        No idea why I made this and what it does
+        Guessing reading a line of units?
+        """
         output = {}
         for row in inp:
             k, v = row
@@ -130,6 +149,9 @@ class ReportManager:
         return output
 
     def re_building(self, inp):
+        """
+        Read building levels from a report entry
+        """
         output = {}
         for row in inp:
             k = row["id"]
@@ -139,6 +161,9 @@ class ReportManager:
         return output
 
     def attack_report(self, report, report_id):
+        """
+        A report where we attacked a village
+        """
         from_village = None
         from_player = None
 
@@ -209,13 +234,13 @@ class ReportManager:
             ):
                 loot[loot_entry[0]] = loot_entry[1]
             extra["loot"] = loot
-            self.logger.info("attack report %s -> %s" % (from_village, to_village))
+            self.logger.info("attack report %s -> %s", from_village, to_village)
 
         scout_results = re.search(
             r'(?s)(<table id="attack_spy_resources".+?</table>)', report
         )
         if scout_results:
-            self.logger.info("scout report %s -> %s" % (from_village, to_village))
+            self.logger.info("scout report %s -> %s", from_village, to_village)
             scout_buildings = re.search(
                 r'(?s)<input id="attack_spy_building_data" type="hidden" value="(.+?)"',
                 report,
@@ -252,6 +277,9 @@ class ReportManager:
             losses={},
             data={},
     ):
+        """
+        Creates a report file
+        """
         output = {
             "type": report_type,
             "origin": origin_village,
@@ -261,22 +289,34 @@ class ReportManager:
         }
         ReportCache.set_cache(report_id, output)
         self.logger.info(
-            "Processed %s report with id %s" % (report_type, str(report_id))
+            "Processed %s report with id %s", report_type, str(report_id)
         )
         return output
 
 
 class ReportCache:
+    """
+    File cache for local reports
+    """
     @staticmethod
     def get_cache(report_id):
+        """
+        Reads a report entry
+        """
         return FileManager.load_json_file(f"cache/reports/{report_id}.json")
 
     @staticmethod
     def set_cache(report_id, entry):
+        """
+        Creates a report entry
+        """
         FileManager.save_json_file(entry, f"cache/reports/{report_id}.json")
 
     @staticmethod
     def cache_grab():
+        """
+        Reads all locally stored reports
+        """
         output = {}
 
         for existing in FileManager.list_directory("cache/reports", ends_with=".json"):

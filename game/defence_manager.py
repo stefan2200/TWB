@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import re
 
 from core.extractors import Extractor
@@ -28,7 +29,7 @@ class DefenceManager:
 
     runs = 0
     logger = None
-    manage_flags_enabled = False
+    manage_flags_enabled = True
     support_factor = 0.25
     support_max_villages = 2
 
@@ -63,8 +64,7 @@ class DefenceManager:
                 send_support[u] = int(int(self.units.troops[u]) * self.support_factor)
 
         self.logger.info(
-            "Sending requested support to village %s: %s"
-            % (requesting_village, str(send_support))
+            "Sending requested support to village %s: %s", requesting_village, str(send_support)
         )
         return self.support(requesting_village, troops=send_support)
 
@@ -79,11 +79,11 @@ class DefenceManager:
             if self.auto_evacuate and with_defence:
                 self.evacuate()
         else:
+            self.flag_logic(self.set_flag_not_under_attack)
             if not with_defence:
                 self.under_attack = False
                 return False
             self.under_attack = False
-            self.flag_logic(self.set_flag_not_under_attack)
             index = 0
 
             for vil in self.my_other_villages:
@@ -106,9 +106,8 @@ class DefenceManager:
                     ok = False
                 index += 1
         if ok:
-            self.logger.info("Area OK for village %s, nice and quiet" % self.village_id)
+            self.logger.info("Area OK for village %s, nice and quiet", self.village_id)
             # All is well
-            self.flag_logic(self.set_flag_not_under_attack)
 
     def evacuate(self):
         if not self.units:
@@ -126,7 +125,7 @@ class DefenceManager:
                 continue
             if not attack_state:
                 self.logger.info(
-                    "Evacuating troops from village %s: %s" % (vid, str(to_hide))
+                    "Evacuating troops from village %s: %s", vid, str(to_hide)
                 )
                 self.support(vid, troops=to_hide)
                 return True
@@ -134,30 +133,26 @@ class DefenceManager:
     def flag_logic(self, set_flag):
         if not self.manage_flags_enabled:
             return
-        if not self._can_change_flag:
-            if not self._sf_logged:
-                self.logger.info(
-                    "Unable to set new flag on village %s because of cool down"
-                    % self.village_id
-                )
-                self._sf_logged = True
-            return
-        self._sf_logged = False
+
         if (
                 not self.current_flag
                 or self.current_flag[0] is not set_flag
                 or self.get_highest_flag_possible(flag_id=set_flag) > self.current_flag[1]
         ):
+            if not self._can_change_flag:
+                if not self._sf_logged:
+                    self.logger.info(
+                        "Unable to set new flag on village %s because of cool down", self.village_id
+                    )
+                    self._sf_logged = True
+                return
+            self._sf_logged = False
             self.flag_set(
                 set_flag, level=self.get_highest_flag_possible(flag_id=set_flag)
             )
             self.logger.info(
-                "Setting flag %d level %d for village %s"
-                % (
-                    set_flag,
-                    self.get_highest_flag_possible(flag_id=set_flag),
-                    self.village_id,
-                )
+                "Setting flag %d level %d for village %s",
+                set_flag, self.get_highest_flag_possible(flag_id=set_flag), self.village_id
             )
 
     def flag_upgrade(self, flag, level):
@@ -188,11 +183,12 @@ class DefenceManager:
     def manage_flags(self):
         if not self.manage_flags_enabled:
             return
-        if self.runs != 0 and self.runs % 5 != 0:
+        # Randomize flag runs
+        if self.runs != 0 and self.runs % random.randint(3, 8) != 0:
             return
         self.logger.info("Managing flags")
 
-        url = "game.php?village=%s&screen=flags" % self.village_id
+        url = f"game.php?village={self.village_id}&screen=flags"
         result = self.wrapper.get_url(url=url)
 
         self._can_change_flag = '<span class="timer cooldown">' not in result.text
@@ -206,12 +202,18 @@ class DefenceManager:
             result.text,
         )
         if get_current_flag:
-            cflag = [int(get_current_flag.group(1)), int(get_current_flag.group(2))]
-            if cflag != self.current_flag:
-                self.current_flag = cflag
-                self.logger.info(
-                    "Current village flag: %s" % get_current_flag.group(3).strip()
+            if '<div id="current_flag" style="margin-top: 10px; display: none">' in result.text:
+                self.logger.warning(
+                    "No flag was identified on village, setting default one"
                 )
+                self.current_flag = None
+            else:
+                cflag = [int(get_current_flag.group(1)), int(get_current_flag.group(2))]
+                if cflag != self.current_flag:
+                    self.current_flag = cflag
+                    self.logger.info(
+                        "Current village flag: %s", get_current_flag.group(3).strip()
+                    )
         upgraded = 0
         raw_flags = json.loads(get_flag_data.group(1))
         self.flags = {}
@@ -220,7 +222,7 @@ class DefenceManager:
                 for amount in raw_flags[flag_type][level]:
                     if int(amount) >= 3:
                         self.flag_upgrade(flag=flag_type, level=level)
-                        self.logger.info("Upgraded flag %s" % flag_type)
+                        self.logger.info("Upgraded flag %s", flag_type)
                         upgraded += 1
                     if int(amount) > 0:
                         if int(flag_type) not in self.flags or self.flags[
@@ -231,7 +233,7 @@ class DefenceManager:
             return self.manage_flags()
 
     def support(self, vid, troops=None):
-        url = "game.php?village=%s&screen=place&target=%s" % (self.village_id, vid)
+        url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_support = self.wrapper.get_url(url)
         pre_data = {}
         for u in Extractor.attack_form(pre_support):
@@ -249,14 +251,14 @@ class DefenceManager:
         post_data = {"x": x, "y": y, "target_type": "coord", "support": "Ondersteunen"}
         pre_data.update(post_data)
 
-        confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
+        confirm_url = f"game.php?village={self.village_id}&screen=place&try=confirm"
         conf = self.wrapper.post_url(url=confirm_url, data=pre_data)
         if '<div class="error_box">' in conf.text:
             return False
         duration = Extractor.attack_duration(conf)
         self.logger.info(
-            "[Support] %s -> %s duration %f.1 h"
-            % (self.village_id, vid, duration / 3600)
+            "[Support] %s -> %s duration %f.1 h",
+            self.village_id, vid, duration / 3600
         )
 
         confirm_data = {}

@@ -59,8 +59,8 @@ class Village:
         vdata = self.config["villages"][village_id]
         if parameter not in vdata:
             self.logger.warning(
-                "Village %s configuration parameter %s does not exist!"
-                % (village_id, parameter)
+                "Village %s configuration parameter %s does not exist!",
+                village_id, parameter
             )
             return default
         return vdata[parameter]
@@ -83,7 +83,7 @@ class Village:
                 self.logger.info("Read game state for village")
         else:
             data = self.wrapper.get_url(
-                "game.php?village=%s&screen=overview" % self.village_id
+                f"game.php?village={self.village_id}&screen=overview"
             )
             if data:
                 self.game_data = Extractor.game_state(data)
@@ -99,7 +99,7 @@ class Village:
 
         if not self.game_data:
             self.logger.error(
-                "Error reading game data for village %s" % self.village_id
+                "Error reading game data for village %s", self.village_id
             )
             return None
 
@@ -107,7 +107,7 @@ class Village:
                 self.village_set_name
                 and self.game_data["village"]["name"] != self.village_set_name
         ):
-            self.logger.name = "Village %s" % self.village_set_name
+            self.logger.name = f"Village {self.village_set_name}"
 
         if not self.get_config(section="villages", parameter=self.village_id):
             return None
@@ -216,7 +216,7 @@ class Village:
         )
         if not build_config:
             self.logger.warning(
-                "Village %d does not have 'building' config override!" % self.village_id
+                "Village %d does not have 'building' config override!", self.village_id
             )
             build_config = self.get_config(
                 section="building", parameter="default", default="purple_predator"
@@ -259,7 +259,7 @@ class Village:
         )
         if not unit_config:
             self.logger.warning(
-                "Village %d does not have 'building' config override!" % self.village_id
+                "Village %d does not have 'units' config override!", self.village_id
             )
             unit_config = self.get_config(
                 section="units", parameter="default", default="basic"
@@ -272,7 +272,7 @@ class Village:
         if entry and self.units.wanted != entry["build"]:
             # update wanted units if template has changed
             self.logger.info(
-                "%s as wanted units for current village" % (str(entry["build"]))
+                "%s as wanted units for current village", str(entry["build"])
             )
             self.units.wanted = entry["build"]
 
@@ -281,8 +281,7 @@ class Village:
             for disabled in disabled_units:
                 self.units.wanted_levels.pop(disabled, None)
             self.logger.info(
-                "%s as wanted upgrades for current village"
-                % (str(self.units.wanted_levels))
+                "%s as wanted upgrades for current village", str(self.units.wanted_levels)
             )
 
         # get total amount of troops in village
@@ -347,8 +346,7 @@ class Village:
                 for building in self.units.wanted:
                     if not self.builder.get_level(building):
                         self.logger.debug(
-                            "Recruit of %s will be ignored because building is not (yet) available"
-                            % building
+                            "Recruit of %s will be ignored because building is not (yet) available", building
                         )
                         continue
                     self.units.start_update(building, disabled_units)
@@ -363,10 +361,10 @@ class Village:
         for x in to_dell:
             self.resman.requested.pop(x)
 
-        self.logger.debug("Current resources: %s" % str(self.resman.actual))
-        self.logger.debug("Requested resources: %s" % str(self.resman.requested))
+        self.logger.debug("Current resources: %s", str(self.resman.actual))
+        self.logger.debug("Requested resources: %s", str(self.resman.requested))
 
-        # Forced peace?
+        # Set timeslots in order to prevent farming during events like national holidays
         forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
         forced_peace = False
         forced_peace_today = False
@@ -393,11 +391,9 @@ class Village:
                     section="farms", parameter="force_scout_if_available", default=True
                 )
                 self.logger.info(
-                    "%d villages from map cache, (your location: %s)"
-                    % (
+                    "%d villages from map cache, (your location: %s)",
                         len(self.area.villages),
-                        ":".join([str(x) for x in self.area.my_location]),
-                    )
+                        ":".join([str(x) for x in self.area.my_location])
                 )
                 if not self.attack:
                     self.attack = AttackManager(
@@ -525,7 +521,7 @@ class Village:
                 params={"quest": result, "skip": "false"},
             )
             if qres:
-                self.logger.info("Completed quest: %s" % str(result))
+                self.logger.info("Completed quest: %s", str(result))
                 return True
         self.logger.debug("There where no completed quests")
         return False
@@ -542,7 +538,7 @@ class Village:
             # First check if there is enough room for storing the reward
             for t_resource in reward["reward"]:
                 if self.resman.storage - self.resman.actual[t_resource] < reward["reward"][t_resource]:
-                    self.logger.info(f"Not enough room to store the {t_resource} part of the reward")
+                    self.logger.info("Not enough room to store the %s part of the reward", t_resource)
                     return False
 
             qres = self.wrapper.post_api_data(
@@ -552,11 +548,11 @@ class Village:
                 data={"reward_id": reward["id"]}
             )
             if qres:
-                if qres['response'] == False:
-                    self.logger.debug(f"Error getting reward! {qres}")
+                if not qres['response']:
+                    self.logger.debug("Error getting reward! %s", qres)
                     return False
                 else:
-                    self.logger.info("Got quest reward: %s" % str(reward))
+                    self.logger.info("Got quest reward: %s", str(reward))
                     for t_resource in reward["reward"]:
                         self.resman.actual[t_resource] += reward["reward"][t_resource]
 
@@ -576,7 +572,4 @@ class Village:
             "under_attack": self.def_man.under_attack,
             "last_run": int(time.time()),
         }
-        self.set_cache(self.village_id, entry=village_entry)
-
-    def set_cache(self, village_id, entry):
-        FileManager.save_json_file(entry, f"cache/managed/{village_id}.json")
+        FileManager.save_json_file(village_entry, f"cache/managed/{self.village_id}.json")
