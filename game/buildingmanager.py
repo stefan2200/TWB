@@ -142,10 +142,9 @@ class BuildingManager:
             r'(?s)(\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text
         )
         if res and int(res.group(2)) <= time.time():
-            result = self.wrapper.get_url(
-                "game.php?village=%s&screen=main&ajaxaction=build_order_reduce&h=%s&id=%s&destroy=0",
-                self.village_id, self.wrapper.last_h, res.group(1)
-            )
+            quickbuild_url = f"game.php?village={self.village_id}&screen=main&ajaxaction=build_order_reduce"
+            quickbuild_url += f"&h={self.wrapper.last_h}&id={res.group(1)}&destroy=0"
+            result = self.wrapper.get_url(quickbuild_url)
             self.logger.debug("Quick build action was completed, re-running function")
             return result
         return False
