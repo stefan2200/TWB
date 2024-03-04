@@ -15,13 +15,12 @@ class DataReader:
         output = {}
         for existing in FileManager.list_directory(f"cache/{cache_location}", ends_with=".json"):
             t_path = f"cache/{cache_location}/{existing}"
-            file = FileManager.open_file(t_path)
-            try:
-                output[existing.replace('.json', '')] = json.load(file)
-            except Exception as e:
-                print("Cache read error for %s: %s. Removing broken entry" % (t_path, str(e)))
-                file.close()
+            data = FileManager.load_json_file(t_path)
+            if not data:
+                print("Cache read error for %s. Removing broken entry" % t_path)
                 FileManager.remove_file(t_path)
+
+            output[existing.replace('.json', '')] = data
 
         return output
 
@@ -89,9 +88,12 @@ class BuildingTemplateManager:
     def template_cache_list():
         output = {}
         for existing in FileManager.list_directory("templates/builder", ends_with=".txt"):
-            file = FileManager.open_file(f"templates/builder/{existing}")
+            lines = FileManager.read_lines(f"templates/builder/{existing}")
+            if not lines:
+                continue
+
             output[existing] = BuildingTemplateManager.template_to_dict(
-                [x.strip() for x in file.readlines()]
+                [x.strip() for x in lines]
             )
         return output
 

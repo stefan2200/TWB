@@ -123,19 +123,15 @@ class TWB:
                 logging.info("Goodbye :)")
                 sys.exit(0)
 
-            template_file = FileManager.open_file("config.example.json")
-            if not template_file:
-                print("Unable to open config.example.json")
+            template = FileManager.load_json_file("config.example.json", object_pairs_hook=collections.OrderedDict)
+            if not template:
+                logging.error("Unable to open config.example.json")
                 return False
-            template = json.load(
-                template_file, object_pairs_hook=collections.OrderedDict
-            )
             template["server"]["endpoint"] = game_endpoint
             template["server"]["server"] = sub_parts.lower()
             template["bot"]["user_agent"] = browser_ua
 
-            new_config = FileManager.open_file("config.json", "w")
-            json.dump(template, new_config, indent=2, sort_keys=False)
+            FileManager.save_json_file(template, "config.json")
             print("Deployed new configuration file")
             return True
 
@@ -181,8 +177,8 @@ class TWB:
         to_ignore = ["villages", "build"]
         for section in old_config:
             if section not in to_ignore:
-                for entry in old_config[section]:
-                    if entry in new_config[section]:
+                for entry in old_config.get(section, {}):
+                    if entry in new_config.get(section, {}):
                         new_config[section][entry] = old_config[section][entry]
         villages = collections.OrderedDict()
         for v in old_config["villages"]:
