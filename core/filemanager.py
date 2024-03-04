@@ -45,13 +45,9 @@ class FileManager:
         return files
 
     @staticmethod
-    def open_file(path, mode="r"):
-        """Opens a file in the specified mode. Returns None if the file does not exist and the mode is "r"."""
+    def __open_file(path, mode="r"):
+        """Opens a file in the specified mode. Private do NOT use outside filemanager."""
         full_path = os.path.join(FileManager.get_root(), path)
-
-        if mode == "r" and not FileManager.path_exists(full_path):
-            return None
-
         return open(full_path, mode)
 
     @staticmethod
@@ -62,8 +58,19 @@ class FileManager:
         if not FileManager.path_exists(full_path):
             return None
 
-        with FileManager.open_file(full_path) as file:
+        with FileManager.__open_file(full_path) as file:
             return file.read()
+
+    @staticmethod
+    def read_lines(path):
+        """Reads the contents of a file and returns the lines. Returns None if the file does not exist."""
+        full_path = os.path.join(FileManager.get_root(), path)
+
+        if not FileManager.path_exists(full_path):
+            return None
+
+        with FileManager.__open_file(full_path) as file:
+            return file.readlines()
 
     @staticmethod
     def remove_file(path):
@@ -81,7 +88,7 @@ class FileManager:
         if not FileManager.path_exists(full_path):
             return None
 
-        with FileManager.open_file(full_path) as file:
+        with FileManager.__open_file(full_path) as file:
             return json.load(file, **kwargs)
 
     @staticmethod
@@ -89,7 +96,7 @@ class FileManager:
         """Saves data to a JSON file. If the file does not exist, it will be created."""
         full_path = os.path.join(FileManager.get_root(), path)
 
-        with FileManager.open_file(full_path, mode="w") as file:
+        with FileManager.__open_file(full_path, mode="w") as file:
             json.dump(data, file, indent=2, sort_keys=False, **kwargs)
 
     @staticmethod
@@ -98,6 +105,9 @@ class FileManager:
         full_src_path = os.path.join(FileManager.get_root(), src_path)
         full_dest_path = os.path.join(FileManager.get_root(), dest_path)
 
-        with FileManager.open_file(full_src_path) as src_file:
-            with FileManager.open_file(full_dest_path, mode="w") as dest_file:
+        if not FileManager.path_exists(full_src_path):
+            return False
+
+        with FileManager.__open_file(full_src_path) as src_file:
+            with FileManager.__open_file(full_dest_path, mode="w") as dest_file:
                 dest_file.write(src_file.read())
