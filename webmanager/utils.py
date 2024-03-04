@@ -29,8 +29,6 @@ class DataReader:
                     f.close()
                     os.remove(t_path)
 
-            output[existing.replace('.json', '')] = data
-
         return output
 
     @staticmethod
@@ -97,6 +95,7 @@ class DataReader:
 
 
 class BuildingTemplateManager:
+
     @staticmethod
     def template_cache_list():
         c_path = os.path.join(os.path.dirname(__file__), "..", "templates", "builder")
