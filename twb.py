@@ -26,11 +26,13 @@ import logging
 import os
 import random
 import sys
+import signal
 import time
 import traceback
 import coloredlogs
 import requests
 
+from core.notification import Notification
 from core.updater import check_update
 from core.filemanager import FileManager
 from core.request import WebWrapper
@@ -45,8 +47,19 @@ coloredlogs.install(
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.WARNING)
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+
+def signal_handler(sig, frame):
+    print('Exiting...')
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 class TWB:
@@ -227,6 +240,7 @@ class TWB:
         """
         Detects world options like flags and knight enabled from the overview page
         """
+
         def check_and_set(option_key, setting, check_string=None):
             nonlocal changed
             if world_config[option_key] is None:
@@ -262,6 +276,7 @@ class TWB:
         Run the bot
         TODO: make less messy
         """
+        Notification.send("TWB is starting up")
         config = self.config()
         if not self.internet_online():
             print("Internet seems to be down, waiting till its back online...")
@@ -426,7 +441,10 @@ def main():
         except Exception as e:
             t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
             print("I crashed :(   %s" % str(e))
+            Notification.send("TWB crashed: %s" % str(e))
             traceback.print_exc()
+
+    Notification.send("TWB has crashed 3 times, exiting")
 
 
 def self_config_test():

@@ -1,7 +1,7 @@
 {
   "build": {
     "name": "tw_bot",
-    "version": "1.9",
+    "version": "2.0",
     "author": "stefan2200"
   },
   "server": {
@@ -12,6 +12,11 @@
   "reporting": {
     "enabled": false,
     "connection_string": "file://cache/logs/twb_{ts}.log"
+  },
+  "notifications": {
+    "enabled": false,
+    "channel_id": "",
+    "token": ""
   },
   "bot": {
     "active_hours": "6-23",

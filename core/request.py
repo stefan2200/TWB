@@ -5,6 +5,7 @@ Class for using one generic cookie jar, emulating a single tab
 import requests
 
 from core.filemanager import FileManager
+from core.notification import Notification
 
 try:
     from urllib.parse import urljoin, urlencode
@@ -80,6 +81,7 @@ class WebWrapper:
                 self.logger.warning("Bot protection hit! cannot continue")
                 self.reporter.report(
                     0, "TWB_RECAPTCHA", "Stopping bot, press any key once captcha has been solved")
+                Notification.send("Bot protection hit! cannot continue")
                 input("Press any key...")
                 return self.get_url(url, headers)
             return res

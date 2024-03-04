@@ -22,6 +22,16 @@ Hours that the bot should be active, it defaults to 6 in the morning to 23 at ni
 **Active Delay, Inactive Delay and Inactive Still Active**
 Active delay configures the minimal time the bot will wait until next run during active hours. Inactive delay will configure the same for inactive hours. If inactive_still_active is disabled the bot will completely shut down during inactive hours and will probably time-out your session so you have to manually restart the bot in the morning.
 
+## Notifications
+Notifications when enabled will send messages to a telegram channel.
+
+### Setup
+To be able to send messages to a telegram channel you will need to create a bot first. To do this you can start a conversation with the [BotFather](https://t.me/botfather) and create a new bot(`/newbot`). After creating the bot you will receive a token, this token should be added to the "notifications.token" parameter in the config file.
+
+After creating the bot you will need to create a channel and add the bot as an administrator. After this you can get the channel ID by sending a message to the channel and forwarding it to the [JsonDumpBot](https://t.me/JsonDumpBot). The `forward_origin.chat.id` should be added to the "notifications.channel_id" parameter in the config file.
+
+Don't forget to enable the "notifications.enabled" parameter in the config file.
+
 ## Building
 The manage_building boolean can disable building globally so you wont have to re-configure all your villages manually.
 **Default** 
