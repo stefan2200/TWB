@@ -26,6 +26,7 @@ import logging
 import os
 import random
 import sys
+import signal
 import time
 import traceback
 import coloredlogs
@@ -51,6 +52,14 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("telegram").setLevel(logging.WARNING)
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+
+def signal_handler(sig, frame):
+    print('Exiting...')
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 class TWB:
@@ -235,6 +244,7 @@ class TWB:
         """
         Detects world options like flags and knight enabled from the overview page
         """
+
         def check_and_set(option_key, setting, check_string=None):
             nonlocal changed
             if world_config[option_key] is None:
