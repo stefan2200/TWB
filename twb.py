@@ -131,10 +131,9 @@ class TWB:
             template["server"]["server"] = sub_parts.lower()
             template["bot"]["user_agent"] = browser_ua
 
-            with FileManager.open_file("config.json", "w") as new_config:
-                json.dump(template, new_config, indent=2, sort_keys=False)
-                print("Deployed new configuration file")
-                return True
+            FileManager.save_json_file(template, "config.json")
+            print("Deployed new configuration file")
+            return True
 
         print("Make sure your url starts with https:// and contains the game.php? part")
         return self.manual_config()
@@ -178,8 +177,8 @@ class TWB:
         to_ignore = ["villages", "build"]
         for section in old_config:
             if section not in to_ignore:
-                for entry in old_config[section]:
-                    if entry in new_config[section]:
+                for entry in old_config.get(section, {}):
+                    if entry in new_config.get(section, {}):
                         new_config[section][entry] = old_config[section][entry]
         villages = collections.OrderedDict()
         for v in old_config["villages"]:
