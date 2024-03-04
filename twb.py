@@ -123,21 +123,18 @@ class TWB:
                 logging.info("Goodbye :)")
                 sys.exit(0)
 
-            template_file = FileManager.open_file("config.example.json")
-            if not template_file:
-                print("Unable to open config.example.json")
+            template = FileManager.load_json_file("config.example.json", object_pairs_hook=collections.OrderedDict)
+            if not template:
+                logging.error("Unable to open config.example.json")
                 return False
-            template = json.load(
-                template_file, object_pairs_hook=collections.OrderedDict
-            )
             template["server"]["endpoint"] = game_endpoint
             template["server"]["server"] = sub_parts.lower()
             template["bot"]["user_agent"] = browser_ua
 
-            new_config = FileManager.open_file("config.json", "w")
-            json.dump(template, new_config, indent=2, sort_keys=False)
-            print("Deployed new configuration file")
-            return True
+            with FileManager.open_file("config.json", "w") as new_config:
+                json.dump(template, new_config, indent=2, sort_keys=False)
+                print("Deployed new configuration file")
+                return True
 
         print("Make sure your url starts with https:// and contains the game.php? part")
         return self.manual_config()
