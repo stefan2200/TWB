@@ -134,10 +134,11 @@ class DefenceManager:
         if not self.manage_flags_enabled:
             return
 
+        highest_flag_possible = self.get_highest_flag_possible(flag_id=set_flag)
         if (
                 not self.current_flag
                 or self.current_flag[0] is not set_flag
-                or self.get_highest_flag_possible(flag_id=set_flag) > self.current_flag[1]
+                or highest_flag_possible and highest_flag_possible > self.current_flag[1]
         ):
             if not self._can_change_flag:
                 if not self._sf_logged:
