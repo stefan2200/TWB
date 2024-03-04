@@ -31,6 +31,7 @@ import traceback
 import coloredlogs
 import requests
 
+from core.notification import Notification
 from core.updater import check_update
 from core.filemanager import FileManager
 from core.request import WebWrapper
@@ -45,6 +46,9 @@ coloredlogs.install(
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.WARNING)
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
@@ -266,6 +270,7 @@ class TWB:
         Run the bot
         TODO: make less messy
         """
+        Notification.send("TWB is starting up")
         config = self.config()
         if not self.internet_online():
             print("Internet seems to be down, waiting till its back online...")
@@ -430,7 +435,10 @@ def main():
         except Exception as e:
             t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
             print("I crashed :(   %s" % str(e))
+            Notification.send("TWB crashed: %s" % str(e))
             traceback.print_exc()
+
+    Notification.send("TWB has crashed 3 times, exiting")
 
 
 def self_config_test():
