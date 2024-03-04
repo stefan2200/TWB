@@ -2,6 +2,7 @@ requests
 coloredlogs
 psutil
 flask
+flask-cors
 pyquery
 beautifulsoup4
 python-telegram-bot
