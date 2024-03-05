@@ -3,6 +3,7 @@ import asyncio
 import telegram
 
 from core.filemanager import FileManager
+from core.exceptions import InvalidJSONException
 
 
 class _Notification:
@@ -19,7 +20,11 @@ class _Notification:
             self.bot = telegram.Bot(token=self.token)
 
     def get_config(self):
-        config = FileManager.load_json_file("config.json")
+        try:
+            config = FileManager.load_json_file("config.json")
+        except InvalidJSONException:
+            config = None
+            self.enabled = False
         if config:
             notification_config = config.get("notifications", {})
             self.enabled = notification_config.get("enabled", False)

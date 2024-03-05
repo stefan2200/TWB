@@ -32,3 +32,10 @@ class FileNotFoundException(Exception):
     """
     The file I'm trying to read does not exist and is expected to be there
     """
+
+
+class UnsupportedPythonVersion(Exception):
+    """
+    You are trying run the bot with an outdated python version
+    Updating to Python3 fixes this issue
+    """

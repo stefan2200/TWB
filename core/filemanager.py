@@ -96,7 +96,7 @@ class FileManager:
         with FileManager.__open_file(full_path) as file:
             try:
                 return json.load(file, **kwargs)
-            except:
+            except json.decoder.JSONDecodeError:
                 raise InvalidJSONException
 
     @staticmethod
