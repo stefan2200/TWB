@@ -36,6 +36,7 @@ from core.notification import Notification
 from core.updater import check_update
 from core.filemanager import FileManager
 from core.request import WebWrapper
+from core.exceptions import InvalidJSONException, UnsupportedPythonVersion
 from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
@@ -469,11 +470,14 @@ def self_config_test():
 if __name__ == "__main__":
     if "-i" in sys.argv:
         logging.info("Bot integrity check passed")
+        if sys.version_info[0] == 2:
+            raise UnsupportedPythonVersion
         check_conf = self_config_test()
         if check_conf is True:
             logging.info("Config integrity check passed")
         if check_conf is False:
-            logging.info("Config integrity check failed")
+            logging.error("Config integrity check failed")
+            print("It looks like your config file is corrupted and the bot was not able to start.")
             sys.exit(1)
         sys.exit(0)
     main()
