@@ -135,6 +135,9 @@ class DefenceManager:
             return
 
         highest_flag_possible = self.get_highest_flag_possible(flag_id=set_flag)
+        if not highest_flag_possible:
+            return
+
         if (
                 not self.current_flag
                 or self.current_flag[0] is not set_flag

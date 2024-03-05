@@ -264,9 +264,15 @@ class Village:
             unit_config = self.get_config(
                 section="units", parameter="default", default="basic"
             )
-        self.units.template = TemplateManager.get_template(
-            category="troops", template=unit_config, output_json=True
-        )
+        try:
+            self.units.template = TemplateManager.get_template(
+                category="troops", template=unit_config, output_json=True
+            )
+        except Exception as e:
+            self.logger.error(
+                "Looks like the unit template file %s is either missing or corrupted", unit_config
+            )
+
         entry = self.units.get_template_action(self.builder.levels)
 
         if entry and self.units.wanted != entry["build"]:
