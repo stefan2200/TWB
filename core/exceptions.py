@@ -18,5 +18,17 @@ class InvalidGameStateException(Exception):
 
 class InvalidUnitTemplateException(Exception):
     """
-    There was an error reading the game state of the village
+    The selected unit template for the village is either missing or corrupted
+    """
+
+
+class InvalidJSONException(Exception):
+    """
+    The JSON file I'm trying to read is corrupted and cannot be parsed
+    """
+
+
+class FileNotFoundException(Exception):
+    """
+    The file I'm trying to read does not exist and is expected to be there
     """
