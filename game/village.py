@@ -16,6 +16,7 @@ from game.reports import ReportManager
 from game.resources import ResourceManager
 from game.snobber import SnobManager
 from game.troopmanager import TroopManager
+from core.exceptions import *
 
 
 class Village:
@@ -34,7 +35,14 @@ class Village:
     def_man = None
     rep_man = None
     config = None
+    forced_peace_today = False
     village_set_name = None
+    last_attack = None
+    build_config = None
+    current_unit_entry = None
+    forced_peace = False
+    forced_peace_today_start = None
+    disabled_units = []
 
     twp = TwStats()
 
@@ -65,12 +73,10 @@ class Village:
             return default
         return vdata[parameter]
 
-    def run(self, config=None, first_run=False):
-        # setup and check if village still exists / is accessible
-        self.config = config
-        self.wrapper.delay = self.get_config(
-            section="bot", parameter="delay_factor", default=1.0
-        )
+    def village_init(self):
+        """
+        Init the village entry and send first request
+        """
         if not self.village_id:
             data = self.wrapper.get_url("game.php?screen=overview&intro")
             if data:
@@ -96,33 +102,37 @@ class Village:
                     "TWB_START",
                     "Starting run for village: %s" % self.game_data["village"]["name"],
                 )
-
-        if not self.game_data:
-            self.logger.error(
-                "Error reading game data for village %s", self.village_id
-            )
-            return None
-
         if (
                 self.village_set_name
                 and self.game_data["village"]["name"] != self.village_set_name
         ):
             self.logger.name = f"Village {self.village_set_name}"
+        return data
 
-        if not self.get_config(section="villages", parameter=self.village_id):
-            return None
+    def set_world_config(self):
+        """
+        Sets basic world options
+        """
+        self.disabled_units = []
+        if not self.get_config(
+                section="world", parameter="archers_enabled", default=True
+        ):
+            self.disabled_units.extend(["archer", "marcher"])
+
+        if not self.get_config(
+                section="world", parameter="building_destruction_enabled", default=True
+        ):
+            self.disabled_units.extend(["ram", "catapult"])
+
         if self.get_config(
                 section="server", parameter="server_on_twstats", default=False
         ):
             self.twp.run(world=self.get_config(section="server", parameter="server"))
 
-        vdata = self.get_config(section="villages", parameter=self.village_id)
-        if not self.get_village_config(
-                self.village_id, parameter="managed", default=False
-        ):
-            return False
-        if not self.game_data:
-            return False
+    def update_pre_run(self):
+        """
+        Manage defence, resources and reports
+        """
         if not self.resman:
             self.resman = ResourceManager(
                 wrapper=self.wrapper, village_id=self.village_id
@@ -145,10 +155,13 @@ class Village:
             )
             self.def_man.map = self.area
 
-        if not self.def_man.units:
+        if not self.def_man.units and self.units:
             self.def_man.units = self.units
 
-        last_attack = self.def_man.under_attack
+    def setup_defence_manager(self, data):
+        """
+        Set-up the defence manager
+        """
         self.def_man.manage_flags_enabled = self.get_config(
             section="world", parameter="flags_enabled", default=False
         )
@@ -171,27 +184,16 @@ class Village:
                 section="units", parameter="manage_defence", default=False
             ),
         )
-
-        disabled_units = []
-        if not self.get_config(
-                section="world", parameter="archers_enabled", default=True
-        ):
-            disabled_units.extend(["archer", "marcher"])
-
-        if not self.get_config(
-                section="world", parameter="building_destruction_enabled", default=True
-        ):
-            disabled_units.extend(["ram", "catapult"])
-
-        if self.def_man.under_attack and not last_attack:
+        if self.def_man.under_attack and not self.last_attack:
             self.logger.warning("Village under attack!")
             self.wrapper.reporter.report(
                 self.village_id,
                 "TWB_ATTACK",
                 "Village: %s under attack" % self.game_data["village"]["name"],
             )
+        self.last_attack = self.def_man.under_attack
 
-        # setup and check if village still exists / is accessible
+    def run_quest_actions(self, config):
         if self.get_config(section="world", parameter="quests_enabled", default=False):
             if self.get_quests():
                 self.logger.info("There where completed quests, re-running function")
@@ -205,47 +207,10 @@ class Village:
                     self.village_id, "TWB_QUEST", "Collected quest reward(s)"
                 )
 
-        if not self.builder:
-            self.builder = BuildingManager(
-                wrapper=self.wrapper, village_id=self.village_id
-            )
-            self.builder.resman = self.resman
-            # manage buildings (has to always run because recruit check depends on building levels)
-        build_config = self.get_village_config(
-            self.village_id, parameter="building", default=None
-        )
-        if not build_config:
-            self.logger.warning(
-                "Village %d does not have 'building' config override!", self.village_id
-            )
-            build_config = self.get_config(
-                section="building", parameter="default", default="purple_predator"
-            )
-        new_queue = TemplateManager.get_template(
-            category="builder", template=build_config
-        )
-        if not self.builder.raw_template or self.builder.raw_template != new_queue:
-            self.builder.queue = new_queue
-            self.builder.raw_template = new_queue
-            if not self.get_config(
-                    section="world", parameter="knight_enabled", default=False
-            ):
-                self.builder.queue = [
-                    x for x in self.builder.queue if "statue" not in x
-                ]
-        self.builder.max_lookahead = self.get_config(
-            section="building", parameter="max_lookahead", default=2
-        )
-        self.builder.max_queue_len = self.get_config(
-            section="building", parameter="max_queued_items", default=2
-        )
-        self.builder.start_update(
-            build=self.get_config(
-                section="building", parameter="manage_buildings", default=True
-            ),
-            set_village_name=self.village_set_name,
-        )
-
+    def units_get_template(self):
+        """
+        Fetches the unit template
+        """
         if not self.units:
             self.units = TroopManager(wrapper=self.wrapper, village_id=self.village_id)
             self.units.resman = self.resman
@@ -272,32 +237,57 @@ class Village:
             self.logger.error(
                 "Looks like the unit template file %s is either missing or corrupted", unit_config
             )
+            raise InvalidUnitTemplateException
 
-        entry = self.units.get_template_action(self.builder.levels)
-
-        if entry and self.units.wanted != entry["build"]:
-            # update wanted units if template has changed
-            self.logger.info(
-                "%s as wanted units for current village", str(entry["build"])
+    def run_builder(self):
+        """
+        Run building construction actions
+        """
+        if not self.builder:
+            self.builder = BuildingManager(
+                wrapper=self.wrapper, village_id=self.village_id
             )
-            self.units.wanted = entry["build"]
-
-        if self.units.wanted_levels != {}:
-            # Remove disabled units
-            for disabled in disabled_units:
-                self.units.wanted_levels.pop(disabled, None)
-            self.logger.info(
-                "%s as wanted upgrades for current village", str(self.units.wanted_levels)
+            self.builder.resman = self.resman
+            # manage buildings (has to always run because recruit check depends on building levels)
+        self.build_config = self.get_village_config(
+            self.village_id, parameter="building", default=None
+        )
+        if not self.build_config:
+            self.logger.warning(
+                "Village %d does not have 'building' config override!", self.village_id
             )
+            self.build_config = self.get_config(
+                section="building", parameter="default", default="purple_predator"
+            )
+        new_queue = TemplateManager.get_template(
+            category="builder", template=self.build_config
+        )
+        if not self.builder.raw_template or self.builder.raw_template != new_queue:
+            self.builder.queue = new_queue
+            self.builder.raw_template = new_queue
+            if not self.get_config(
+                    section="world", parameter="knight_enabled", default=False
+            ):
+                self.builder.queue = [
+                    x for x in self.builder.queue if "statue" not in x
+                ]
+        self.builder.max_lookahead = self.get_config(
+            section="building", parameter="max_lookahead", default=2
+        )
+        self.builder.max_queue_len = self.get_config(
+            section="building", parameter="max_queued_items", default=2
+        )
+        self.builder.start_update(
+            build=self.get_config(
+                section="building", parameter="manage_buildings", default=True
+            ),
+            set_village_name=self.village_set_name,
+        )
 
-        # get total amount of troops in village
-        self.units.update_totals()
-        if (
-                self.get_config(section="units", parameter="upgrade", default=False)
-                and self.units.wanted_levels != {}
-        ):
-            self.units.attempt_upgrade()
-
+    def run_snob_recruit(self):
+        """
+        Uses the snob to mint coins, store resources and recruit snobs
+        """
         if (
                 self.get_village_config(self.village_id, parameter="snobs", default=None)
                 and self.builder.levels["snob"] > 0
@@ -314,7 +304,62 @@ class Village:
             self.snobman.building_level = self.builder.get_level("snob")
             self.snobman.run()
 
-        # recruitment management
+    def check_forced_peace(self):
+        """
+        Checks if farming is disabled for the current time
+        """
+        # Set timeslots in order to prevent farming during events like national holidays
+        forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
+        self.forced_peace = False
+        self.forced_peace_today = False
+        self.forced_peace_today_start = None
+        for time_pairs in forced_peace_times:
+            start_dt = datetime.strptime(time_pairs["start"], "%d.%m.%y %H:%M:%S")
+            end_dt = datetime.strptime(time_pairs["end"], "%d.%m.%y %H:%M:%S")
+            now = datetime.now()
+            if start_dt.date() == datetime.today().date():
+                forced_peace_today = True
+                forced_peace_today_start = start_dt
+            if start_dt < now < end_dt:
+                self.logger.debug("Currently in a forced peace time! No attacks will be send.")
+                self.forced_peace = True
+                break
+
+    def set_unit_wanted_levels(self):
+        """
+        Fetches wanted units for the current buildings
+        """
+        self.current_unit_entry = self.units.get_template_action(self.builder.levels)
+
+        if self.current_unit_entry and self.units.wanted != self.current_unit_entry["build"]:
+            # update wanted units if template has changed
+            self.logger.info(
+                "%s as wanted units for current village", str(self.current_unit_entry["build"])
+            )
+            self.units.wanted = self.current_unit_entry["build"]
+
+        if self.units.wanted_levels != {}:
+            # Remove disabled units
+            for disabled in self.disabled_units:
+                self.units.wanted_levels.pop(disabled, None)
+            self.logger.info(
+                "%s as wanted upgrades for current village", str(self.units.wanted_levels)
+            )
+
+    def run_unit_upgrades(self):
+        """
+        Uses smith to research or upgrade units
+        """
+        if (
+                self.get_config(section="units", parameter="upgrade", default=False)
+                and self.units.wanted_levels != {}
+        ):
+            self.units.attempt_upgrade()
+
+    def do_recruit(self):
+        """
+        Recruits new units
+        """
         if self.get_config(section="units", parameter="recruit", default=False):
             self.units.can_fix_queue = self.get_config(
                 section="units", parameter="remove_manual_queued", default=False
@@ -355,9 +400,9 @@ class Village:
                             "Recruit of %s will be ignored because building is not (yet) available", building
                         )
                         continue
-                    self.units.start_update(building, disabled_units)
+                    self.units.start_update(building, self.disabled_units)
 
-        #
+    def manage_local_resources(self):
         to_dell = []
         for x in self.resman.requested:
             if all(res == 0 for res in self.resman.requested[x].values()):
@@ -370,25 +415,39 @@ class Village:
         self.logger.debug("Current resources: %s", str(self.resman.actual))
         self.logger.debug("Requested resources: %s", str(self.resman.requested))
 
-        # Set timeslots in order to prevent farming during events like national holidays
-        forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
-        forced_peace = False
-        forced_peace_today = False
-        forced_peace_today_start = None
-        for time_pairs in forced_peace_times:
-            start_dt = datetime.strptime(time_pairs["start"], "%d.%m.%y %H:%M:%S")
-            end_dt = datetime.strptime(time_pairs["end"], "%d.%m.%y %H:%M:%S")
-            now = datetime.now()
-            if start_dt.date() == datetime.today().date():
-                forced_peace_today = True
-                forced_peace_today_start = start_dt
-            if start_dt < now < end_dt:
-                self.logger.debug("Currently in a forced peace time! No attacks will be send.")
-                forced_peace = True
-                break
+    def set_farm_options(self):
+        """
+        Sets various options for farming management
+        """
+        self.attack.target_high_points = self.get_config(
+            section="farms", parameter="attack_higher_points", default=False
+        )
+        self.attack.farm_minpoints = self.get_config(
+            section="farms", parameter="min_points", default=24
+        )
+        self.attack.farm_maxpoints = self.get_config(
+            section="farms", parameter="max_points", default=1080
+        )
+        self.attack.farm_radius = self.get_config(
+            section="farms", parameter="search_radius", default=50
+        )
+        self.attack.farm_default_wait = self.get_config(
+            section="farms", parameter="default_away_time", default=1200
+        )
+        self.attack.farm_high_prio_wait = self.get_config(
+            section="farms", parameter="full_loot_away_time", default=1800
+        )
+        self.attack.farm_low_prio_wait = self.get_config(
+            section="farms", parameter="low_loot_away_time", default=7200
+        )
+        if self.current_unit_entry:
+            self.attack.template = self.current_unit_entry["farm"]
 
-        # attack management
-        if not forced_peace and self.units.can_attack:
+    def run_farming(self):
+        """
+        Runs the farming logic
+        """
+        if not self.forced_peace and self.units.can_attack:
             if not self.area:
                 self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
             self.area.get_map()
@@ -409,33 +468,12 @@ class Village:
                         map=self.area,
                     )
                     self.attack.repman = self.rep_man
-                if forced_peace_today:
-                    self.logger.info("Forced peace time coming up today!")
-                    self.attack.forced_peace_time = forced_peace_today_start
 
-                self.attack.target_high_points = self.get_config(
-                    section="farms", parameter="attack_higher_points", default=False
-                )
-                self.attack.farm_minpoints = self.get_config(
-                    section="farms", parameter="min_points", default=24
-                )
-                self.attack.farm_maxpoints = self.get_config(
-                    section="farms", parameter="max_points", default=1080
-                )
-                self.attack.farm_radius = self.get_config(
-                    section="farms", parameter="search_radius", default=50
-                )
-                self.attack.farm_default_wait = self.get_config(
-                    section="farms", parameter="default_away_time", default=1200
-                )
-                self.attack.farm_high_prio_wait = self.get_config(
-                    section="farms", parameter="full_loot_away_time", default=1800
-                )
-                self.attack.farm_low_prio_wait = self.get_config(
-                    section="farms", parameter="low_loot_away_time", default=7200
-                )
-                if entry:
-                    self.attack.template = entry["farm"]
+                if self.forced_peace_today:
+                    self.logger.info("Forced peace time coming up today!")
+                    self.attack.forced_peace_time = self.forced_peace_today_start
+                self.set_farm_options()
+
                 if (
                         self.get_config(section="farms", parameter="farm", default=False)
                         and not self.def_man.under_attack
@@ -448,6 +486,10 @@ class Village:
                     )
                     self.attack.run()
 
+    def do_gather(self):
+        """
+        Runs gathering if unlocked and active
+        """
         self.units.can_gather = self.get_village_config(
             self.village_id, parameter="gather_enabled", default=False
         )
@@ -456,10 +498,14 @@ class Village:
                 selection=self.get_village_config(
                     self.village_id, parameter="gather_selection", default=1
                 ),
-                disabled_units=disabled_units,
+                disabled_units=self.disabled_units,
                 advanced_gather=self.get_village_config(self.village_id, parameter="advanced_gather", default=1)
             )
-        # market management
+
+    def go_manage_market(self):
+        """
+        Manages the market
+        """
         if self.get_config(
                 section="market", parameter="auto_trade", default=False
         ) and self.builder.get_level("market"):
@@ -493,6 +539,54 @@ class Village:
             # Set the parameter correctly when the config says so.
             self.resman.do_premium_trade = True
             self.resman.do_premium_stuff()
+
+    def run(self, config=None, first_run=False):
+        # setup and check if village still exists / is accessible
+        self.config = config
+        self.wrapper.delay = self.get_config(
+            section="bot", parameter="delay_factor", default=1.0
+        )
+
+        data = self.village_init()
+
+        if not self.game_data:
+            self.logger.error(
+                "Error reading game data for village %s", self.village_id
+            )
+            raise VillageInitException
+
+        self.set_world_config()
+
+        if not self.get_config(section="villages", parameter=self.village_id):
+            raise VillageInitException
+
+        vdata = self.get_config(section="villages", parameter=self.village_id)
+        if not self.get_village_config(
+                self.village_id, parameter="managed", default=False
+        ):
+            return False
+        if not self.game_data:
+            raise InvalidGameStateException
+
+        self.update_pre_run()
+
+        self.setup_defence_manager(data=data)
+        self.run_quest_actions(config=config)
+
+        self.run_builder()
+        self.units_get_template()
+        self.set_unit_wanted_levels()
+
+        self.units.update_totals()
+        self.run_unit_upgrades()
+        self.run_snob_recruit()
+        self.do_recruit()
+        self.manage_local_resources()
+
+        self.run_farming()
+
+        self.do_gather()
+        self.go_manage_market()
 
         self.set_cache_vars()
         self.logger.info("Village cycle done, returning to overview")
