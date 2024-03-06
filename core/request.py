@@ -131,6 +131,9 @@ class WebWrapper:
         """
         time.sleep(5)
         session_data = FileManager.load_json_file("cache/session.json")
+        selenium_ua = self.driver.execute_script("return navigator.userAgent")
+        self.headers.update({"user-agent": selenium_ua})
+        self.logger.info("Using driver user agent %s", selenium_ua)
         if session_data:
             self.web.cookies.update(session_data['cookies'])
             get_test = self.get_url("game.php?screen=overview")
