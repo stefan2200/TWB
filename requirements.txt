@@ -5,3 +5,4 @@ flask
 pyquery
 beautifulsoup4
 python-telegram-bot
+git+https://www.github.com/ultrafunkamsterdam/undetected-chromedriver@master

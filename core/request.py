@@ -12,7 +12,7 @@ import re
 import time
 import random
 from urllib.parse import urljoin, urlencode
-
+import undetected_chromedriver as uc
 from core.reporter import ReporterObject
 
 
@@ -34,6 +34,7 @@ class WebWrapper:
     auth_endpoint = None
     reporter = None
     delay = 1.0
+    driver = uc.Chrome(headless=False, use_subprocess=True)
 
     def __init__(self, url, server=None, endpoint=None, reporter_enabled=False, reporter_constr=None):
         """
@@ -44,6 +45,8 @@ class WebWrapper:
         self.server = server
         self.endpoint = endpoint
         self.reporter = ReporterObject(enabled=reporter_enabled, connection_string=reporter_constr)
+        selenium_logger = logging.getLogger('selenium.webdriver.remote.remote_connection')
+        selenium_logger.setLevel(logging.WARNING)
 
     def post_process(self, response):
         """
@@ -65,6 +68,11 @@ class WebWrapper:
         """
         Fetches a URL using a basic GET request
         """
+        class FakeResponse:
+            text = None
+            status_code = 200
+            url = None
+
         self.headers['Origin'] = (self.endpoint if self.endpoint else self.auth_endpoint).rstrip('/')
         if not self.priority_mode:
             time.sleep(random.randint(int(3 * self.delay), int(7 * self.delay)))
@@ -72,7 +80,15 @@ class WebWrapper:
         if not headers:
             headers = self.headers
         try:
-            res = self.web.get(url=url, headers=headers)
+            if "ajax" in url or "api" in url:
+                res = self.web.get(url, headers=headers)
+            else:
+                self.driver.get(url)
+                time.sleep(1.5)
+                res = FakeResponse()
+                res.text = self.driver.page_source
+                res.url = self.driver.current_url
+
             self.logger.debug("GET %s [%d]", url, res.status_code)
             self.post_process(res)
             if 'data-bot-protect="forced"' in res.text:
@@ -113,6 +129,7 @@ class WebWrapper:
         """
         Start the bot and verify whether the last session is still valid
         """
+        time.sleep(5)
         session_data = FileManager.load_json_file("cache/session.json")
         if session_data:
             self.web.cookies.update(session_data['cookies'])
@@ -122,15 +139,10 @@ class WebWrapper:
             self.logger.warning("Current session cache not valid")
 
         self.web.cookies.clear()
-        cinp = input("Enter browser cookie string> ")
+        cinp = input("Press enter after signing in ")
         cookies = {}
-        cinp = cinp.strip()
-        for itt in cinp.split(';'):
-            itt = itt.strip()
-            kvs = itt.split("=")
-            k = kvs[0]
-            v = '='.join(kvs[1:])
-            cookies[k] = v
+        for cookie in self.driver.get_cookies():
+            cookies[cookie['name']] = cookie['value']
         self.web.cookies.update(cookies)
         self.logger.info("Game Endpoint: %s", self.endpoint)
 
