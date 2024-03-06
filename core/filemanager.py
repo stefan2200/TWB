@@ -1,6 +1,8 @@
 import json
 import os
 
+from core.exceptions import InvalidJSONException, FileNotFoundException
+
 
 class FileManager:
     """Provides methods for file and directory management."""
@@ -48,7 +50,10 @@ class FileManager:
     def __open_file(path, mode="r"):
         """Opens a file in the specified mode. Private do NOT use outside filemanager."""
         full_path = os.path.join(FileManager.get_root(), path)
-        return open(full_path, mode)
+        try:
+            return open(full_path, mode)
+        except:
+            raise FileNotFoundException
 
     @staticmethod
     def read_file(path):
@@ -89,7 +94,10 @@ class FileManager:
             return None
 
         with FileManager.__open_file(full_path) as file:
-            return json.load(file, **kwargs)
+            try:
+                return json.load(file, **kwargs)
+            except json.decoder.JSONDecodeError:
+                raise InvalidJSONException
 
     @staticmethod
     def save_json_file(data, path, **kwargs):

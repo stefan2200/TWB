@@ -7,14 +7,12 @@ import requests
 from core.filemanager import FileManager
 from core.notification import Notification
 
-try:
-    from urllib.parse import urljoin, urlencode
-except ImportError:
-    from urlparse import urljoin, urlencode
 import logging
 import re
 import time
 import random
+from urllib.parse import urljoin, urlencode
+
 from core.reporter import ReporterObject
 
 
