@@ -470,10 +470,13 @@ if __name__ == "__main__":
     if "-i" in sys.argv:
         logging.info("Bot integrity check passed")
         check_conf = self_config_test()
+        if sys.version_info[0] == 2:
+            raise UnsupportedPythonVersion
         if check_conf is True:
             logging.info("Config integrity check passed")
         if check_conf is False:
-            logging.info("Config integrity check failed")
+            logging.error("Config integrity check failed")
+            logging.error("It looks like your config file is corrupted and the bot was not able to start.")
             sys.exit(1)
         sys.exit(0)
     main()
