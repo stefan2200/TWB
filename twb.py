@@ -36,7 +36,6 @@ from core.notification import Notification
 from core.updater import check_update
 from core.filemanager import FileManager
 from core.request import WebWrapper
-from core.exceptions import InvalidJSONException, UnsupportedPythonVersion
 from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
@@ -292,7 +291,7 @@ class TWB:
             dtn = datetime.datetime.now()
             dt_next = dtn + datetime.timedelta(0, sleep)
             print(
-                "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                "Dead for %.2f minutes (next run at: %s)" % (sleep / 60, dt_next.time())
             )
             time.sleep(sleep)
             return False
@@ -334,7 +333,7 @@ class TWB:
                 dtn = datetime.datetime.now()
                 dt_next = dtn + datetime.timedelta(0, sleep)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)" % (sleep / 60, dt_next.time())
+                    "Dead for %.2f minutes (next run at: %s)" % (sleep / 60, dt_next.time())
                 )
                 time.sleep(sleep)
             else:
@@ -406,7 +405,7 @@ class TWB:
 
                 VillageManager.farm_manager(verbose=True)
                 print(
-                    "Dead for %f.2 minutes (next run at: %s)"
+                    "Dead for %.2f minutes (next run at: %s)"
                     % (sleep / 60, dt_next.time())
                 )
                 sys.stdout.flush()
@@ -470,14 +469,14 @@ def self_config_test():
 if __name__ == "__main__":
     if "-i" in sys.argv:
         logging.info("Bot integrity check passed")
+        check_conf = self_config_test()
         if sys.version_info[0] == 2:
             raise UnsupportedPythonVersion
-        check_conf = self_config_test()
         if check_conf is True:
             logging.info("Config integrity check passed")
         if check_conf is False:
             logging.error("Config integrity check failed")
-            print("It looks like your config file is corrupted and the bot was not able to start.")
+            logging.error("It looks like your config file is corrupted and the bot was not able to start.")
             sys.exit(1)
         sys.exit(0)
     main()
