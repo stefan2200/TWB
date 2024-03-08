@@ -1,11 +1,17 @@
+"""
+Used to create snobs
+"""
+import json
 import logging
 import re
-import json
 
 from core.extractors import Extractor
 
 
 class SnobManager:
+    """
+    Create the snob manager
+    """
     wrapper = None
     village_id = None
     resman = None
@@ -17,14 +23,24 @@ class SnobManager:
     using_coin_system = False
 
     def level_system(self):
+        """
+        Just return 0, that's what it does
+        Just that, nothing more
+        """
         return 0
 
     def __init__(self, wrapper=None, village_id=None):
+        """
+        Create the snob manager class
+        """
         self.wrapper = wrapper
         self.village_id = village_id
-        self.logger = logging.getLogger("Snob:%s" % self.village_id)
+        self.logger = logging.getLogger(f"Snob:{self.village_id}")
 
     def need_reserve(self, text):
+        """
+        Checks in a weird way if there is enough gold coins or stored resources
+        """
         if not self.using_coin_system:
             need_amount = re.search(
                 r'(?s)<th colspan="3">[\w\s]+</th>.+?data-unit="snob">.+?<td.+?>\s*(\d+)\sx',
@@ -44,6 +60,9 @@ class SnobManager:
         return 0
 
     def attempt_recruit(self, amount):
+        """
+        Tries to recruit a new snob
+        """
         result = self.wrapper.get_action(action="snob", village_id=self.village_id)
         if '"id":"coin"' in result.text:
             self.using_coin_system = True
@@ -57,8 +76,7 @@ class SnobManager:
             nres = self.need_reserve(result.text)
             if nres > 0:
                 self.logger.debug(
-                    "Not enough resources available, still %d needed, attempting storage"
-                    % nres
+                    "Not enough resources available, still %d needed, attempting storage", nres
                 )
                 cres = (
                     self.storage_item(result.text)
@@ -67,10 +85,9 @@ class SnobManager:
                 )
                 if cres:
                     return self.attempt_recruit(amount)
-                else:
-                    self.is_incomplete = True
-                    self.logger.debug("Not enough resources available")
-                    return False
+                self.is_incomplete = True
+                self.logger.debug("Not enough resources available")
+                return False
         self.is_incomplete = False
         r_num = int(can_recruit.group(1))
         if r_num == 0:
@@ -78,15 +95,15 @@ class SnobManager:
                 "No more snobs available, awaiting snob creating, snob death or village loss"
             )
             return False
-        train_snob_url = "game.php?village=%s&screen=snob&action=train&h=%s" % (
-            self.village_id,
-            self.wrapper.last_h,
-        )
+        train_snob_url = f"game.php?village={self.village_id}&screen=snob&action=train&h={self.wrapper.last_h}"
         self.wrapper.get_url(train_snob_url)
         return True
 
     def storage_item(self, result):
-        storage_re = re.search(r"train\.storage_item = (\{.+?\})", result)
+        """
+        Tries to store resources for future snob creation
+        """
+        storage_re = re.search(r"train\.storage_item = (\{.+?})", result)
         if not storage_re:
             self.logger.warning(
                 "Snob recruit is called but storage data not on page, error?"
@@ -96,9 +113,7 @@ class SnobManager:
         data = json.loads(raw_coin)
 
         if self.has_enough(data):
-            get_post = (
-                "game.php?village=%s&screen=snob&action=reserve" % self.village_id
-            )
+            get_post = f"game.php?village={self.village_id}&screen=snob&action=reserve"
             data = {"factor": "1", "h": self.wrapper.last_h}
             self.wrapper.post_url(url=get_post, data=data)
             return True
@@ -107,7 +122,10 @@ class SnobManager:
             return False
 
     def coin_item(self, result):
-        storage_re = re.search(r"train\.storage_item = (\{.+?\})", result)
+        """
+        Tries to create a new gold coin
+        """
+        storage_re = re.search(r"train\.storage_item = (\{.+?})", result)
         if not storage_re:
             self.logger.warning(
                 "Snob recruit is called but storage data not on page, error?"
@@ -117,7 +135,7 @@ class SnobManager:
         data = json.loads(raw_coin)
 
         if self.has_enough(data):
-            get_post = "game.php?village=%s&screen=snob&action=coin" % self.village_id
+            get_post = f"game.php?village={self.village_id}&screen=snob&action=coin"
             data = {"coin_mint_count": "1", "count": "1", "h": self.wrapper.last_h}
             self.wrapper.post_url(url=get_post, data=data)
             return True
@@ -126,6 +144,10 @@ class SnobManager:
             return False
 
     def has_enough(self, build_item):
+        """
+        Checks if there are enough resources available
+        If not, they will be requested from resources
+        """
         r = True
         if build_item["wood"] > self.resman.actual["wood"]:
             req = build_item["wood"] - self.resman.actual["wood"]
@@ -142,6 +164,9 @@ class SnobManager:
         return r
 
     def run(self):
+        """
+        Run the snob updater
+        """
         if not self.can_snob:
             return False
         if self.building_level == 0:
@@ -153,4 +178,4 @@ class SnobManager:
             current = int(self.troop_manager.total_troops["snob"])
             if current < self.wanted:
                 return self.attempt_recruit(amount=self.wanted - current)
-            self.logger.info("Snob up-to-date (%d/%d)" % (current, self.wanted))
+            self.logger.info("Snob up-to-date (%d/%d)", current, self.wanted)

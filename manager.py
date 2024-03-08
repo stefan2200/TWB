@@ -1,10 +1,10 @@
 import json
-import os
 import logging
+import os
 import sys
 
-from game.reports import ReportCache
 from game.attack import AttackCache
+from game.reports import ReportCache
 
 
 class VillageManager:
@@ -34,8 +34,8 @@ class VillageManager:
                 if reports[rep]["dest"] == farm and reports[rep]["type"] == "attack":
                     for unit in reports[rep]["extra"]["units_sent"]:
                         total_sent_count += reports[rep]["extra"]["units_sent"][unit]
-                    for unit in reports[rep]["losses"]:
-                        total_loss_count += reports[rep]["losses"][unit]
+                    for unit in reports[rep]["extra"]["units_losses"]:
+                        total_loss_count += reports[rep]["extra"]["units_losses"][unit]
                     try:
                         res = reports[rep]["extra"]["loot"]
                         for r in res:
@@ -45,6 +45,7 @@ class VillageManager:
                     except:
                         pass
             percentage_lost = 0
+
             if total_sent_count > 0:
                 percentage_lost = total_loss_count / total_sent_count * 100
 
@@ -55,8 +56,8 @@ class VillageManager:
                 perf = "Low Profile "
             if verbose:
                 logger.info(
-                    "%sFarm village %s attacked %d times - Total loot: %s - Total units lost: %s (%s)",
-                    perf, farm, len(num_attack), str(loot), str(total_loss_count), str(percentage_lost)
+                    "%sFarm village %s attacked %d times - Total loot: %s - Total units lost: %d (%.2f)",
+                    perf, farm, len(num_attack), str(loot), total_loss_count, percentage_lost
                 )
             if len(num_attack):
                 total = 0
@@ -64,7 +65,7 @@ class VillageManager:
                     total += loot[k]
                 if len(num_attack) > 3:
                     if total / len(num_attack) < 100 and (
-                        "low_profile" not in data or not data["low_profile"]
+                            "low_profile" not in data or not data["low_profile"]
                     ):
                         if verbose:
                             logger.info(
@@ -74,7 +75,7 @@ class VillageManager:
                         data["low_profile"] = True
                         AttackCache.set_cache(farm, data)
                     elif total / len(num_attack) > 500 and (
-                        "high_profile" not in data or not data["high_profile"]
+                            "high_profile" not in data or not data["high_profile"]
                     ):
                         if verbose:
                             logger.info(

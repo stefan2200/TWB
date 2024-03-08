@@ -73,4 +73,5 @@ help_file = {
     'village.support_others_max_villages': 'The max amount of villages to send support to (total 2 * 25% of troops)',
     'village.request_support_on_attack': 'Allows automatic requesting of support units'
 }
-buildings = ["main", "barracks", "stable", "watchtower", "smith", "garage", "place", "statue", "market", "wood", "stone", "iron", "farm", "hide", "wall", "snob", "church"]
+buildings = ["main", "barracks", "stable", "watchtower", "smith", "garage", "place", "statue", "market", "wood",
+             "stone", "iron", "farm", "hide", "wall", "snob", "church"]
