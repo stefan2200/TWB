@@ -1,7 +1,8 @@
-import os
-import json
 import collections
+import json
+import os
 import subprocess
+
 import psutil
 
 
@@ -73,7 +74,10 @@ class DataReader:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
             if village_id not in template['villages']:
                 return False
-            template['villages'][str(village_id)][parameter] = json.loads(value)
+            try:
+                template['villages'][str(village_id)][parameter] = json.loads(value)
+            except json.decoder.JSONDecodeError:
+                template['villages'][str(village_id)][parameter] = json.loads(f'"{value}"')
             with open(config_file_path, 'w') as newcf:
                 json.dump(template, newcf, indent=2, sort_keys=False)
                 print("Deployed new configuration file")
@@ -102,15 +106,15 @@ class BuildingTemplateManager:
         for existing in os.listdir(c_path):
             if not existing.endswith(".txt"):
                 continue
-            with open(os.path.join(os.path.dirname(__file__), "..", "templates", "builder", existing), 'r') as template_file:
-                output[existing] = BuildingTemplateManager.template_to_dict([x.strip() for x in template_file.readlines()])
+            with open(os.path.join(os.path.dirname(__file__), "..", "templates", "builder", existing),
+                      'r') as template_file:
+                output[existing] = BuildingTemplateManager.template_to_dict(
+                    [x.strip() for x in template_file.readlines()])
         return output
 
     @staticmethod
     def template_to_dict(t_list):
-        out_data = {
-
-        }
+        out_data = {}
         rows = []
 
         for entry in t_list:
@@ -138,9 +142,7 @@ class MapBuilder:
         max_y = 0
 
         current_location = None
-
         grid_vils = {}
-
         extra_data = {}
 
         for v in villages:

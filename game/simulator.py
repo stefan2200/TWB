@@ -1,11 +1,10 @@
 import math
-import os
-import json
+
+from core.filemanager import FileManager
 
 
 # Tribalwars simulator class, based on real math stuff I guess
 class Simulator:
-
     pool = {
         "spear": {
             "name": "spear",
@@ -281,10 +280,10 @@ class Simulator:
         return result if result >= 0 else 0
 
     def post_wall(
-        self,
-        attacker,
-        defender,
-        wall,
+            self,
+            attacker,
+            defender,
+            wall,
     ):
         rams = attacker["quantity"]["ram"]
         wall = wall if wall else 0
@@ -365,11 +364,11 @@ class Simulator:
 
                 ratio = attackFood[attackType] / attackFoodSum
                 defense = (
-                    def_strength[attackType.replace("attack", "defense")]
-                    * ratio
-                    * wallBonus
-                    * nightbonus
-                    + wallDefense * ratio
+                        def_strength[attackType.replace("attack", "defense")]
+                        * ratio
+                        * wallBonus
+                        * nightbonus
+                        + wallDefense * ratio
                 )
                 a = attack_strength[attackType] * moral * luck / defense
                 if a < 1:
@@ -407,17 +406,11 @@ class Simulator:
 class SimCache:
     @staticmethod
     def get_cache(world):
-        t_path = os.path.join("cache", "stats_%s.json" % world)
-        if os.path.exists(t_path):
-            with open(t_path, "r") as f:
-                return json.load(f)
-        return None
+        return FileManager.load_json_file(f"cache/stats_{world}.json")
 
     @staticmethod
     def set_cache(world, entry):
-        t_path = os.path.join("cache", "stats_%s.json" % world)
-        with open(t_path, "w") as f:
-            return json.dump(entry, f)
+        FileManager.save_json_file(entry, f"cache/stats_{world}.json")
 
     @staticmethod
     def grab_cache(world, session, village_id):
