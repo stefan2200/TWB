@@ -209,8 +209,8 @@ class BuildingManager:
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def get_next_building_action(self, index=0):
-        if index >= self.max_lookahead:
-            self.logger.debug("Not building anything because insufficient resources")
+        if index >= len(self.queue) or index >= self.max_lookahead:
+            self.logger.debug("Not building anything because insufficient resources or index out of range")
             return False
 
         queue_check = self.is_queued()
@@ -221,10 +221,10 @@ class BuildingManager:
         if self.resman and self.resman.in_need_of("pop"):
             build_data = "farm:%d" % (int(self.levels["farm"]) + 1)
             if (
-                len(self.queue)
-                and "farm"
-                not in [x.split(":")[0] for x in self.queue[0 : self.max_lookahead]]
-                and int(self.levels["farm"]) != 30
+                    len(self.queue)
+                    and "farm"
+                    not in [x.split(":")[0] for x in self.queue[0: self.max_lookahead]]
+                    and int(self.levels["farm"]) != 30
             ):
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding farm in front of queue because low on pop")
@@ -236,7 +236,7 @@ class BuildingManager:
             min_lvl = int(min_lvl)
             if min_lvl <= self.levels[entry]:
                 self.queue.pop(index)
-                return self.get_next_building_action(index=index)
+                return self.get_next_building_action(index)
             if entry not in self.costs:
                 self.logger.debug("Ignoring %s because not yet available" % entry)
                 return self.get_next_building_action(index + 1)
@@ -246,7 +246,7 @@ class BuildingManager:
                     "Removing entry %s because max_level exceeded" % entry
                 )
                 self.queue.pop(index)
-                return self.get_next_building_action(index=index)
+                return self.get_next_building_action(index)
             if check["can_build"] and self.has_enough(check) and "build_link" in check:
                 queue = self.put_wait(check["build_time"])
                 self.logger.info(
