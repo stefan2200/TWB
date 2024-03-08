@@ -64,12 +64,9 @@ class VillageManager:
                 for k in loot:
                     total += loot[k]
                 if len(num_attack) > 3:
-if total / len(num_attack) < 100 and (
-    "low_profile" not in data or not data["low_profile"]
- ):
-                            < 100 and (
+                    if total / len(num_attack) < 100 and (
                             "low_profile" not in data or not data["low_profile"]
-                    )):
+                    ):
                         if verbose:
                             logger.info(
                                 "Farm %s has very low resources (%d avg total), extending farm time",
