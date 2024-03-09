@@ -249,8 +249,8 @@ class BuildingManager:
         """
         Calculates the next best possible building action
         """
-        if index >= self.max_lookahead:
-            self.logger.debug("Not building anything because insufficient resources")
+        if index >= len(self.queue) or index >= self.max_lookahead:
+            self.logger.debug("Not building anything because insufficient resources or index out of range")
             return False
 
         queue_check = self.is_queued()
@@ -276,7 +276,7 @@ class BuildingManager:
             min_lvl = int(min_lvl)
             if min_lvl <= self.levels[entry]:
                 self.queue.pop(index)
-                return self.get_next_building_action(index=index)
+                return self.get_next_building_action(index)
             if entry not in self.costs:
                 self.logger.debug("Ignoring %s because not yet available", entry)
                 return self.get_next_building_action(index + 1)
@@ -286,7 +286,7 @@ class BuildingManager:
                     "Removing entry %s because max_level exceeded", entry
                 )
                 self.queue.pop(index)
-                return self.get_next_building_action(index=index)
+                return self.get_next_building_action(index)
             if check["can_build"] and self.has_enough(check) and "build_link" in check:
                 queue = self.put_wait(check["build_time"])
                 self.logger.info(
