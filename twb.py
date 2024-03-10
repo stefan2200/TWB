@@ -39,6 +39,7 @@ from core.request import WebWrapper
 from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
+from core.exceptions import UnsupportedPythonVersion
 
 coloredlogs.install(
     level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
@@ -215,7 +216,7 @@ class TWB:
                     print(
                         f"Village {found_vid} was found but no config entry was found. Adding automatically"
                     )
-                    self.add_village(village_id=found_vid)
+                    config = self.add_village(village_id=found_vid)
 
         return overview_page, config
 
@@ -234,6 +235,7 @@ class TWB:
 
         FileManager.save_json_file(original, "config.json")
         print("Deployed new configuration file")
+        return original
 
     @staticmethod
     def get_world_options(overview_page: OverviewPage, config):

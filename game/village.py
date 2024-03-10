@@ -440,6 +440,9 @@ class Village:
         self.attack.farm_low_prio_wait = self.get_config(
             section="farms", parameter="low_loot_away_time", default=7200
         )
+        self.attack.scout_farm_amount = self.get_config(
+            section="farms", parameter="farm_scout_amount", default=5
+        )
         if self.current_unit_entry:
             self.attack.template = self.current_unit_entry["farm"]
 

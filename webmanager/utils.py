@@ -77,7 +77,7 @@ class DataReader:
             try:
                 template['villages'][str(village_id)][parameter] = json.loads(value)
             except json.decoder.JSONDecodeError:
-                template['villages'][str(village_id)][parameter] = json.loads(f'"{value}"')
+                template['villages'][str(village_id)][parameter] = value
             with open(config_file_path, 'w') as newcf:
                 json.dump(template, newcf, indent=2, sort_keys=False)
                 print("Deployed new configuration file")
