@@ -39,6 +39,7 @@ from core.request import WebWrapper
 from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
+from core.exceptions import UnsupportedPythonVersion
 
 coloredlogs.install(
     level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
