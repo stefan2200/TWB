@@ -32,6 +32,9 @@ class AttackManager:
     farm_maxpoints = 1000
     ignored = []
 
+    # Configures the amount of spies used to detect if villages are safe to farm
+    scout_farm_amount = 5
+
     forced_peace_time = None
 
     # blocks villages which cannot be attacked at the moment (too low points, beginners protection etc..)
@@ -233,12 +236,12 @@ class AttackManager:
         """
         Attempt to send scouts to a farm
         """
-        if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < 5:
+        if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < self.scout_farm_amount:
             self.logger.debug(
                 "Cannot scout %s at the moment because insufficient unit: spy", vid
             )
             return False
-        troops = {"spy": 5}
+        troops = {"spy": self.scout_farm_amount}
         if self.attack(vid, troops=troops):
             self.attacked(vid, scout=True, safe=False)
 
