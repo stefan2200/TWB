@@ -216,7 +216,7 @@ class TWB:
                     print(
                         f"Village {found_vid} was found but no config entry was found. Adding automatically"
                     )
-                    self.add_village(village_id=found_vid)
+                    config = self.add_village(village_id=found_vid)
 
         return overview_page, config
 
@@ -235,6 +235,7 @@ class TWB:
 
         FileManager.save_json_file(original, "config.json")
         print("Deployed new configuration file")
+        return original
 
     @staticmethod
     def get_world_options(overview_page: OverviewPage, config):
