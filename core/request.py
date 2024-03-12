@@ -172,6 +172,22 @@ class WebWrapper:
             except:
                 return res
 
+    def get_api_data_other(self, params={}):
+
+        custom = dict(self.headers)
+        custom['accept'] = "application/json, text/javascript, */*; q=0.01"
+        custom['x-requested-with'] = "XMLHttpRequest"
+        custom['tribalwars-ajax'] = "1"
+
+        payload = f"game.php?{urlencode(params)}"
+        url = urljoin(self.endpoint, payload)
+        res = self.get_url(url, headers=custom)
+        if res.status_code == 200:
+            try:
+                return res.json()
+            except:
+                return res
+
     def post_api_data(self, village_id, action, params={}, data={}):
         """
         Simulates an API request

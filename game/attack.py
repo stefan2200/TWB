@@ -94,6 +94,23 @@ class AttackManager:
                 if out_res == -1:
                     break
 
+    def send_using_farm_manager(self, target_village, farm_template):
+        payload = {
+            "village": self.village_id,
+            "screen": "am_farm",
+            "mode": "farm",
+            "template_id": farm_template,
+            "target": target_village,
+            "source": self.village_id,
+            "json": "1",
+            "h": self.wrapper.last_h
+        }
+        result = self.wrapper.get_api_data_other(
+            village_id=self.village_id,
+            params=payload
+        )
+        return result
+
     def send_farm(self, target, template):
         """
         Send a farming run
