@@ -252,6 +252,9 @@ class Village:
         self.build_config = self.get_village_config(
             self.village_id, parameter="building", default=None
         )
+        if self.build_config is False:
+            self.logger.debug("Builder is disabled for village %s", self.village_id)
+            return
         if not self.build_config:
             self.logger.warning(
                 "Village %d does not have 'building' config override!", self.village_id
