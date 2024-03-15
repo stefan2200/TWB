@@ -40,6 +40,7 @@ from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
 from core.exceptions import UnsupportedPythonVersion
+from game.gameoptions import GameOptions
 
 coloredlogs.install(
     level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
@@ -73,6 +74,7 @@ class TWB:
     wrapper = None
     should_run = True
     runs = 0
+    game_options = None
 
     @staticmethod
     def internet_online():
@@ -144,6 +146,9 @@ class TWB:
             template["server"]["endpoint"] = game_endpoint
             template["server"]["server"] = sub_parts.lower()
             template["bot"]["user_agent"] = browser_ua
+
+            logging.info("New world, syncing world options, this might take a couple of seconds")
+            self.game_options = GameOptions(endpoint=game_endpoint)
 
             FileManager.save_json_file(template, "config.json")
             print("Deployed new configuration file")
@@ -297,7 +302,8 @@ class TWB:
             )
             time.sleep(sleep)
             return False
-
+        if not self.game_options:
+            self.game_options = GameOptions(endpoint=config["server"]["endpoint"])
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
             server=config["server"]["server"],
@@ -424,7 +430,8 @@ class TWB:
             "cache/world",
             "cache/logs",
             "cache/managed",
-            "cache/hunter"
+            "cache/hunter",
+            "cache/world_options"
         ]
         FileManager.create_directories(directories)
 
