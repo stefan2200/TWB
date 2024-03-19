@@ -40,6 +40,7 @@ from game.village import Village
 from manager import VillageManager
 from pages.overview import OverviewPage
 from core.exceptions import UnsupportedPythonVersion
+from core.extractors import Extractor
 
 coloredlogs.install(
     level=logging.DEBUG if "-q" not in sys.argv else logging.INFO,
@@ -73,6 +74,7 @@ class TWB:
     wrapper = None
     should_run = True
     runs = 0
+    found_villages = []
 
     @staticmethod
     def internet_online():
@@ -210,8 +212,9 @@ class TWB:
         Gets the overview page to automatically detect world options and owned villages
         """
         overview_page = OverviewPage(self.wrapper)
+        self.found_villages = Extractor.village_ids_from_overview(overview_page.result_get.text)
         if config["bot"].get("add_new_villages", False):
-            for found_vid in overview_page.villages_data:
+            for found_vid in self.found_villages:
                 if found_vid not in config["villages"]:
                     print(
                         f"Village {found_vid} was found but no config entry was found. Adding automatically"
@@ -349,7 +352,7 @@ class TWB:
                     print("Deployed new configuration file")
                 village_number = 1
                 for village in self.villages:
-                    if overview_page.villages_data and village.village_id not in overview_page.villages_data:
+                    if village.village_id not in self.found_villages:
                         print(
                             "Village %s will be ignored because it is not available anymore"
                             % village.village_id

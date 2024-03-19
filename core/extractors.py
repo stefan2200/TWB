@@ -184,7 +184,7 @@ class Extractor:
         """
         if type(res) != str:
             res = res.text
-        villages = re.findall(r'<span class="quickedit-vn" data-id="(\d+)"', res)
+        villages = re.findall(r'<span class="quickedit-vn" data-id="(\w+)"', res)
         return list(set(villages))
 
     @staticmethod
