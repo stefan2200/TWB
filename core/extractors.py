@@ -11,6 +11,7 @@ class Extractor:
     Defines various non-compiled regexes for data retrieval
     TODO: use compiled various for CPU efficiency
     """
+
     @staticmethod
     def village_data(res):
         """
@@ -244,4 +245,16 @@ class Extractor:
         reward_count_unlocked = str(res["reward_count_unlocked"])
         if reward_count_unlocked and res["chests"][reward_count_unlocked]["is_collected"]:
             return reward_count_unlocked
+        return None
+
+    @staticmethod
+    def get_server_time(res):
+        """
+        Detects the server time
+        """
+        if type(res) != str:
+            res = res.text
+        data = re.search(r'<span id="serverTime"(?: title=".*")?>(\d+:\d+:\d+)</span>', res)
+        if data:
+            return data.group(1)
         return None

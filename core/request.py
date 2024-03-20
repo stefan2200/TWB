@@ -14,6 +14,7 @@ import random
 from urllib.parse import urljoin, urlencode
 
 from core.reporter import ReporterObject
+from core.time import Time
 
 
 class WebWrapper:
@@ -60,6 +61,9 @@ class WebWrapper:
         get_h = re.search(r'&h=(\w+)', response.text)
         if get_h:
             self.last_h = get_h.group(1)
+
+        # If the server time is available, sync it
+        Time.sync(response)
 
     def get_url(self, url, headers=None):
         """
