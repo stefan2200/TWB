@@ -117,7 +117,11 @@ class Map:
         """
         vid = entry[0]
         name = entry[2]
-        points = int(entry[3].replace(".", ""))
+        try:
+            points = int(entry[3].replace(".", ""))
+        except ValueError:
+            # Breaks farming logic on event villages
+            return
         player = entry[4]
         bonus = entry[6]
         clan = entry[11]
