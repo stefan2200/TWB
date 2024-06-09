@@ -6,8 +6,8 @@ import math
 import random
 import time
 
-from core.extractors import Extractor
-from game.resources import ResourceManager
+from twb.core.extractors import Extractor
+from twb.game.resources import ResourceManager
 
 
 class TroopManager:

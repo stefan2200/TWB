@@ -3,7 +3,7 @@ import logging
 import random
 import re
 
-from core.extractors import Extractor
+from twb.core.extractors import Extractor
 
 
 class DefenceManager:

@@ -5,7 +5,7 @@ import json
 import logging
 import re
 
-from core.extractors import Extractor
+from twb.core.extractors import Extractor
 
 
 class SnobManager:

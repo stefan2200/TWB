@@ -6,8 +6,8 @@ import logging
 import re
 from datetime import datetime
 
-from core.extractors import Extractor
-from core.filemanager import FileManager
+from twb.core.extractors import Extractor
+from twb.core.filemanager import FileManager
 
 
 class ReportManager:

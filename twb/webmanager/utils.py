@@ -1,6 +1,7 @@
 import collections
 import json
 import os
+from pathlib import Path
 import subprocess
 
 import psutil
@@ -45,7 +46,7 @@ class DataReader:
 
     @staticmethod
     def config_grab():
-        with open(os.path.join(os.path.dirname(__file__), "..", "config.json"), 'r') as f:
+        with open(f"{Path.cwd()}/config.json", 'r', encoding="utf-8") as f:
             return json.load(f)
 
     @staticmethod
@@ -54,7 +55,7 @@ class DataReader:
             value = json.loads(value)
         except:
             pass
-        config_file_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
+        config_file_path = f"{Path.cwd()}/config.json"
         with open(config_file_path, 'r') as config_file:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
             if "." in parameter:
@@ -69,7 +70,7 @@ class DataReader:
 
     @staticmethod
     def village_config_set(village_id, parameter, value):
-        config_file_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
+        config_file_path = f"{Path.cwd()}/config.json"
         with open(config_file_path, 'r') as config_file:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
             if village_id not in template['villages']:

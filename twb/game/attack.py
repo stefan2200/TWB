@@ -3,13 +3,13 @@ Attack manager
 Sounds dangerous but it just sends farms
 """
 
-from core.extractors import Extractor
+from twb.core.extractors import Extractor
 import logging
 import time
 from datetime import datetime
 from datetime import timedelta
 
-from core.filemanager import FileManager
+from twb.core.filemanager import FileManager
 
 
 class AttackManager:

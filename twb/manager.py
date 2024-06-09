@@ -1,17 +1,60 @@
+import copy
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 
-from game.attack import AttackCache
-from game.reports import ReportCache
+from twb.game.attack import AttackCache
+from twb.game.reports import ReportCache
+from twb.game.village import Village
 
 
 class VillageManager:
+    def __init__(self, wrapper, found_villages):
+        self.wrapper = wrapper
+        self.found_villages = found_villages
+        self.villages = []
+
+    def initialize_villages(self, config):
+        for vid in config["villages"]:
+            village = Village(wrapper=self.wrapper, village_id=vid)
+            self.villages.append(copy.deepcopy(village))
+
+    def process_villages(self, config):
+        village_number = 1
+        rm = None
+        defense_states = {}
+
+        for village in self.villages:
+            if village.village_id not in self.found_villages:
+                logging.info("Village %s will be ignored because it is not available anymore", village.village_id)
+                continue
+
+            rm = rm or village.rep_man
+            village.rep_man = rm or village.rep_man
+
+            if config["bot"].get("auto_set_village_names", False):
+                template = config["bot"]["village_name_template"]
+                num_pad = f"{village_number:0{config['bot']['village_name_number_length']}d}"
+                village.village_set_name = template.replace("{num}", num_pad)
+
+            village.run(config=config)
+
+            if village.get_config(section="units", parameter="manage_defence", default=False) and village.def_man:
+                defense_states[village.village_id] = village.def_man.under_attack if village.def_man.allow_support_recv else False
+
+            village_number += 1
+
+        if defense_states and config["farms"]["farm"]:
+            logging.info("Syncing attack states")
+            for village in self.villages:
+                village.def_man.my_other_villages = defense_states
+                
     @staticmethod
     def farm_manager(verbose=False, clean_reports=False):
         logger = logging.getLogger("FarmManager")
-        with open("config.json", "r") as f:
+        with open(f"{Path.cwd()}/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
 
         if verbose:
@@ -23,25 +66,25 @@ class VillageManager:
             logger.info("Reports: %d", len(reports))
             logger.info("Farms: %d", len(attacks))
         t = {"wood": 0, "iron": 0, "stone": 0}
-        for farm in attacks:
-            data = attacks[farm]
+        for farm, attack in attacks.items():
+            data = attack
 
             num_attack = []
             loot = {"wood": 0, "iron": 0, "stone": 0}
             total_loss_count = 0
             total_sent_count = 0
-            for rep in reports:
-                if reports[rep]["dest"] == farm and reports[rep]["type"] == "attack":
-                    for unit in reports[rep]["extra"]["units_sent"]:
-                        total_sent_count += reports[rep]["extra"]["units_sent"][unit]
-                    for unit in reports[rep]["extra"]["units_losses"]:
-                        total_loss_count += reports[rep]["extra"]["units_losses"][unit]
+            for id, report in reports.items():
+                if report["dest"] == farm and report["type"] == "attack":
+                    for unit in report["extra"]["units_sent"]:
+                        total_sent_count += report["extra"]["units_sent"][unit]
+                    for unit in report["extra"]["units_losses"]:
+                        total_loss_count += report["extra"]["units_losses"][unit]
                     try:
-                        res = reports[rep]["extra"]["loot"]
+                        res = report["extra"]["loot"]
                         for r in res:
                             loot[r] = loot[r] + int(res[r])
                             t[r] = t[r] + int(res[r])
-                        num_attack.append(reports[rep])
+                        num_attack.append(report)
                     except:
                         pass
             percentage_lost = 0

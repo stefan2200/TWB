@@ -1,6 +1,6 @@
 import math
 
-from core.filemanager import FileManager
+from twb.core.filemanager import FileManager
 
 
 # Tribalwars simulator class, based on real math stuff I guess

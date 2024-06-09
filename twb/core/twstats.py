@@ -10,7 +10,7 @@ from collections import defaultdict
 import requests
 from pyquery import PyQuery as pq
 
-from core.filemanager import FileManager
+from twb.core.filemanager import FileManager
 
 
 class TwStats:

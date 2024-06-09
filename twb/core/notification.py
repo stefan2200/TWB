@@ -1,9 +1,10 @@
 import asyncio
+from pathlib import Path
 
 import telegram
 
-from core.filemanager import FileManager
-from core.exceptions import InvalidJSONException
+from twb.core.filemanager import FileManager
+from twb.core.exceptions import InvalidJSONException
 
 
 class _Notification:
@@ -21,7 +22,7 @@ class _Notification:
 
     def get_config(self):
         try:
-            config = FileManager.load_json_file("config.json")
+            config = FileManager.load_json_file(f"{Path.cwd()}/config.json")
         except InvalidJSONException:
             config = None
             self.enabled = False

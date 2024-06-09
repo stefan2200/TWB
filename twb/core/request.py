@@ -4,8 +4,8 @@ Class for using one generic cookie jar, emulating a single tab
 
 import requests
 
-from core.filemanager import FileManager
-from core.notification import Notification
+from twb.core.filemanager import FileManager
+from twb.core.notification import Notification
 
 import logging
 import re
@@ -13,7 +13,7 @@ import time
 import random
 from urllib.parse import urljoin, urlencode
 
-from core.reporter import ReporterObject
+from twb.core.reporter import ReporterObject
 
 
 class WebWrapper:
@@ -45,6 +45,21 @@ class WebWrapper:
         self.endpoint = endpoint
         self.reporter = ReporterObject(enabled=reporter_enabled, connection_string=reporter_constr)
 
+    @staticmethod
+    def internet_online():
+        """
+        Checks if the bot has access to the internet
+
+        Returns:
+            boolean: Is there connection to the internet
+        """
+        try:
+            requests.get("https://github.com/stefan2200/TWB", timeout=(10, 60))
+            return True
+        except requests.Timeout:
+            return False
+    
+          
     def post_process(self, response):
         """
         Post-processes all requests and stores data used for the next request

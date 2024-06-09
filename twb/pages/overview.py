@@ -5,7 +5,7 @@ from typing import Dict, Optional, Tuple
 from bs4 import BeautifulSoup
 from requests import Response
 
-from core.request import WebWrapper
+from twb.core.request import WebWrapper
 
 
 class Point:

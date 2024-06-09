@@ -1,7 +1,7 @@
 """
 Manages template files
 """
-from core.filemanager import FileManager
+from twb.core.filemanager import FileManager
 
 
 class TemplateManager:

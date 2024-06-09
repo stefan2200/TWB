@@ -1,7 +1,7 @@
 import json
 import os
 
-from core.exceptions import InvalidJSONException, FileNotFoundException
+from twb.core.exceptions import InvalidJSONException, FileNotFoundException
 
 
 class FileManager:

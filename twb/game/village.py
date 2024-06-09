@@ -4,19 +4,20 @@ import time
 from codecs import decode
 from datetime import datetime
 
-from core.extractors import Extractor
-from core.filemanager import FileManager
-from core.templates import TemplateManager
-from core.twstats import TwStats
-from game.attack import AttackManager
-from game.buildingmanager import BuildingManager
-from game.defence_manager import DefenceManager
-from game.map import Map
-from game.reports import ReportManager
-from game.resources import ResourceManager
-from game.snobber import SnobManager
-from game.troopmanager import TroopManager
-from core.exceptions import *
+from twb.core.extractors import Extractor
+from twb.core.filemanager import FileManager
+from twb.core.templates import TemplateManager
+from twb.core.twstats import TwStats
+from twb.core.exceptions import *
+from twb.game.attack import AttackManager
+from twb.game.buildingmanager import BuildingManager
+from twb.game.defence_manager import DefenceManager
+from twb.game.map import Map
+from twb.game.reports import ReportManager
+from twb.game.resources import ResourceManager
+from twb.game.snobber import SnobManager
+from twb.game.troopmanager import TroopManager
+
 
 
 class Village:

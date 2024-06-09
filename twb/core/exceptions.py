@@ -39,3 +39,9 @@ class UnsupportedPythonVersion(Exception):
     You are trying run the bot with an outdated python version
     Updating to Python3 fixes this issue
     """
+
+class NoInternetException(Exception):
+    """
+    Error when village init does not happen correctly
+    """
+

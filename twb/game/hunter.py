@@ -2,8 +2,8 @@ import datetime
 import logging
 import time
 
-from core.extractors import Extractor
-from game.simulator import Simulator
+from twb.core.extractors import Extractor
+from twb.game.simulator import Simulator
 
 
 class Hunter:

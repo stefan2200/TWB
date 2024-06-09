@@ -5,8 +5,8 @@ import logging
 import math
 import time
 
-from core.extractors import Extractor
-from core.filemanager import FileManager
+from twb.core.extractors import Extractor
+from twb.core.filemanager import FileManager
 
 
 class Map:

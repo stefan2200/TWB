@@ -6,7 +6,7 @@ import random
 import re
 import time
 
-from core.extractors import Extractor
+from twb.core.extractors import Extractor
 
 
 class BuildingManager:
