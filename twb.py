@@ -1,22 +1,6 @@
 """
 TWB - an open source Tribal Wars bot
 """
-#
-# This file is part of the TWB distribution (https://github.com/stefan2200/TWB).
-# Copyright (c) 2024 Stefan2200
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-#
 
 import collections
 import copy
@@ -57,6 +41,13 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 
 def signal_handler(sig, frame):
+    """
+    Function that manages shutting the bot down after a closing signal is sent
+
+    Args:
+        sig (_type_): _description_
+        frame (_type_): _description_
+    """
     print('Exiting...')
     sys.exit(0)
 
@@ -99,60 +90,64 @@ class TWB:
                 "Oh no, config.example.json and config.json do not exist. You broke something didn't you?"
             )
             return False
+        
         logging.info(
             "Please enter the current (logged-in) URL of the world you are playing on (or q to exit)"
             "The URL should look something like this:\n"
             "https://nl01.tribalwars.nl/game.php?village=12345&screen=overview"
         )
-        input_url = input("URL: ")
+        input_url = input("URL: ").strip()
         if input_url.strip() == "q":
             return False
+        
         server = input_url.split("://")[1].split("/")[0]
         game_endpoint = input_url.split("?")[0]
         sub_parts = server.split(".")[0]
+        
         logging.info("Game endpoint: %s", game_endpoint)
         logging.info("World: %s", sub_parts.upper())
-        check = input("Does this look correct? [nY]")
-        if "y" in check.lower():
-            browser_ua = input(
-                "Enter your browser user agent "
-                "(to lower detection rates). Just google what is my user agent> "
+        
+        if input("Does this look correct? [nY]").lower() != "y":
+            logging.info("Make sure your URL starts with https:// and contains the game.php? part")
+            return self.manual_config()
+        
+        browser_ua = input("Enter your browser user agent (to lower detection rates). Just google 'what is my user agent'> ").strip()
+        if len(browser_ua) < 10:
+            logging.error("It should start with Chrome, Firefox or something. Please try again")
+            return self.manual_config()
+        
+        
+        disclaimer = """
+        Read carefully: Please note the use of this bot can cause bans, kicks, annoyances and other stuff.
+        I do my best to make the bot as undetectable as possible but most issues / bans are config related.
+        Make sure you keep your bot sleeps at a reasonable numbers and please don't blame me if your account gets banned ;) 
+        PS. make sure to regularly (1-2 per day) logout/login using the browser session and supply the new cookie string. 
+        Using a single session for 24h straight will probably result in a ban
+        """
+        logging.info(disclaimer)
+        
+        if input("Do you understand this and still wish to continue, please type: yes and press enter> ").lower() != "yes":
+            logging.info("Goodbye :)")
+            sys.exit(0)
+
+
+        template = FileManager.load_json_file(
+            "config.example.json", 
+            object_pairs_hook=collections.OrderedDict
             )
-            if browser_ua and len(browser_ua) < 10:
-                logging.error(
-                    "It should start with Chrome, Firefox or something. Please try again"
-                )
-                return self.manual_config()
-            browser_ua = browser_ua.strip()
-            disclaimer = """
-            Read carefully: Please note the use of this bot can cause bans, kicks, annoyances and other stuff.
-            I do my best to make the bot as undetectable as possible but most issues / bans are config related.
-            Make sure you keep your bot sleeps at a reasonable numbers and please don't blame me if your account gets banned ;) 
-            PS. make sure to regularly (1-2 per day) logout/login using the browser session and supply the new cookie string. 
-            Using a single session for 24h straight will probably result in a ban
-            """
-            logging.info(disclaimer)
-            final_check = input(
-                "Do you understand this and still wish to continue, please type: yes and press enter> "
-            )
-            if "yes" not in final_check.lower():
-                logging.info("Goodbye :)")
-                sys.exit(0)
+        if not template:
+            logging.error("Unable to open config.example.json")
+            return False
 
-            template = FileManager.load_json_file("config.example.json", object_pairs_hook=collections.OrderedDict)
-            if not template:
-                logging.error("Unable to open config.example.json")
-                return False
-            template["server"]["endpoint"] = game_endpoint
-            template["server"]["server"] = sub_parts.lower()
-            template["bot"]["user_agent"] = browser_ua
+        template["server"]["endpoint"] = game_endpoint
+        template["server"]["server"] = sub_parts.lower()
+        template["bot"]["user_agent"] = browser_ua
 
-            FileManager.save_json_file(template, "config.json")
-            print("Deployed new configuration file")
-            return True
+        FileManager.save_json_file(template, "config.json")
+        logging.info("Deployed new configuration file")
+        return True
 
-        print("Make sure your url starts with https:// and contains the game.php? part")
-        return self.manual_config()
+        
 
     def config(self):
         """
@@ -166,22 +161,20 @@ class TWB:
             if self.manual_config():
                 return self.config()
 
-            print("No config file found. Exiting")
+            logging.error("No config file found. Exiting")
             sys.exit(1)
 
         config = FileManager.load_json_file("config.json", object_pairs_hook=collections.OrderedDict)
 
         if template and config["build"]["version"] != template["build"]["version"]:
-            print(
-                "Outdated config file found, merging (old copy saved as config.bak)\n"
-                "Remove config.example.json to disable this behavior"
-            )
+            logging.warning("Outdated config file found, merging (old copy saved as config.bak)\n"
+                            "Remove config.example.json to disable this behavior")
             FileManager.copy_file("config.json", "config.bak")
 
             config = self.merge_configs(config, template)
             FileManager.save_json_file(config, "config.json")
 
-            print("Deployed new configuration file")
+            logging.info("Deployed new configuration file")
 
         return config
 
@@ -196,6 +189,7 @@ class TWB:
                 for entry in old_config.get(section, {}):
                     if entry in new_config.get(section, {}):
                         new_config[section][entry] = old_config[section][entry]
+                        
         villages = collections.OrderedDict()
         for v in old_config["villages"]:
             nc = new_config["village_template"]
@@ -231,13 +225,13 @@ class TWB:
         FileManager.copy_file("config.json", "config.bak")
 
         if not template and "village_template" not in original:
-            print(f"Village entry {village_id} could not be added to the config file!")
-            return
+            logging.error(f"Village entry {village_id} could not be added to the config file!")
+            return None
 
         original["villages"][village_id] = template if template else original["village_template"]
 
         FileManager.save_json_file(original, "config.json")
-        print("Deployed new configuration file")
+        logging.info("Deployed new configuration file")
         return original
 
     @staticmethod
@@ -276,13 +270,132 @@ class TWB:
         get_h = time.localtime().tm_hour
         return get_h in range(active_h[0], active_h[1])
 
-    def run(self):
+    def handle_internet_connection(self, config):
+        if not self.internet_online():
+            logging.info("Internet seems to be down, waiting till its back online...")
+            sleep_duration = self.calculate_sleep_duration(config)
+            dtn = datetime.datetime.now()
+            dt_next = dtn + datetime.timedelta(0, sleep_duration)
+            logging.info("Dead for %.2f minutes (next run at: %s)", sleep_duration / 60, dt_next.time())
+            time.sleep(sleep_duration)
+            return False
+        return True
+
+    def calculate_sleep_duration(self, config):
+        sleep_duration = 0
+        if self.is_active_hours(config=config):
+            sleep_duration = config["bot"]["active_delay"]
+        else:
+            if config["bot"]["inactive_still_active"]:
+                sleep_duration = config["bot"]["inactive_delay"]
+
+        sleep_duration += random.randint(20, 120)
+        return sleep_duration
+
+    def setup_wrapper(self, config):
+        self.wrapper = WebWrapper(
+            config["server"]["endpoint"],
+            server=config["server"]["server"],
+            endpoint=config["server"]["endpoint"],
+            reporter_enabled=config["reporting"]["enabled"],
+            reporter_constr=config["reporting"]["connection_string"],
+        )
+        self.wrapper.start()
+
+    def set_user_agent(self, config):
+        if not config["bot"].get("user_agent", None):
+            logging.warning(
+                "No custom user agent was supplied, this will likely get you banned."
+                "Please set the bot -> user_agent parameter to your browser's one. "
+                "Just google 'what is my user agent'."
+            )
+            return
+        self.wrapper.headers["user-agent"] = config["bot"]["user_agent"]
+
+    def initialize_villages(self, config):
+        for vid in config["villages"]:
+            village = Village(wrapper=self.wrapper, village_id=vid)
+            self.villages.append(copy.deepcopy(village))
+
+    def process_villages(self, config):
+        village_number = 1
+        rm = None
+        defense_states = {}
+
+        for village in self.villages:
+            if village.village_id not in self.found_villages:
+                logging.info("Village %s will be ignored because it is not available anymore", village.village_id)
+                continue
+
+            rm = rm or village.rep_man
+            village.rep_man = rm or village.rep_man
+
+            if config["bot"].get("auto_set_village_names", False):
+                template = config["bot"]["village_name_template"]
+                num_pad = f"{village_number:0{config['bot']['village_name_number_length']}d}"
+                village.village_set_name = template.replace("{num}", num_pad)
+
+            village.run(config=config)
+
+            if village.get_config(section="units", parameter="manage_defence", default=False) and village.def_man:
+                defense_states[village.village_id] = village.def_man.under_attack if village.def_man.allow_support_recv else False
+
+            village_number += 1
+
+        return defense_states
+
+    def sync_defense_states(self, config):
+        defense_states = self.process_villages(config)
+        if defense_states and config["farms"]["farm"]:
+            logging.info("Syncing attack states")
+            for village in self.villages:
+                village.def_man.my_other_villages = defense_states
+                
+    def run_old(self):
         """
         Run the bot
         TODO: make less messy
         """
+        
         Notification.send("TWB is starting up")
         config = self.config()
+
+        if not self.handle_internet_connection(config):
+            return False
+
+        self.setup_wrapper(config)
+        self.set_user_agent(config)
+        self.initialize_villages(config)
+
+        while self.should_run:
+            if not self.handle_internet_connection(config):
+                continue
+
+            config = self.config()
+            overview_page, config = self.get_overview(config)
+            has_changed, new_cf = self.get_world_options(overview_page, config)
+
+            if has_changed:
+                logging.info("Updated world options")
+                config = self.merge_configs(config, new_cf)
+                FileManager.save_json_file(config, "config.json")
+                logging.info("Deployed new configuration file")
+
+            self.process_villages(config)
+            self.sync_defense_states(config)
+
+            sleep_duration = self.calculate_sleep_duration(config)
+            self.runs += 1
+
+            VillageManager.farm_manager(verbose=True)
+            logging.info("Sleeping for %.2f minutes (next run at: %s)", sleep_duration / 60, (datetime.datetime.now() + datetime.timedelta(0, sleep_duration)).time())
+            time.sleep(sleep_duration)
+            
+            
+        Notification.send("TWB is starting up")
+        # Config Setup
+        config = self.config()
+        # Online Check
         if not self.internet_online():
             print("Internet seems to be down, waiting till its back online...")
             sleep = 0
@@ -300,7 +413,7 @@ class TWB:
             )
             time.sleep(sleep)
             return False
-
+         # webWrapper setup
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
             server=config["server"]["server"],
@@ -416,10 +529,12 @@ class TWB:
                 sys.stdout.flush()
                 time.sleep(sleep)
 
-    def start(self):
+    def run(self):
         """
-        First run, verify if dirctory structure exist
+        Run bot
         """
+
+
         directories = [
             "cache/attacks",
             "cache/reports",
@@ -431,6 +546,41 @@ class TWB:
         ]
         FileManager.create_directories(directories)
 
+        Notification.send("TWB is starting up")
+        config = self.config()
+
+        if not self.handle_internet_connection(config):
+            return False
+
+        self.setup_wrapper(config)
+        self.set_user_agent(config)
+        self.initialize_villages(config)
+
+        while self.should_run:
+            if not self.handle_internet_connection(config):
+                continue
+
+            config = self.config()
+            overview_page, config = self.get_overview(config)
+            has_changed, new_cf = self.get_world_options(overview_page, config)
+
+            if has_changed:
+                logging.info("Updated world options")
+                config = self.merge_configs(config, new_cf)
+                FileManager.save_json_file(config, "config.json")
+                logging.info("Deployed new configuration file")
+
+            self.process_villages(config)
+            self.sync_defense_states(config)
+
+            sleep_duration = self.calculate_sleep_duration(config)
+            self.runs += 1
+
+            VillageManager.farm_manager(verbose=True)
+            logging.info("Sleeping for %.2f minutes (next run at: %s)", sleep_duration / 60, (datetime.datetime.now() + datetime.timedelta(0, sleep_duration)).time())
+            time.sleep(sleep_duration)
+        
+        
         self.run()
 
 
@@ -442,7 +592,7 @@ def main():
     for _ in range(3):
         t = TWB()
         try:
-            t.start()
+            t.run()
         except Exception as e:
             t.wrapper.reporter.report(0, "TWB_EXCEPTION", str(e))
             print("I crashed :(   %s" % str(e))
