@@ -16,6 +16,14 @@ class VillageManager:
         self.found_villages = found_villages
         self.villages = []
 
+    def add_found_villages(self, found_villages):
+        """_summary_
+
+        Args:
+            found_villages (_type_): _description_
+        """
+        self.found_villages = found_villages
+        
     def initialize_villages(self, config):
         for vid in config["villages"]:
             village = Village(wrapper=self.wrapper, village_id=vid)

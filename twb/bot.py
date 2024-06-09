@@ -37,7 +37,6 @@ class TWB:
         self.wrapper = None
         self.should_run = True
         self.runs = 0
-        self.found_villages = []
         
         if integrity_check:
             self.integrity_check()
@@ -114,6 +113,21 @@ class TWB:
             time.sleep(sleep_duration)
             return False
         return True
+    def get_found_villages_from_overview(self, overview_page):
+        return Extractor.village_ids_from_overview(overview_page.result_get.text)
+
+    
+    def add_new_villages_to_config(self, config, found_villages):
+        if not config["bot"].get("add_new_villages", False):
+            return config
+        
+        for found_vid in found_villages:
+            if found_vid not in config["villages"]:
+                print(
+                    f"Village {found_vid} was found but no config entry was found. Adding automatically"
+                )
+                config = self.add_village(village_id=found_vid)
+        return config
     
     def run(self):
         """
@@ -143,7 +157,11 @@ class TWB:
         self.setup_wrapper(config)
         self.set_user_agent(config)
 
-        village_manager = VillageManager(self.wrapper, self.found_villages)
+        overview_page = self.get_overview()
+        found_villages = self.get_found_villages_from_overview(overview_page)
+        config = self.add_new_villages_to_config(config, found_villages)
+        
+        village_manager = VillageManager(self.wrapper, found_villages)
         village_manager.initialize_villages(config)
 
         while self.should_run:
@@ -151,7 +169,10 @@ class TWB:
                 continue
 
             config = ConfigManager.load_config()
-            overview_page, config = self.get_overview(config)
+            overview_page = self.get_overview()
+            found_villages = self.get_found_villages_from_overview(overview_page)
+            village_manager.add_found_villages(found_villages)
+            config = self.add_new_villages_to_config(config, found_villages)
             has_changed, new_cf = self.get_world_options(overview_page, config)
 
             if has_changed:
@@ -190,18 +211,9 @@ class TWB:
             return
         self.wrapper.headers["user-agent"] = config["bot"]["user_agent"]
 
-    def get_overview(self, config):
+    def get_overview(self):
         overview_page = OverviewPage(self.wrapper)
-        self.found_villages = Extractor.village_ids_from_overview(overview_page.result_get.text)
-        if config["bot"].get("add_new_villages", False):
-            for found_vid in self.found_villages:
-                if found_vid not in config["villages"]:
-                    print(
-                        f"Village {found_vid} was found but no config entry was found. Adding automatically"
-                    )
-                    config = self.add_village(village_id=found_vid)
-
-        return overview_page, config
+        return overview_page
 
     def add_village(self, village_id, template=None):
         original = ConfigManager.load_config()
