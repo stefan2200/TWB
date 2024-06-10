@@ -7,7 +7,7 @@ name = "twb"
 version = "2.0.0"
 description = "Tribal Wars Bot"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 license = { file = "LICENSE.md" }
 authors = [
     { name = "contributors", email = "matthewmoorcroft@gmail.com" }
