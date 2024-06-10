@@ -59,7 +59,7 @@ source = ["twb", "tests"]
 source = ["twb", "*/site-packages"]
 
 [tool.mypy]
-python_version = "3.6"
+python_version = "3.7"
 files = ["twb", "tests"]
 show_error_codes = true
 pretty = true
@@ -68,7 +68,7 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pyright]
-pythonVersion = "3.6"
+pythonVersion = "3.7"
 include = ["twb", "tests"]
 typeCheckingMode = "basic"
 
