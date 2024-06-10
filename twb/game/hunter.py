@@ -38,7 +38,9 @@ class Hunter:
                     lowest = item
         return lowest
 
-    def troops_in_village(self, source=None, troops={}):
+    def troops_in_village(self, source=None, troops=None):
+        if troops is None:
+            troops = {}
         if source:
             if self.villages[source].attack.has_troops_available(troops):
                 return source
@@ -47,7 +49,7 @@ class Hunter:
                 return v
 
     def send_attack_chain(
-            self, source, item, exact_send_time=0, min_sleep_amount_millis=100
+        self, source, item, exact_send_time=0, min_sleep_amount_millis=100
     ):
         data = self.schedule[item]
         attack_set = []
@@ -73,7 +75,7 @@ class Hunter:
         self.wrapper.priority_mode = False
 
     def attack(self, source, vid, troops=None):
-        url = "game.php?village=%s&screen=place&target=%s" % (source, vid)
+        url = f"game.php?village={source}&screen=place&target={vid}"
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}
         for u in Extractor.attack_form(pre_attack):
@@ -89,7 +91,7 @@ class Hunter:
         post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}
         pre_data.update(post_data)
 
-        confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
+        confirm_url = f"game.php?village={self.village_id}&screen=place&try=confirm"
         conf = self.wrapper.post_url(url=confirm_url, data=pre_data)
         if '<div class="error_box">' in conf.text:
             return False
@@ -119,7 +121,7 @@ class Hunter:
         )
 
     def prepare(self, vid, troops=None):
-        url = "game.php?village=%s&screen=place&target=%s" % (self.village_id, vid)
+        url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}
         for u in Extractor.attack_form(pre_attack):
@@ -132,11 +134,11 @@ class Hunter:
         post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}
         pre_data.update(post_data)
 
-        confirm_url = "game.php?village=%s&screen=place&try=confirm" % self.village_id
+        confirm_url = f"game.php?village={self.village_id}&screen=place&try=confirm"
         conf = self.wrapper.post_url(url=confirm_url, data=pre_data)
         if '<div class="error_box">' in conf.text:
             return False
-        duration = Extractor.attack_duration(conf)
+        Extractor.attack_duration(conf)
 
         confirm_data = {}
         for u in Extractor.attack_form(conf):

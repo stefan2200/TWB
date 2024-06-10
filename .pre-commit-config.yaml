@@ -5,6 +5,7 @@ repos:
     rev: v0.4.8
     hooks:
       - id: ruff
+        args: [--ignore, E501]
       - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

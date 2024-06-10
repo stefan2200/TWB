@@ -2,8 +2,8 @@ import copy
 import json
 import logging
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from twb.game.attack import AttackCache
 from twb.game.reports import ReportCache
@@ -23,7 +23,7 @@ class VillageManager:
             found_villages (_type_): _description_
         """
         self.found_villages = found_villages
-        
+
     def initialize_villages(self, config):
         for vid in config["villages"]:
             village = Village(wrapper=self.wrapper, village_id=vid)
@@ -36,7 +36,10 @@ class VillageManager:
 
         for village in self.villages:
             if village.village_id not in self.found_villages:
-                logging.info("Village %s will be ignored because it is not available anymore", village.village_id)
+                logging.info(
+                    "Village %s will be ignored because it is not available anymore",
+                    village.village_id,
+                )
                 continue
 
             rm = rm or village.rep_man
@@ -44,13 +47,24 @@ class VillageManager:
 
             if config["bot"].get("auto_set_village_names", False):
                 template = config["bot"]["village_name_template"]
-                num_pad = f"{village_number:0{config['bot']['village_name_number_length']}d}"
+                num_pad = (
+                    f"{village_number:0{config['bot']['village_name_number_length']}d}"
+                )
                 village.village_set_name = template.replace("{num}", num_pad)
 
             village.run(config=config)
 
-            if village.get_config(section="units", parameter="manage_defence", default=False) and village.def_man:
-                defense_states[village.village_id] = village.def_man.under_attack if village.def_man.allow_support_recv else False
+            if (
+                village.get_config(
+                    section="units", parameter="manage_defence", default=False
+                )
+                and village.def_man
+            ):
+                defense_states[village.village_id] = (
+                    village.def_man.under_attack
+                    if village.def_man.allow_support_recv
+                    else False
+                )
 
             village_number += 1
 
@@ -58,11 +72,11 @@ class VillageManager:
             logging.info("Syncing attack states")
             for village in self.villages:
                 village.def_man.my_other_villages = defense_states
-                
+
     @staticmethod
     def farm_manager(verbose=False, clean_reports=False):
         logger = logging.getLogger("FarmManager")
-        with open(f"{Path.cwd()}/config.json", "r", encoding="utf-8") as f:
+        with open(f"{Path.cwd()}/config.json", encoding="utf-8") as f:
             config = json.load(f)
 
         if verbose:
@@ -81,7 +95,7 @@ class VillageManager:
             loot = {"wood": 0, "iron": 0, "stone": 0}
             total_loss_count = 0
             total_sent_count = 0
-            for id, report in reports.items():
+            for _id, report in reports.items():
                 if report["dest"] == farm and report["type"] == "attack":
                     for unit in report["extra"]["units_sent"]:
                         total_sent_count += report["extra"]["units_sent"][unit]
@@ -93,7 +107,7 @@ class VillageManager:
                             loot[r] = loot[r] + int(res[r])
                             t[r] = t[r] + int(res[r])
                         num_attack.append(report)
-                    except:
+                    except KeyError:
                         pass
             percentage_lost = 0
 
@@ -108,7 +122,12 @@ class VillageManager:
             if verbose:
                 logger.info(
                     "%sFarm village %s attacked %d times - Total loot: %s - Total units lost: %d (%.2f)",
-                    perf, farm, len(num_attack), str(loot), total_loss_count, percentage_lost
+                    perf,
+                    farm,
+                    len(num_attack),
+                    str(loot),
+                    total_loss_count,
+                    percentage_lost,
                 )
             if len(num_attack):
                 total = 0
@@ -116,42 +135,50 @@ class VillageManager:
                     total += loot[k]
                 if len(num_attack) > 3:
                     if total / len(num_attack) < 100 and (
-                            "low_profile" not in data or not data["low_profile"]
+                        "low_profile" not in data or not data["low_profile"]
                     ):
                         if verbose:
                             logger.info(
                                 "Farm %s has very low resources (%d avg total), extending farm time",
-                                farm, total / len(num_attack)
+                                farm,
+                                total / len(num_attack),
                             )
                         data["low_profile"] = True
                         AttackCache.set_cache(farm, data)
                     elif total / len(num_attack) > 500 and (
-                            "high_profile" not in data or not data["high_profile"]
+                        "high_profile" not in data or not data["high_profile"]
                     ):
                         if verbose:
                             logger.info(
                                 "Farm %s has very high resources (%d avg total), setting to high profile",
-                                farm, total / len(num_attack)
+                                farm,
+                                total / len(num_attack),
                             )
                         data["high_profile"] = True
                         AttackCache.set_cache(farm, data)
 
             if percentage_lost > 20 and not data["low_profile"]:
-                logger.warning(f"Dangerous {percentage_lost} percentage lost units! Extending farm time")
+                logger.warning(
+                    f"Dangerous {percentage_lost} percentage lost units! Extending farm time"
+                )
                 data["low_profile"] = True
                 data["high_profile"] = False
                 AttackCache.set_cache(farm, data)
             if percentage_lost > 50 and len(num_attack) > 10:
-                logger.critical("Farm seems too dangerous/ unprofitable to farm. Setting safe to false!")
+                logger.critical(
+                    "Farm seems too dangerous/ unprofitable to farm. Setting safe to false!"
+                )
                 data["safe"] = False
                 AttackCache.set_cache(farm, data)
 
         if verbose:
-            logger.info("Total loot: %s" % t)
+            logger.info(f"Total loot: {t}")
 
         if clean_reports:
-            list_of_files = sorted(["./cache/reports/" + f for f in os.listdir("./cache/reports/")],
-                                   key=os.path.getctime)
+            list_of_files = sorted(
+                ["./cache/reports/" + f for f in os.listdir("./cache/reports/")],
+                key=os.path.getctime,
+            )
 
             logger.info(f"Found {len(list_of_files)} files")
 

@@ -1,6 +1,7 @@
 """
 Manages building management manager
 """
+
 import logging
 import random
 import re
@@ -13,6 +14,7 @@ class BuildingManager:
     """
     Core class for building management
     """
+
     logger = None
     levels = {}
 
@@ -67,7 +69,7 @@ class BuildingManager:
         vname = self.game_state["village"]["name"]
 
         if not self.logger:
-            self.logger = logging.getLogger(fr"Builder: {vname}")
+            self.logger = logging.getLogger(rf"Builder: {vname}")
 
         if self.complete_actions(main_data.text):
             return self.start_update(build=build, set_village_name=set_village_name)
@@ -106,7 +108,7 @@ class BuildingManager:
             if existing_queue > 1:
                 self.logger.warning(
                     "Building queue out of sync, waiting until %d manual actions are finished!",
-                    existing_queue
+                    existing_queue,
                 )
                 return True
             else:
@@ -118,12 +120,13 @@ class BuildingManager:
             r = self.max_queue_len - 1
         else:
             r = self.max_queue_len - len(self.waits)
-        for x in range(r):
+        for _x in range(r):
             result = self.get_next_building_action()
             if not result:
                 self.logger.info(
                     "No build more operations where executed (%d current, %d left)",
-                    len(self.waits), len(self.queue)
+                    len(self.waits),
+                    len(self.queue),
                 )
                 return False
         # Check for instant build after putting something in the queue
@@ -182,16 +185,16 @@ class BuildingManager:
         Checks if there are enough resources to queue a building
         """
         if (
-                build_item["iron"] > self.resman.storage
-                or build_item["wood"] > self.resman.storage
-                or build_item["stone"] > self.resman.storage
+            build_item["iron"] > self.resman.storage
+            or build_item["wood"] > self.resman.storage
+            or build_item["stone"] > self.resman.storage
         ):
             build_data = "storage:%d" % (int(self.levels["storage"]) + 1)
             if (
-                    len(self.queue)
-                    and "storage"
-                    not in [x.split(":")[0] for x in self.queue[0: self.max_lookahead]]
-                    and int(self.levels["storage"]) != 30
+                len(self.queue)
+                and "storage"
+                not in [x.split(":")[0] for x in self.queue[0 : self.max_lookahead]]
+                and int(self.levels["storage"]) != 30
             ):
                 self.queue.insert(0, build_data)
                 self.logger.info(
@@ -212,11 +215,11 @@ class BuildingManager:
             self.resman.request(source="building", resource="iron", amount=req)
             r = False
         if build_item["pop"] > (
-                self.game_state["village"]["pop_max"] - self.game_state["village"]["pop"]
+            self.game_state["village"]["pop_max"] - self.game_state["village"]["pop"]
         ):
             req = build_item["pop"] - (
-                    self.game_state["village"]["pop_max"]
-                    - self.game_state["village"]["pop"]
+                self.game_state["village"]["pop_max"]
+                - self.game_state["village"]["pop"]
             )
             self.resman.request(source="building", resource="pop", amount=req)
             r = False
@@ -250,7 +253,9 @@ class BuildingManager:
         Calculates the next best possible building action
         """
         if index >= len(self.queue) or index >= self.max_lookahead:
-            self.logger.debug("Not building anything because insufficient resources or index out of range")
+            self.logger.debug(
+                "Not building anything because insufficient resources or index out of range"
+            )
             return False
 
         queue_check = self.is_queued()
@@ -261,10 +266,10 @@ class BuildingManager:
         if self.resman and self.resman.in_need_of("pop"):
             build_data = "farm:%d" % (int(self.levels["farm"]) + 1)
             if (
-                    len(self.queue)
-                    and "farm"
-                    not in [x.split(":")[0] for x in self.queue[0: self.max_lookahead]]
-                    and int(self.levels["farm"]) != 30
+                len(self.queue)
+                and "farm"
+                not in [x.split(":")[0] for x in self.queue[0 : self.max_lookahead]]
+                and int(self.levels["farm"]) != 30
             ):
                 self.queue.insert(0, build_data)
                 self.logger.info("Adding farm in front of queue because low on pop")
@@ -282,9 +287,7 @@ class BuildingManager:
                 return self.get_next_building_action(index + 1)
             check = self.costs[entry]
             if "max_level" in check and min_lvl > check["max_level"]:
-                self.logger.debug(
-                    "Removing entry %s because max_level exceeded", entry
-                )
+                self.logger.debug("Removing entry %s because max_level exceeded", entry)
                 self.queue.pop(index)
                 return self.get_next_building_action(index)
             if check["can_build"] and self.has_enough(check) and "build_link" in check:

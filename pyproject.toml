@@ -7,7 +7,7 @@ name = "twb"
 version = "2.0.0"
 description = "Tribal Wars Bot"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 license = { file = "LICENSE.md" }
 authors = [
     { name = "contributors", email = "matthewmoorcroft@gmail.com" }
@@ -23,7 +23,7 @@ dependencies = [
     "lxml>=5.2.2",
     "coloredlogs>=15.0.1",
     "psutil>=5.9.8",
-    "flask>=3.0.3",
+    "flask>=2.2.5",
     "pyquery>=2.0.0",
     "python-telegram-bot>=21.3"
 ]
@@ -59,7 +59,7 @@ source = ["twb", "tests"]
 source = ["twb", "*/site-packages"]
 
 [tool.mypy]
-python_version = "3.6"
+python_version = "3.7"
 files = ["twb", "tests"]
 show_error_codes = true
 pretty = true
@@ -68,7 +68,7 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pyright]
-pythonVersion = "3.6"
+pythonVersion = "3.7"
 include = ["twb", "tests"]
 typeCheckingMode = "basic"
 
@@ -87,7 +87,6 @@ select = [
     "UP",  # pyupgrade
     "W",  # pycodestyle warning
 ]
-ignore-init-module-imports = true
 
 [tool.ruff.lint.isort]
 force-single-line = true

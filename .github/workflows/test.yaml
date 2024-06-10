@@ -42,6 +42,11 @@ jobs:
           allow-prereleases: true
           cache: pip
           cache-dependency-path: requirements*/*.txt
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt-dev
       - run: pip install tox
       - run: tox run -e ${{ matrix.tox || format('py{0}', matrix.python) }}
   typing:

@@ -1,7 +1,8 @@
 import json
 import os
 
-from twb.core.exceptions import InvalidJSONException, FileNotFoundException
+from twb.core.exceptions import FileNotFoundException
+from twb.core.exceptions import InvalidJSONException
 
 
 class FileManager:
@@ -38,8 +39,8 @@ class FileManager:
 
     @staticmethod
     def list_directory(directory, ends_with=None):
-        """Returns a list of files in a directory. If ends_with is specified, only files ending with the specified
-        string will be returned."""
+        """Returns a list of files in a directory. If ends_with is specified, only files
+        ending with the specified string will be returned."""
         full_path = os.path.join(FileManager.get_root(), directory)
         files = os.listdir(full_path)
         if ends_with:
@@ -51,9 +52,9 @@ class FileManager:
         """Opens a file in the specified mode. Private do NOT use outside filemanager."""
         full_path = os.path.join(FileManager.get_root(), path)
         try:
-            return open(full_path, mode)
-        except:
-            raise FileNotFoundException
+            return open(full_path, mode, encoding="utf-8")
+        except FileNotFoundError as err:
+            raise FileNotFoundException from err
 
     @staticmethod
     def read_file(path):
@@ -96,8 +97,8 @@ class FileManager:
         with FileManager.__open_file(full_path) as file:
             try:
                 return json.load(file, **kwargs)
-            except json.decoder.JSONDecodeError:
-                raise InvalidJSONException
+            except json.decoder.JSONDecodeError as err:
+                raise InvalidJSONException from err
 
     @staticmethod
     def save_json_file(data, path, **kwargs):

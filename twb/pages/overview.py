@@ -1,10 +1,11 @@
 import dataclasses
 import re
-from typing import Dict, Optional, Tuple
+from typing import Dict
+from typing import Optional
+from typing import Tuple
 
 from bs4 import BeautifulSoup
 from requests import Response
-
 from twb.core.request import WebWrapper
 
 
@@ -99,26 +100,26 @@ class Storage:
             self.wood = int(resource_values[0])
             self.stone = int(resource_values[1])
             self.iron = int(resource_values[2])
-        except ValueError:
-            raise ValueError("Invalid resources string format")
+        except ValueError as err:
+            raise ValueError("Invalid resources string format") from err
         try:
             self.capacity = int(capacity)
-        except ValueError:
-            raise ValueError("Invalid capacity string format")
+        except ValueError as err:
+            raise ValueError("Invalid capacity string format") from err
 
 
 class Village:
     """Represents a village with its name, coordinates, and continent."""
 
     def __init__(
-            self,
-            village_id: str,
-            village_name: str,
-            coordinates: Point,
-            continent: str,
-            points: str,
-            storage: Storage,
-            farm: Farm,
+        self,
+        village_id: str,
+        village_name: str,
+        coordinates: Point,
+        continent: str,
+        points: str,
+        storage: Storage,
+        farm: Farm,
     ):
         """
         Initializes a Village object.
@@ -234,7 +235,9 @@ class OverviewPage:
             for row in rows:
                 if row.find_all("td"):
                     cells = row.find_all("td")
-                    idx_offset = 1 if len(cells[0].contents) == 0 else 0  # Compatibility with premium account
+                    idx_offset = (
+                        1 if len(cells[0].contents) == 0 else 0
+                    )  # Compatibility with premium account
                     village_id = cells[idx_offset].contents[1].attrs["data-id"]
 
                     name, coordinates, continent = self._extract_name_cords_continent(

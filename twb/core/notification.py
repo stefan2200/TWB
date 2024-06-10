@@ -3,8 +3,8 @@ from pathlib import Path
 
 import telegram
 
-from twb.core.filemanager import FileManager
 from twb.core.exceptions import InvalidJSONException
+from twb.core.filemanager import FileManager
 
 
 class _Notification:

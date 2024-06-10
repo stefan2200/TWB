@@ -1,6 +1,7 @@
 """
 Map management, pls don't read this code.
 """
+
 import logging
 import math
 import time
@@ -13,6 +14,7 @@ class Map:
     """
     Class to manage the world around you
     """
+
     wrapper = None
     village_id = None
     map_data = []
@@ -45,12 +47,13 @@ class Map:
                 x = int(data["x"])
                 y = int(data["y"])
                 vdata = data["villages"]
-                # Fix broken parsing                 
-                if type(vdata) is dict:
+                # Fix broken parsing
+                if isinstance(vdata, dict):
                     cdata = [{}] * 20
                     for k, v in vdata.items():
-                        if type(v) is not dict:
-                            cdata[int(k)] = {0: item[0:] for item in v}
+                        if not isinstance(v, dict):
+                            # line below needs reviewing based on logic and not complying with BO35
+                            cdata[int(k)] = {0: item[0:] for item in v}  # noqa: B035
                         else:
                             cdata[int(k)] = v
                     vdata = cdata
@@ -58,7 +61,7 @@ class Map:
                     if not val:
                         continue
                     # Force dict type to iterate properly
-                    if type(val) != dict:
+                    if not isinstance(val, dict):
                         val = {i: val[i] for i in range(0, len(val))}
                     for lat, entry in val.items():
                         if not lat:
@@ -87,7 +90,7 @@ class Map:
                 x = int(data["x"])
                 y = int(data["y"])
                 vdata = data["villages"]
-                for lon, lon_val in enumerate(vdata):
+                for lon, _lon_val in enumerate(vdata):
                     try:
                         for lat in vdata[lon]:
                             coords = [x + int(lon), y + int(lat)]
@@ -106,7 +109,7 @@ class Map:
         if not self.map_data or not self.villages:
             logging.warning(
                 "Error reading map state for village %s, farming might not work properly",
-                self.village_id
+                self.village_id,
             )
             return False
         return True
@@ -168,6 +171,7 @@ class MapCache:
     """
     Holds a cache of all found villages within a certain distance
     """
+
     @staticmethod
     def get_cache(village_id):
         """

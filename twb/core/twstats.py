@@ -17,18 +17,19 @@ class TwStats:
     """
     Default max building levels
     """
+
     max_levels = {
-        'main': 30,
-        'barracks': 25,
-        'stable': 20,
-        'garage': 15,
-        'smith': 20,
-        'snob': 3,
-        'market': 25,
-        'wood': 30,
-        'stone': 30,
-        'iron': 30,
-        'wall': 20
+        "main": 30,
+        "barracks": 25,
+        "stable": 20,
+        "garage": 15,
+        "smith": 20,
+        "snob": 3,
+        "market": 25,
+        "wood": 30,
+        "stone": 30,
+        "iron": 30,
+        "wall": 20,
     }
 
     output = {}
@@ -60,10 +61,12 @@ class TwStats:
                 output[upgrade_building][building_level] = village_population
 
         try:
-            with open('cache/world/buildings_%s.json' % world, 'w') as f:
+            with open(f"cache/world/buildings_{world}.json", "w") as f:
                 f.write(json.dumps(output))
-        except:
-            with open(f"../cache/world/buildings_{world}.json", "w", encoding="utf-8") as f:
+        except FileNotFoundError:
+            with open(
+                f"../cache/world/buildings_{world}.json", "w", encoding="utf-8"
+            ) as f:
                 f.write(json.dumps(output))
         self.output = output
         return output
@@ -86,6 +89,7 @@ class TwsCache:
     """
     Cache data for TWStats
     """
+
     @staticmethod
     def get_cache(world):
         """
@@ -101,5 +105,5 @@ class TwsCache:
         return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     TwStats().run(world=sys.argv[1])

@@ -3,7 +3,7 @@
 # Configuration manual
 Help file for defining your custom configuration file.
 ## Server
-**Username and password** 
+**Username and password**
 As of v1.2 this is no longer required since login is protected by a captcha
 
 **Endpoint & Server & World**
@@ -20,7 +20,7 @@ The bot has a feature for remote logging using MySQL and files.
 By default every start (running twb.py) creates a new log-file based on the current timestamp.
 If you want the bot to log to MySQL it is required to supply a connection string like this:
 `mysql://username:password@hostname:3306/database_name`
-It should automatically create the required tables if they don't exist yet. 
+It should automatically create the required tables if they don't exist yet.
 
 ## Bot
 This will configure non game-related related features.
@@ -39,7 +39,7 @@ An array of times that you cannot attack (christmas etc..). Should be in the for
 
 ## Building
 The manage_building boolean can disable building globally so you wont have to re-configure all your villages manually.
-**Default** 
+**Default**
 will set the default building template, I personally like the purple_predator one but custom ones can be supplied in the builder templates folder.
 
 **Max Look-ahead**
@@ -64,7 +64,7 @@ Note: the batch size will always be the max amount of units in one try, if insuf
 
 ## Farms
 
-This section will configure the farming options for all villages, every village will automatically start attacking nearby barbarian villages. If spies are available the village will get scouted first, if it does not contain troops and the wall level is zero it will automatically be added to the farm list. 
+This section will configure the farming options for all villages, every village will automatically start attacking nearby barbarian villages. If spies are available the village will get scouted first, if it does not contain troops and the wall level is zero it will automatically be added to the farm list.
 If no scouts are available or they are not yet researched the script will send 1 farm run. If it returns without any losses it should also get added to the farm list.
 
 By default the script will choose quantity over resources since other players could also be attacking this village. The "default_away_time" parameter sets the amount of seconds the bot will wait before attacking this village again. "full_loot_away_time" does the same but for high priority villages (full loot return).
@@ -94,7 +94,7 @@ This will force the bot to reserve resources for snob creation, only the builder
 The amount of snobs that can be created in a village can be configured with the "snobs" parameter.
 
 **Custom farms**
-Each village can have a list of custom farms in the "additional_farms" parameter, the village ID's should be added as strings. 
+Each village can have a list of custom farms in the "additional_farms" parameter, the village ID's should be added as strings.
 *Note: This option can be very dangerous! if the village gets captured by you or some other player the bot will still keep attacking until troops die or the entry gets disabled in the village cache file.*
 
 **Gathering**
