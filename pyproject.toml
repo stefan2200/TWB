@@ -23,7 +23,7 @@ dependencies = [
     "lxml>=5.2.2",
     "coloredlogs>=15.0.1",
     "psutil>=5.9.8",
-    "flask>=3.0.3",
+    "flask>=2.2.5",
     "pyquery>=2.0.0",
     "python-telegram-bot>=21.3"
 ]
