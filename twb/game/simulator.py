@@ -280,10 +280,10 @@ class Simulator:
         return result if result >= 0 else 0
 
     def post_wall(
-            self,
-            attacker,
-            defender,
-            wall,
+        self,
+        attacker,
+        defender,
+        wall,
     ):
         rams = attacker["quantity"]["ram"]
         wall = wall if wall else 0
@@ -348,7 +348,7 @@ class Simulator:
         while self.get_sum(attackerUnits) >= 1 and self.get_sum(defenderUnits) >= 1:
             attack_strength = self.attack_sum(attackerUnits)
             def_strength = self.defense_sum(defenderUnits)
-            attack_sum = self.get_sum(attackerUnits)
+            self.get_sum(attackerUnits)
 
             attackFood = self.attack_sum_food(attackerUnits)
             attackFoodSum = self.get_sum(attackFood)
@@ -364,11 +364,11 @@ class Simulator:
 
                 ratio = attackFood[attackType] / attackFoodSum
                 defense = (
-                        def_strength[attackType.replace("attack", "defense")]
-                        * ratio
-                        * wallBonus
-                        * nightbonus
-                        + wallDefense * ratio
+                    def_strength[attackType.replace("attack", "defense")]
+                    * ratio
+                    * wallBonus
+                    * nightbonus
+                    + wallDefense * ratio
                 )
                 a = attack_strength[attackType] * moral * luck / defense
                 if a < 1:
@@ -388,10 +388,10 @@ class Simulator:
 
         for unit in self.pool:
             attacker["losses"][unit] = attacker["quantity"][unit] - round(
-                (attackerUnits[unit])
+                attackerUnits[unit]
             )
             defender["losses"][unit] = defender["quantity"][unit] - round(
-                (defenderUnits[unit])
+                defenderUnits[unit]
             )
 
         return {
@@ -426,5 +426,5 @@ class SimCache:
         if not entry:
             return {}
 
-        for unit in entry["response"]["unit_data"]:
+        for _unit in entry["response"]["unit_data"]:
             return

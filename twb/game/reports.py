@@ -1,6 +1,7 @@
 """
 Report management
 """
+
 import json
 import logging
 import re
@@ -14,6 +15,7 @@ class ReportManager:
     """
     Class to "efficiently" manage reports
     """
+
     wrapper = None
     village_id = None
     game_state = None
@@ -48,7 +50,10 @@ class ReportManager:
             return datetime.fromtimestamp(int(attack["extra"]["when"]))
 
         entry = max(possible_reports, key=highest_when)
-        self.logger.debug("This is the newest? %s", datetime.fromtimestamp(int(entry["extra"]["when"])))
+        self.logger.debug(
+            "This is the newest? %s",
+            datetime.fromtimestamp(int(entry["extra"]["when"])),
+        )
         if entry["extra"].get("resources", None):
             return True, entry["extra"]["resources"]
         return False, {}
@@ -64,13 +69,13 @@ class ReportManager:
                 if entry["type"] == "attack" and entry["losses"] == {}:
                     return 1
                 if (
-                        entry["type"] == "scout"
-                        and entry["losses"] == {}
-                        and (
+                    entry["type"] == "scout"
+                    and entry["losses"] == {}
+                    and (
                         entry["extra"]["defence_units"] == {}
                         or entry["extra"]["defence_units"]
                         == entry["extra"]["defence_losses"]
-                )
+                    )
                 ):
                     return 1
 
@@ -174,9 +179,14 @@ class ReportManager:
 
         losses = {}
 
-        attacked = re.search(r'(\d{2}\.\d{2}\.\d{2} \d{2}\:\d{2}\:\d{2})<span class=\"small grey\">', report)
+        attacked = re.search(
+            r"(\d{2}\.\d{2}\.\d{2} \d{2}\:\d{2}\:\d{2})<span class=\"small grey\">",
+            report,
+        )
         if attacked:
-            extra["when"] = int(datetime.strptime(attacked.group(1), "%d.%m.%y %H:%M:%S").timestamp())
+            extra["when"] = int(
+                datetime.strptime(attacked.group(1), "%d.%m.%y %H:%M:%S").timestamp()
+            )
 
         attacker = re.search(r'(?s)(<table id="attack_info_att".+?</table>)', report)
         if attacker:
@@ -230,7 +240,7 @@ class ReportManager:
         if results:
             loot = {}
             for loot_entry in re.findall(
-                    r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', report
             ):
                 loot[loot_entry[0]] = loot_entry[1]
             extra["loot"] = loot
@@ -250,7 +260,8 @@ class ReportManager:
                 extra["buildings"] = self.re_building(json.loads(raw))
             found_res = {}
             for loot_entry in re.findall(
-                    r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)', scout_results.group(1)
+                r'<span class="icon header (wood|stone|iron)".+?</span>(\d+)',
+                scout_results.group(1),
             ):
                 found_res[loot_entry[0]] = loot_entry[1]
             extra["resources"] = found_res
@@ -269,17 +280,21 @@ class ReportManager:
         return True
 
     def put(
-            self,
-            report_id,
-            report_type,
-            origin_village=None,
-            dest_village=None,
-            losses={},
-            data={},
+        self,
+        report_id,
+        report_type,
+        origin_village=None,
+        dest_village=None,
+        losses=None,
+        data=None,
     ):
         """
         Creates a report file
         """
+        if data is None:
+            data = {}
+        if losses is None:
+            losses = {}
         output = {
             "type": report_type,
             "origin": origin_village,
@@ -288,9 +303,7 @@ class ReportManager:
             "extra": data,
         }
         ReportCache.set_cache(report_id, output)
-        self.logger.info(
-            "Processed %s report with id %s", report_type, str(report_id)
-        )
+        self.logger.info("Processed %s report with id %s", report_type, str(report_id))
         return output
 
 
@@ -298,6 +311,7 @@ class ReportCache:
     """
     File cache for local reports
     """
+
     @staticmethod
     def get_cache(report_id):
         """
@@ -320,5 +334,7 @@ class ReportCache:
         output = {}
 
         for existing in FileManager.list_directory("cache/reports", ends_with=".json"):
-            output[existing.replace(".json", "")] = FileManager.load_json_file(f"cache/reports/{existing}")
+            output[existing.replace(".json", "")] = FileManager.load_json_file(
+                f"cache/reports/{existing}"
+            )
         return output

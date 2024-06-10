@@ -40,8 +40,8 @@ class UnsupportedPythonVersion(Exception):
     Updating to Python3 fixes this issue
     """
 
+
 class NoInternetException(Exception):
     """
     Error when village init does not happen correctly
     """
-

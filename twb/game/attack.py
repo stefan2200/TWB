@@ -3,12 +3,12 @@ Attack manager
 Sounds dangerous but it just sends farms
 """
 
-from twb.core.extractors import Extractor
 import logging
 import time
 from datetime import datetime
 from datetime import timedelta
 
+from twb.core.extractors import Extractor
 from twb.core.filemanager import FileManager
 
 
@@ -16,6 +16,7 @@ class AttackManager:
     """
     Attackmanager class
     """
+
     map = None
     village_id = None
     troopmanager = None
@@ -75,8 +76,8 @@ class AttackManager:
         self.get_targets()
         ignored = []
         # Limits the amount of villages that are farmed from the current village
-        for target in self.targets[0: self.max_farms]:
-            if type(self.template) == list:
+        for target in self.targets[0 : self.max_farms]:
+            if isinstance(self.template, list):
                 f = False
                 for template in self.template:
                     if template in ignored:
@@ -107,13 +108,17 @@ class AttackManager:
                 if attack_result == "forced_peace":
                     return 0
                 self.logger.info(
-                    "Attacking %s -> %s (%s)" ,self.village_id, target["id"], str(template)
+                    "Attacking %s -> %s (%s)",
+                    self.village_id,
+                    target["id"],
+                    str(template),
                 )
                 self.wrapper.reporter.report(
                     self.village_id,
                     "TWB_FARM",
-                    "Attacking %s -> %s (%s)"
-                    % (self.village_id, target["id"], str(template)),
+                    "Attacking {} -> {} ({})".format(
+                        self.village_id, target["id"], str(template)
+                    ),
                 )
                 if attack_result:
                     for u in template:
@@ -125,10 +130,10 @@ class AttackManager:
                         scout=True,
                         safe=True,
                         high_profile=cached["high_profile"]
-                        if type(cached) == dict
+                        if isinstance(cached, dict)
                         else False,
                         low_profile=cached["low_profile"]
-                        if type(cached) == dict and "low_profile" in cached
+                        if isinstance(cached, dict) and "low_profile" in cached
                         else False,
                     )
                     return 1
@@ -159,7 +164,8 @@ class AttackManager:
             if village["owner"] != "0" and vid not in self.extra_farm:
                 if vid not in self.ignored:
                     self.logger.debug(
-                        "Ignoring village %s because player owned, add to additional_farms to auto attack", vid
+                        "Ignoring village %s because player owned, add to additional_farms to auto attack",
+                        vid,
                     )
                     self.ignored.append(vid)
                 continue
@@ -168,7 +174,9 @@ class AttackManager:
                     if vid not in self.ignored:
                         self.logger.debug(
                             "Ignoring village %s because points %d exceeds limit %d",
-                            vid, village["points"], self.farm_maxpoints
+                            vid,
+                            village["points"],
+                            self.farm_maxpoints,
                         )
                         self.ignored.append(vid)
                     continue
@@ -176,18 +184,22 @@ class AttackManager:
                     if vid not in self.ignored:
                         self.logger.debug(
                             "Ignoring village %s because points %d below limit %d",
-                            vid, village["points"], self.farm_minpoints
+                            vid,
+                            village["points"],
+                            self.farm_minpoints,
                         )
                         self.ignored.append(vid)
                     continue
                 if (
-                        village["points"] >= my_village["points"]
-                        and not self.target_high_points
+                    village["points"] >= my_village["points"]
+                    and not self.target_high_points
                 ):
                     if vid not in self.ignored:
                         self.logger.debug(
                             "Ignoring village %s because of higher points %d -> %d",
-                            vid, my_village["points"], village["points"]
+                            vid,
+                            my_village["points"],
+                            village["points"],
                         )
                         self.ignored.append(vid)
                     continue
@@ -197,7 +209,8 @@ class AttackManager:
                 get_h = time.localtime().tm_hour
                 if get_h in range(0, 8) or get_h == 23:
                     self.logger.debug(
-                        "Village %s will be ignored because it is player owned and attack between 23h-8h", vid
+                        "Village %s will be ignored because it is player owned and attack between 23h-8h",
+                        vid,
                     )
                     continue
             distance = self.map.get_dist(village["location"])
@@ -205,7 +218,9 @@ class AttackManager:
                 if vid not in self.ignored:
                     self.logger.debug(
                         "Village %s will be ignored because it is too far away: distance is %f, max is %d",
-                        vid, distance, self.farm_radius
+                        vid,
+                        distance,
+                        self.farm_radius,
                     )
                     self.ignored.append(vid)
                 continue
@@ -219,7 +234,9 @@ class AttackManager:
         )
         self.targets = sorted(output, key=lambda x: x[1])
 
-    def attacked(self, vid, scout=False, high_profile=False, safe=True, low_profile=False):
+    def attacked(
+        self, vid, scout=False, high_profile=False, safe=True, low_profile=False
+    ):
         """
         The farm was sent and this is a callback on what happened
         """
@@ -236,7 +253,10 @@ class AttackManager:
         """
         Attempt to send scouts to a farm
         """
-        if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < self.scout_farm_amount:
+        if (
+            "spy" not in self.troopmanager.troops
+            or int(self.troopmanager.troops["spy"]) < self.scout_farm_amount
+        ):
             self.logger.debug(
                 "Cannot scout %s at the moment because insufficient unit: spy", vid
             )
@@ -256,7 +276,9 @@ class AttackManager:
             last_attack = datetime.fromtimestamp(cache_entry["last_attack"])
             now = datetime.now()
             if last_attack < now - timedelta(hours=12):
-                self.logger.debug(f"Attacked long ago %s, trying scout attack", {last_attack})
+                self.logger.debug(
+                    "Attacked long ago %s, trying scout attack", {last_attack}
+                )
                 if self.scout(vid):
                     return False
 
@@ -269,7 +291,8 @@ class AttackManager:
                 self.scout(vid)
                 return False
             self.logger.warning(
-                "%s will be attacked but scouting is not possible (yet), going in blind!", vid
+                "%s will be attacked but scouting is not possible (yet), going in blind!",
+                vid,
             )
             return True
 
@@ -277,13 +300,15 @@ class AttackManager:
             if cache_entry["scout"] and self.repman:
                 status = self.repman.safe_to_engage(vid)
                 if status == -1:
-                    self.logger.info(
-                        "Checking %s: scout report not yet available", vid
-                    )
+                    self.logger.info("Checking %s: scout report not yet available", vid)
                     return False
                 if status == 0:
-                    if cache_entry["last_attack"] + self.farm_low_prio_wait * 2 > int(time.time()):
-                        self.logger.info(f"{vid}: Old scout report found ({cache_entry['last_attack']}), re-scouting")
+                    if cache_entry["last_attack"] + self.farm_low_prio_wait * 2 > int(
+                        time.time()
+                    ):
+                        self.logger.info(
+                            f"{vid}: Old scout report found ({cache_entry['last_attack']}), re-scouting"
+                        )
                         self.scout(vid)
                         return False
                     else:
@@ -297,7 +322,8 @@ class AttackManager:
                 return True
 
             self.logger.debug(
-                "%s will be ignored for attack because unsafe, set safe:true to override", vid
+                "%s will be ignored for attack because unsafe, set safe:true to override",
+                vid,
             )
             return False
 
@@ -317,13 +343,16 @@ class AttackManager:
                 total_loot += int(res[x])
 
             if res_left and total_loot > 100:
-                self.logger.debug(f"Draining farm of resources! Sending attack to get {res}.")
+                self.logger.debug(
+                    f"Draining farm of resources! Sending attack to get {res}."
+                )
                 min_time = int(self.farm_high_prio_wait / 2)
 
         if cache_entry["last_attack"] + min_time > int(time.time()):
             self.logger.debug(
                 "%s will be ignored because of previous attack (%d sec delay between attacks)",
-                vid, min_time
+                vid,
+                min_time,
             )
             return False
         return cache_entry
@@ -331,8 +360,8 @@ class AttackManager:
     def has_troops_available(self, troops):
         for t in troops:
             if (
-                    t not in self.troopmanager.troops
-                    or int(self.troopmanager.troops[t]) < troops[t]
+                t not in self.troopmanager.troops
+                or int(self.troopmanager.troops[t]) < troops[t]
             ):
                 return False
         return True
@@ -367,7 +396,9 @@ class AttackManager:
         if self.forced_peace_time:
             now = datetime.now()
             if now + timedelta(seconds=duration) > self.forced_peace_time:
-                self.logger.info("Attack would arrive after the forced peace timer, not sending attack!")
+                self.logger.info(
+                    "Attack would arrive after the forced peace timer, not sending attack!"
+                )
                 return "forced_peace"
 
         self.logger.info(
@@ -410,5 +441,7 @@ class AttackCache:
         output = {}
 
         for existing in FileManager.list_directory("cache/attacks", ends_with=".json"):
-            output[existing.replace(".json", "")] = FileManager.load_json_file(f"cache/attacks/{existing}")
+            output[existing.replace(".json", "")] = FileManager.load_json_file(
+                f"cache/attacks/{existing}"
+            )
         return output

@@ -1,6 +1,7 @@
 """
 Used to create snobs
 """
+
 import json
 import logging
 import re
@@ -12,6 +13,7 @@ class SnobManager:
     """
     Create the snob manager
     """
+
     wrapper = None
     village_id = None
     resman = None
@@ -76,7 +78,8 @@ class SnobManager:
             nres = self.need_reserve(result.text)
             if nres > 0:
                 self.logger.debug(
-                    "Not enough resources available, still %d needed, attempting storage", nres
+                    "Not enough resources available, still %d needed, attempting storage",
+                    nres,
                 )
                 cres = (
                     self.storage_item(result.text)

@@ -1,6 +1,7 @@
 """
 Manages template files
 """
+
 from twb.core.filemanager import FileManager
 
 
@@ -8,6 +9,7 @@ class TemplateManager:
     """
     Template manager file
     """
+
     @staticmethod
     def get_template(category, template="basic", output_json=False):
         """

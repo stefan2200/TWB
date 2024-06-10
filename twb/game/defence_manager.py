@@ -53,7 +53,6 @@ class DefenceManager:
         self.logger = logging.getLogger("Defence Manager")
 
     def support_other(self, requesting_village):
-
         if self.under_attack or not self.allow_support_send:
             return False
         if not self.units:
@@ -64,7 +63,9 @@ class DefenceManager:
                 send_support[u] = int(int(self.units.troops[u]) * self.support_factor)
 
         self.logger.info(
-            "Sending requested support to village %s: %s", requesting_village, str(send_support)
+            "Sending requested support to village %s: %s",
+            requesting_village,
+            str(send_support),
         )
         return self.support(requesting_village, troops=send_support)
 
@@ -93,9 +94,9 @@ class DefenceManager:
                     self.logger.debug("Already supported 2 villages, ignoring")
                     break
                 if (
-                        not self.under_attack
-                        and self.my_other_villages[vil]
-                        and self.allow_support_send
+                    not self.under_attack
+                    and self.my_other_villages[vil]
+                    and self.allow_support_send
                 ):
                     if vil in self.supported:
                         continue
@@ -139,14 +140,16 @@ class DefenceManager:
             return
 
         if (
-                not self.current_flag
-                or self.current_flag[0] is not set_flag
-                or highest_flag_possible and highest_flag_possible > self.current_flag[1]
+            not self.current_flag
+            or self.current_flag[0] is not set_flag
+            or highest_flag_possible
+            and highest_flag_possible > self.current_flag[1]
         ):
             if not self._can_change_flag:
                 if not self._sf_logged:
                     self.logger.info(
-                        "Unable to set new flag on village %s because of cool down", self.village_id
+                        "Unable to set new flag on village %s because of cool down",
+                        self.village_id,
                     )
                     self._sf_logged = True
                 return
@@ -156,7 +159,9 @@ class DefenceManager:
             )
             self.logger.info(
                 "Setting flag %d level %d for village %s",
-                set_flag, self.get_highest_flag_possible(flag_id=set_flag), self.village_id
+                set_flag,
+                self.get_highest_flag_possible(flag_id=set_flag),
+                self.village_id,
             )
 
     def flag_upgrade(self, flag, level):
@@ -206,7 +211,10 @@ class DefenceManager:
             result.text,
         )
         if get_current_flag:
-            if '<div id="current_flag" style="margin-top: 10px; display: none">' in result.text:
+            if (
+                '<div id="current_flag" style="margin-top: 10px; display: none">'
+                in result.text
+            ):
                 self.logger.warning(
                     "No flag was identified on village, setting default one"
                 )
@@ -261,8 +269,7 @@ class DefenceManager:
             return False
         duration = Extractor.attack_duration(conf)
         self.logger.info(
-            "[Support] %s -> %s duration %f.1 h",
-            self.village_id, vid, duration / 3600
+            "[Support] %s -> %s duration %f.1 h", self.village_id, vid, duration / 3600
         )
 
         confirm_data = {}
