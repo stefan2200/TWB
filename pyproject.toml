@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "twb"
-version = "1.8.0"
+version = "2.0.0"
 description = "Tribal Wars Bot"
 readme = "README.md"
 requires-python = ">=3.6"
