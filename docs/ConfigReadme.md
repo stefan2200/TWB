@@ -4,7 +4,7 @@
 Help file for defining your custom configuration file.
 ## Server
 **Username and password**
-Can be supplied for auto login, not required if has_recaptcha is enabled or a cookie string is supplied.
+As of v1.2 this is no longer required since login is protected by a captcha
 
 **Endpoint & Server & World**
 These are the first parts of the URL your TW game is located at. Endpoint should start with "https://" and end at "game.php". Server and world is the server you are currently playing at, in most cases (if not all) this is the first part of the endpoint URL after "https://".
@@ -15,22 +15,27 @@ This has nothing to do with the in-game bot protection, it just tells the script
 **Server on TWPlus**
 If your game world is not (yet) available on [http://twplus.org/](http://twplus.org/) set to false. This will automatically fetch world-related data like the population required for certain buildings.
 
+## Remote logging
+The bot has a feature for remote logging using MySQL and files.
+By default every start (running twb.py) creates a new log-file based on the current timestamp.
+If you want the bot to log to MySQL it is required to supply a connection string like this:
+`mysql://username:password@hostname:3306/database_name`
+It should automatically create the required tables if they don't exist yet.
+
 ## Bot
 This will configure non game-related related features.
+
 **Active Hours**
 Hours that the bot should be active, it defaults to 6 in the morning to 23 at night. The current time will be set to your current timezone so if your TZ differs from the game's one make sure you include the difference in time!
+
 **Active Delay, Inactive Delay and Inactive Still Active**
 Active delay configures the minimal time the bot will wait until next run during active hours. Inactive delay will configure the same for inactive hours. If inactive_still_active is disabled the bot will completely shut down during inactive hours and will probably time-out your session so you have to manually restart the bot in the morning.
 
-## Notifications
-Notifications when enabled will send messages to a telegram channel.
-
-### Setup
-To be able to send messages to a telegram channel you will need to create a bot first. To do this you can start a conversation with the [BotFather](https://t.me/botfather) and create a new bot(`/newbot`). After creating the bot you will receive a token, this token should be added to the "notifications.token" parameter in the config file.
-
-After creating the bot you will need to create a channel and add the bot as an administrator. After this you can get the channel ID by sending a message to the channel and forwarding it to the [JsonDumpBot](https://t.me/JsonDumpBot). The `forward_origin.chat.id` should be added to the "notifications.channel_id" parameter in the config file.
-
-Don't forget to enable the "notifications.enabled" parameter in the config file.
+**Forced Peace Times**
+An array of times that you cannot attack (christmas etc..). Should be in the form of:
+```
+[{"start:": "%d.%m.%y %H:%M:%S", "end":"%d.%m.%y %H:%M:%S"}, {"start:": "24.12.2001 17:00:00", "end":"27.12.2001 01:00:00"}]
+```
 
 ## Building
 The manage_building boolean can disable building globally so you wont have to re-configure all your villages manually.
@@ -91,3 +96,7 @@ The amount of snobs that can be created in a village can be configured with the 
 **Custom farms**
 Each village can have a list of custom farms in the "additional_farms" parameter, the village ID's should be added as strings.
 *Note: This option can be very dangerous! if the village gets captured by you or some other player the bot will still keep attacking until troops die or the entry gets disabled in the village cache file.*
+
+**Gathering**
+If troops are not used for farming and there is no incoming attack the village will automatically attempt to start a gather operation.
+You can enable/disable this using the gather parameter and set the default gather operation using the "gather_selection" option.

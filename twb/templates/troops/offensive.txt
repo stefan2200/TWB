@@ -1,0 +1,23 @@
+[{
+    "building": "barracks",
+    "level": 5,
+    "research": [
+        "axe", "light", "spy", "ram"
+    ],
+    "build": {
+      "barracks": {
+        "axe": 7500
+      },
+      "stable": {
+        "light": 1000,
+        "spy": 500
+       },
+       "workshop": {
+        "ram": 150,
+        "spy": 500
+       }
+      },
+    "farm": [
+        {"light": 100}
+    ]
+}]

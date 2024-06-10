@@ -1,0 +1,93 @@
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "twb"
+version = "2.0.0"
+description = "Tribal Wars Bot"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "contributors", email = "matthewmoorcroft@gmail.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.12.3",
+    "lxml>=5.2.2",
+    "coloredlogs>=15.0.1",
+    "psutil>=5.9.8",
+    "flask>=2.2.5",
+    "pyquery>=2.0.0",
+    "python-telegram-bot>=21.3"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/stefan2200/TWB"
+"Repository" = "https://github.com/stefan2200/TWB"
+
+
+[tool.flit.module]
+name = "twb"
+
+[tool.flit.sdist]
+include = [
+    "docs/",
+    "requirements/",
+    "tests/",
+    "CHANGES.rst",
+    "CONTRIBUTING.rst"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["twb", "tests"]
+
+[tool.coverage.paths]
+source = ["twb", "*/site-packages"]
+
+[tool.mypy]
+python_version = "3.7"
+files = ["twb", "tests"]
+show_error_codes = true
+pretty = true
+strict = true
+
+ignore_missing_imports = true
+
+[tool.pyright]
+pythonVersion = "3.7"
+include = ["twb", "tests"]
+typeCheckingMode = "basic"
+
+[tool.ruff]
+src = ["twb"]
+fix = true
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint]
+select = [
+    "B",  # flake8-bugbear
+    "E",  # pycodestyle error
+    "F",  # pyflakes
+    "I",  # isort
+    "UP",  # pyupgrade
+    "W",  # pycodestyle warning
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+order-by-type = false

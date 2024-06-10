@@ -1,0 +1,105 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        {{ config | safe }}
+    </div>
+    <div class="col-lg-4">
+        <h4>Villages</h4>
+        <ul class="list-group">
+                {% for village in data.bot %}
+                <li class="list-group-item {% if current_select == village %} active {% endif %} ">
+                    <a class="list-group-item-action" href="/village?id={{data.bot[village].public.id}}">{{data.bot[village].public.name}} ({{data.bot[village].public.location}})</a>
+                    {% if current_select == village %}
+                        <button id="save_config" class="btn btn-success btn-sm float-right disabled">Save</button>
+                    {% endif %}
+                </li>
+                {% endfor %}
+
+        </ul>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var set_values = {};
+	function set_config(parameter, value) {
+		$.getJSON("/app/config/set?village_id={{current_select}}&parameter="+encodeURIComponent(parameter)+"&value="+encodeURIComponent(value), function(data){
+			console.log("Set values", parameter, value);
+		});
+	}
+
+	function set_toggle_value(target, value) {
+		if(!value) {
+			target.removeClass("btn-success");
+			target.addClass("btn-danger");
+			target.text("Disabled");
+		} else {
+			target.addClass("btn-success");
+			target.removeClass("btn-danger");
+			target.text("Enabled");
+		}
+	}
+
+	function toggle_event(event) {
+		var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		var current_value = target.hasClass("btn-success");
+		var next_value = !current_value;
+		set_config(name, next_value);
+		set_toggle_value(target, next_value);
+	}
+
+	function select_event(event) {
+	  var target = $(event.target);
+		var name = target.attr("data-type-option");
+		if(name == undefined) alert("Error setting target");
+		set_config(name, target.val());
+	}
+
+	function num_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = parseInt(target.val());
+      $('#save_config').removeClass('disabled');
+	}
+
+	function text_event() {
+      var target = $(event.target);
+      var name = target.attr("data-type-option");
+      if(name == undefined) alert("Error setting target");
+      set_values[name] = target.val();
+      $('#save_config').removeClass('disabled');
+	}
+
+	$( document ).ready(function() {
+		$( "[data-type=toggle]" ).click(function(e) {
+		  toggle_event(e);
+		});
+
+		$( "[data-type=select]" ).change(function(e) {
+		  select_event(e);
+		});
+
+		$( "[data-type=number]" ).change(function(e) {
+		  num_event(e);
+		});
+
+		$( "[data-type=text]" ).change(function(e) {
+		  text_event(e);
+		});
+
+		$('#save_config').click(function(){
+		  $.each(set_values, function(set_key, set_value){
+		    set_config(set_key, set_value);
+		  });
+		  setTimeout(function(){location.reload()}, 500);
+		});
+	});
+</script>
+{% endblock %}
