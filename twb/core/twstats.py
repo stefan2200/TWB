@@ -45,7 +45,7 @@ class TwStats:
                 total += self.max_levels[b][buildings[str(b)]]
         return total
 
-    def get_building_data(self, world):
+    def get_building_data(self, world: str):
         """
         Detects building data from TWStats
         """
@@ -71,7 +71,7 @@ class TwStats:
         self.output = output
         return output
 
-    def run(self, world):
+    def run(self, world: str):
         """
         Runs the update function
         """
@@ -91,7 +91,7 @@ class TwsCache:
     """
 
     @staticmethod
-    def get_cache(world):
+    def get_cache(world: str) -> None:
         """
         Gets the current cache
         """
