@@ -11,7 +11,7 @@ from pathlib import Path
 import requests
 
 
-def check_update(config_path):
+def check_update(config_path: str) -> None:
     """
     If enabled, check whether the config template version matches the one on github
     Notify and 5 seconds sleep if update is available

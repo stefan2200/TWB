@@ -4,6 +4,11 @@ File used for data extraction
 
 import json
 import re
+from typing import Any
+from typing import Dict
+from typing import List
+
+from requests.models import Response
 
 
 class Extractor:
@@ -25,7 +30,7 @@ class Extractor:
             return json.loads(data, strict=False)
 
     @staticmethod
-    def game_state(res):
+    def game_state(res: Response) -> Dict[str, Any]:
         """
         Detects the game state that is available on most pages
         """
@@ -184,7 +189,7 @@ class Extractor:
         return builder
 
     @staticmethod
-    def village_ids_from_overview(res):
+    def village_ids_from_overview(res: str) -> List[str]:
         """
         Fetches villages from the overview page
         """
