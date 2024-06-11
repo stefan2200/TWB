@@ -6,6 +6,7 @@ import json
 import logging
 import re
 from datetime import datetime
+from pathlib import Path
 
 from twb.core.extractors import Extractor
 from twb.core.filemanager import FileManager
@@ -317,14 +318,18 @@ class ReportCache:
         """
         Reads a report entry
         """
-        return FileManager.load_json_file(f"cache/reports/{report_id}.json")
+        return FileManager.load_json_file(
+            f"{Path.cwd()}/cache/reports/{report_id}.json"
+        )
 
     @staticmethod
     def set_cache(report_id, entry):
         """
         Creates a report entry
         """
-        FileManager.save_json_file(entry, f"cache/reports/{report_id}.json")
+        FileManager.save_json_file(
+            entry, f"{Path.cwd()}/cache/reports/{report_id}.json"
+        )
 
     @staticmethod
     def cache_grab():
@@ -333,8 +338,10 @@ class ReportCache:
         """
         output = {}
 
-        for existing in FileManager.list_directory("cache/reports", ends_with=".json"):
+        for existing in FileManager.list_directory(
+            f"{Path.cwd()}/cache/reports", ends_with=".json"
+        ):
             output[existing.replace(".json", "")] = FileManager.load_json_file(
-                f"cache/reports/{existing}"
+                f"{Path.cwd()}/cache/reports/{existing}"
             )
         return output

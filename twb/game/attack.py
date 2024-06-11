@@ -7,6 +7,7 @@ import logging
 import time
 from datetime import datetime
 from datetime import timedelta
+from pathlib import Path
 
 from twb.core.extractors import Extractor
 from twb.core.filemanager import FileManager
@@ -430,18 +431,24 @@ class AttackManager:
 class AttackCache:
     @staticmethod
     def get_cache(village_id):
-        return FileManager.load_json_file(f"cache/attacks/{village_id}.json")
+        return FileManager.load_json_file(
+            f"{Path.cwd()}/cache/attacks/{village_id}.json"
+        )
 
     @staticmethod
     def set_cache(village_id, entry):
-        return FileManager.save_json_file(entry, f"cache/attacks/{village_id}.json")
+        return FileManager.save_json_file(
+            entry, f"{Path.cwd()}/cache/attacks/{village_id}.json"
+        )
 
     @staticmethod
     def cache_grab():
         output = {}
 
-        for existing in FileManager.list_directory("cache/attacks", ends_with=".json"):
+        for existing in FileManager.list_directory(
+            f"{Path.cwd()}/cache/attacks", ends_with=".json"
+        ):
             output[existing.replace(".json", "")] = FileManager.load_json_file(
-                f"cache/attacks/{existing}"
+                f"{Path.cwd()}/cache/attacks/{existing}"
             )
         return output

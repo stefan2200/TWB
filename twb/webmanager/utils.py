@@ -11,14 +11,12 @@ class DataReader:
     @staticmethod
     def cache_grab(cache_location):
         output = {}
-        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", cache_location)
+        c_path = f"{Path.cwd()}/cache/{cache_location}"
         for existing in os.listdir(c_path):
             existing = str(existing)
             if not existing.endswith(".json"):
                 continue
-            t_path = os.path.join(
-                os.path.dirname(__file__), "..", "cache", cache_location, existing
-            )
+            t_path = f"{Path.cwd()}/cache/{cache_location}/{existing}"
             with open(t_path) as f:
                 try:
                     output[existing.replace(".json", "")] = json.load(f)
@@ -86,7 +84,7 @@ class DataReader:
 
     @staticmethod
     def get_session():
-        c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
+        c_path = f"{Path.cwd()}/cache/session.json"
         if not os.path.exists(c_path):
             return {"raw": "", "endpoint": "None", "server": "None", "world": "None"}
         with open(c_path) as session_file:

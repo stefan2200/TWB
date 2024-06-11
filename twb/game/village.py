@@ -3,6 +3,7 @@ import logging
 import time
 from codecs import decode
 from datetime import datetime
+from pathlib import Path
 
 from twb.core.exceptions import InvalidGameStateException
 from twb.core.exceptions import InvalidUnitTemplateException
@@ -701,5 +702,5 @@ class Village:
             "last_run": int(time.time()),
         }
         FileManager.save_json_file(
-            village_entry, f"cache/managed/{self.village_id}.json"
+            village_entry, f"{Path.cwd()}/cache/managed/{self.village_id}.json"
         )
