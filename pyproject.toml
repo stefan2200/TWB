@@ -9,7 +9,7 @@ description = "Tribal Wars Bot"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE.md" }
-authors = [{ name = "contributors", email = "matthewmoorcroft@gmail.com" }]
+authors = [{ name = "matthewmoorcroft", email = "matthewmoorcroft@gmail.com" }]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
