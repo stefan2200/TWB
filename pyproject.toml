@@ -3,7 +3,7 @@ requires = ["flit_core<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "twb"
+name = "TWBot"
 version = "2.0.0"
 description = "Tribal Wars Bot"
 readme = "README.md"
@@ -27,8 +27,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/stefan2200/TWB"
-"Repository" = "https://github.com/stefan2200/TWB"
+"Homepage" = "https://github.com/matthewmoorcroft/TWBot"
+"Repository" = "https://github.com/matthewmoorcroft/TWBot"
 
 
 [tool.flit.module]
