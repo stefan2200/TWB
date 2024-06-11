@@ -66,10 +66,8 @@ jobs:
       - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
       - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
         with:
-          password: ${{ secrets.PYPI_TEST_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           packages-dir: artifact/
       - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: artifact/
