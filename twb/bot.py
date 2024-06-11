@@ -148,13 +148,13 @@ class TWB:
             NoInternetException: Raises an exception if the bot doesn't have internet
         """
         directories = [
-            "cache/attacks",
-            "cache/reports",
-            "cache/villages",
-            "cache/world",
-            "cache/logs",
-            "cache/managed",
-            "cache/hunter",
+            f"{Path.cwd()}/cache/attacks",
+            f"{Path.cwd()}/cache/reports",
+            f"{Path.cwd()}/cache/villages",
+            f"{Path.cwd()}/cache/world",
+            f"{Path.cwd()}/cache/logs",
+            f"{Path.cwd()}/cache/managed",
+            f"{Path.cwd()}/cache/hunter",
         ]
         FileManager.create_directories(directories)
 

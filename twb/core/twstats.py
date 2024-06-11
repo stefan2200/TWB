@@ -6,6 +6,7 @@ import json
 import logging
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 import requests
 from pyquery import PyQuery as pq
@@ -61,7 +62,7 @@ class TwStats:
                 output[upgrade_building][building_level] = village_population
 
         try:
-            with open(f"cache/world/buildings_{world}.json", "w") as f:
+            with open(f"{Path.cwd()}/cache/world/buildings_{world}.json", "w") as f:
                 f.write(json.dumps(output))
         except FileNotFoundError:
             with open(
@@ -95,7 +96,7 @@ class TwsCache:
         """
         Gets the current cache
         """
-        cache_path = f"cache/world/buildings_{world}.json"
+        cache_path = f"{Path.cwd()}/cache/world/buildings_{world}.json"
         alt_cache_path = f"../cache/world/buildings_{world}.json"
 
         if FileManager.path_exists(cache_path):

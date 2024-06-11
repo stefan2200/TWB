@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 from twb.core.filemanager import FileManager
 
@@ -406,11 +407,11 @@ class Simulator:
 class SimCache:
     @staticmethod
     def get_cache(world):
-        return FileManager.load_json_file(f"cache/stats_{world}.json")
+        return FileManager.load_json_file(f"{Path.cwd()}/cache/stats_{world}.json")
 
     @staticmethod
     def set_cache(world, entry):
-        FileManager.save_json_file(entry, f"cache/stats_{world}.json")
+        FileManager.save_json_file(entry, f"{Path.cwd()}/cache/stats_{world}.json")
 
     @staticmethod
     def grab_cache(world, session, village_id):

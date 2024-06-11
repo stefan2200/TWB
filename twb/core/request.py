@@ -6,6 +6,7 @@ import logging
 import random
 import re
 import time
+from pathlib import Path
 from typing import Optional
 from urllib.parse import urlencode
 from urllib.parse import urljoin
@@ -146,7 +147,7 @@ class WebWrapper:
         """
         Start the bot and verify whether the last session is still valid
         """
-        session_data = FileManager.load_json_file("cache/session.json")
+        session_data = FileManager.load_json_file(f"{Path.cwd()}/cache/session.json")
         if session_data:
             self.web.cookies.update(session_data["cookies"])
             get_test = self.get_url("game.php?screen=overview")
@@ -172,7 +173,7 @@ class WebWrapper:
 
         FileManager.save_json_file(
             {"endpoint": self.endpoint, "server": self.server, "cookies": cookies},
-            "cache/session.json",
+            f"{Path.cwd()}/cache/session.json",
         )
 
     def get_action(self, village_id, action):

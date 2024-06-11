@@ -5,6 +5,7 @@ Map management, pls don't read this code.
 import logging
 import math
 import time
+from pathlib import Path
 
 from twb.core.extractors import Extractor
 from twb.core.filemanager import FileManager
@@ -177,11 +178,15 @@ class MapCache:
         """
         Get data from the cache
         """
-        return FileManager.load_json_file(f"cache/villages/{village_id}.json")
+        return FileManager.load_json_file(
+            f"{Path.cwd()}/cache/villages/{village_id}.json"
+        )
 
     @staticmethod
     def set_cache(village_id, entry):
         """
         Creates or updates a cache entry
         """
-        FileManager.save_json_file(entry, f"cache/villages/{village_id}.json")
+        FileManager.save_json_file(
+            entry, f"{Path.cwd()}/cache/villages/{village_id}.json"
+        )
