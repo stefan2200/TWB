@@ -5,7 +5,10 @@ import os
 import random
 import sys
 import time
+from collections import OrderedDict
 from pathlib import Path
+from typing import List
+from typing import Tuple
 
 import coloredlogs
 
@@ -32,7 +35,9 @@ logging.getLogger("telegram").setLevel(logging.WARNING)
 
 
 class TWB:
-    def __init__(self, integrity_check=False, config_path="config.json"):
+    def __init__(
+        self, integrity_check: bool = False, config_path: str = "config.json"
+    ) -> None:
         self.res = None
         self.villages = []
         self.wrapper = None
@@ -92,7 +97,7 @@ class TWB:
         sleep_duration += random.randint(20, 120)
         return sleep_duration
 
-    def handle_internet_connection(self, config):
+    def handle_internet_connection(self, config: OrderedDict) -> bool:
         """
         Handles internet connection for the bot
 
@@ -116,10 +121,14 @@ class TWB:
             return False
         return True
 
-    def get_found_villages_from_overview(self, overview_page):
+    def get_found_villages_from_overview(
+        self, overview_page: OverviewPage
+    ) -> List[str]:
         return Extractor.village_ids_from_overview(overview_page.result_get.text)
 
-    def add_new_villages_to_config(self, config, found_villages):
+    def add_new_villages_to_config(
+        self, config: OrderedDict, found_villages: List[str]
+    ) -> OrderedDict:
         if not config["bot"].get("add_new_villages", False):
             return config
 
@@ -198,7 +207,7 @@ class TWB:
             time.sleep(sleep_duration)
         self.run()
 
-    def setup_wrapper(self, config):
+    def setup_wrapper(self, config: OrderedDict) -> None:
         self.wrapper = WebWrapper(
             config["server"]["endpoint"],
             server=config["server"]["server"],
@@ -208,7 +217,7 @@ class TWB:
         )
         self.wrapper.start()
 
-    def set_user_agent(self, config):
+    def set_user_agent(self, config: OrderedDict) -> None:
         if not config["bot"].get("user_agent", None):
             logging.warning(
                 "No custom user agent was supplied, this will likely get you banned."
@@ -218,7 +227,7 @@ class TWB:
             return
         self.wrapper.headers["user-agent"] = config["bot"]["user_agent"]
 
-    def get_overview(self):
+    def get_overview(self) -> OverviewPage:
         overview_page = OverviewPage(self.wrapper)
         return overview_page
 
@@ -241,7 +250,9 @@ class TWB:
         return original
 
     @staticmethod
-    def get_world_options(overview_page: OverviewPage, config):
+    def get_world_options(
+        overview_page: OverviewPage, config: OrderedDict
+    ) -> Tuple[bool, OrderedDict]:
         def check_and_set(option_key, setting, check_string=None):
             nonlocal changed
             if world_config[option_key] is None:

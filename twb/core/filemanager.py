@@ -1,5 +1,11 @@
 import json
 import os
+from collections import OrderedDict
+from pathlib import WindowsPath
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 
 from twb.core.exceptions import FileNotFoundException
 from twb.core.exceptions import InvalidJSONException
@@ -9,7 +15,7 @@ class FileManager:
     """Provides methods for file and directory management."""
 
     @staticmethod
-    def get_root():
+    def get_root() -> str:
         """Returns the root directory of the project."""
         return os.path.join(os.path.dirname(__file__), "..")
 
@@ -19,18 +25,18 @@ class FileManager:
         return os.path.join(FileManager.get_root(), path)
 
     @staticmethod
-    def path_exists(path):
+    def path_exists(path: str) -> bool:
         """Returns True if the path exists, False otherwise."""
         return os.path.exists(path)
 
     @staticmethod
-    def create_directory(directory):
+    def create_directory(directory: str) -> None:
         """Creates a directory if it does not exist."""
         if not os.path.exists(directory):
             os.makedirs(directory)
 
     @staticmethod
-    def create_directories(directories):
+    def create_directories(directories: List[str]) -> None:
         """Creates a list of directories in the root directory if they do not exist."""
         root_directory = FileManager.get_root()
         for directory in directories:
@@ -87,7 +93,38 @@ class FileManager:
             os.remove(full_path)
 
     @staticmethod
-    def load_json_file(path, **kwargs):
+    def load_json_file(
+        path: Union[WindowsPath, str], **kwargs
+    ) -> Union[
+        Dict[str, Union[str, Dict[str, str]]],
+        Dict[
+            str,
+            Union[
+                Dict[str, str],
+                Dict[str, Union[str, bool]],
+                Dict[str, Union[str, float, int, bool]],
+                Dict[str, Union[bool, str, int]],
+                Dict[str, Union[bool, int]],
+                Dict[str, Union[bool, int, float]],
+                Dict[str, bool],
+                Dict[str, Dict[str, Union[str, float, int, bool]]],
+            ],
+        ],
+        Dict[
+            str,
+            Union[
+                Dict[str, str],
+                Dict[str, Union[str, bool]],
+                Dict[str, Optional[Union[str, float, int, bool]]],
+                Dict[str, Union[bool, str, int]],
+                Dict[str, Union[str, float, int, bool]],
+                Dict[str, Union[bool, int]],
+                Dict[str, Union[bool, int, float]],
+                Dict[str, Optional[bool]],
+            ],
+        ],
+        OrderedDict,
+    ]:
         """Loads a JSON file and returns the data. Returns None if the file does not exist."""
         full_path = os.path.join(FileManager.get_root(), path)
 
@@ -101,7 +138,9 @@ class FileManager:
                 raise InvalidJSONException from err
 
     @staticmethod
-    def save_json_file(data, path, **kwargs):
+    def save_json_file(
+        data: Dict[str, Union[str, Dict[str, str]]], path: str, **kwargs
+    ) -> None:
         """Saves data to a JSON file. If the file does not exist, it will be created."""
         full_path = os.path.join(FileManager.get_root(), path)
 

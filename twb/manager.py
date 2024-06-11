@@ -3,20 +3,23 @@ import json
 import logging
 import os
 import sys
+from collections import OrderedDict
 from pathlib import Path
+from typing import List
 
+from twb.core.request import WebWrapper
 from twb.game.attack import AttackCache
 from twb.game.reports import ReportCache
 from twb.game.village import Village
 
 
 class VillageManager:
-    def __init__(self, wrapper, found_villages):
+    def __init__(self, wrapper: WebWrapper, found_villages: List[str]) -> None:
         self.wrapper = wrapper
         self.found_villages = found_villages
         self.villages = []
 
-    def add_found_villages(self, found_villages):
+    def add_found_villages(self, found_villages: List[str]) -> None:
         """_summary_
 
         Args:
@@ -24,12 +27,12 @@ class VillageManager:
         """
         self.found_villages = found_villages
 
-    def initialize_villages(self, config):
+    def initialize_villages(self, config: OrderedDict) -> None:
         for vid in config["villages"]:
             village = Village(wrapper=self.wrapper, village_id=vid)
             self.villages.append(copy.deepcopy(village))
 
-    def process_villages(self, config):
+    def process_villages(self, config: OrderedDict):
         village_number = 1
         rm = None
         defense_states = {}

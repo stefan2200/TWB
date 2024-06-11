@@ -8,7 +8,7 @@ from twb.core.filemanager import FileManager
 
 class ConfigManager:
     @staticmethod
-    def load_config():
+    def load_config() -> collections.OrderedDict:
         config_template = (
             Path(__file__).resolve().parent.parent / "templates" / "config.example.json"
         )

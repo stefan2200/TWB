@@ -10,7 +10,7 @@ colorama==0.4.6
     # via build
 importlib-metadata==7.1.0
     # via build
-packaging==24.1
+packaging==24.0
     # via build
 pyproject-hooks==1.1.0
     # via build

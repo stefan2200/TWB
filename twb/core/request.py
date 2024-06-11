@@ -6,10 +6,12 @@ import logging
 import random
 import re
 import time
+from typing import Optional
 from urllib.parse import urlencode
 from urllib.parse import urljoin
 
 import requests
+from requests.models import Response
 
 from twb.core.filemanager import FileManager
 from twb.core.notification import Notification
@@ -38,12 +40,12 @@ class WebWrapper:
 
     def __init__(
         self,
-        url,
-        server=None,
-        endpoint=None,
-        reporter_enabled=False,
-        reporter_constr=None,
-    ):
+        url: str,
+        server: Optional[str] = None,
+        endpoint: Optional[str] = None,
+        reporter_enabled: bool = False,
+        reporter_constr: Optional[str] = None,
+    ) -> None:
         """
         Construct the session and detect variables
         """
@@ -56,7 +58,7 @@ class WebWrapper:
         )
 
     @staticmethod
-    def internet_online():
+    def internet_online() -> bool:
         """
         Checks if the bot has access to the internet
 
@@ -69,7 +71,7 @@ class WebWrapper:
         except requests.Timeout:
             return False
 
-    def post_process(self, response):
+    def post_process(self, response: Response) -> None:
         """
         Post-processes all requests and stores data used for the next request
         """
@@ -85,7 +87,7 @@ class WebWrapper:
         if get_h:
             self.last_h = get_h.group(1)
 
-    def get_url(self, url, headers=None):
+    def get_url(self, url: str, headers: None = None) -> Response:
         """
         Fetches a URL using a basic GET request
         """
@@ -140,7 +142,7 @@ class WebWrapper:
 
     def start(
         self,
-    ):
+    ) -> None:
         """
         Start the bot and verify whether the last session is still valid
         """

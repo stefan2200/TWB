@@ -5,6 +5,7 @@ This module can be used in order to report actions to a file or remote MySQL ser
 import logging
 import time
 import warnings
+from typing import Optional
 
 try:
     import pymysql
@@ -69,7 +70,7 @@ class FileReporter:
         """
         return
 
-    def setup(self, connection):
+    def setup(self, connection: str):
         """
         Make sure the logfile exists
         """
@@ -179,7 +180,9 @@ class ReporterObject:
     logger = logging.getLogger("RemoteLogger")
     connection = None
 
-    def __init__(self, enabled=False, connection_string=None):
+    def __init__(
+        self, enabled: bool = False, connection_string: Optional[str] = None
+    ) -> None:
         """
         Detects reporter configuration
         """
@@ -187,7 +190,7 @@ class ReporterObject:
             self.enabled = True
             self.setup(connection_string=connection_string)
 
-    def setup(self, connection_string):
+    def setup(self, connection_string: str):
         """
         Fetchers the used reporter
         """
@@ -229,7 +232,7 @@ class ReporterObject:
         else:
             self.object = RemoteReporter()
 
-    def report(self, village_id, action, data):
+    def report(self, village_id: str, action: str, data: str) -> None:
         """
         Run the report function on the installed reporter
         """

@@ -7,11 +7,9 @@ name = "twb"
 version = "2.0.0"
 description = "Tribal Wars Bot"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = { file = "LICENSE.md" }
-authors = [
-    { name = "contributors", email = "matthewmoorcroft@gmail.com" }
-]
+authors = [{ name = "contributors", email = "matthewmoorcroft@gmail.com" }]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -25,7 +23,7 @@ dependencies = [
     "psutil>=5.9.8",
     "flask>=2.2.5",
     "pyquery>=2.0.0",
-    "python-telegram-bot>=21.3"
+    "python-telegram-bot>=21.3",
 ]
 
 [project.urls]
@@ -42,14 +40,12 @@ include = [
     "requirements/",
     "tests/",
     "CHANGES.rst",
-    "CONTRIBUTING.rst"
+    "CONTRIBUTING.rst",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-filterwarnings = [
-    "error",
-]
+filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
@@ -59,7 +55,7 @@ source = ["twb", "tests"]
 source = ["twb", "*/site-packages"]
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 files = ["twb", "tests"]
 show_error_codes = true
 pretty = true
@@ -68,7 +64,7 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pyright]
-pythonVersion = "3.7"
+pythonVersion = "3.8"
 include = ["twb", "tests"]
 typeCheckingMode = "basic"
 
@@ -84,7 +80,7 @@ select = [
     "E",  # pycodestyle error
     "F",  # pyflakes
     "I",  # isort
-    "UP",  # pyupgrade
+    "UP", # pyupgrade
     "W",  # pycodestyle warning
 ]
 
