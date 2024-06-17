@@ -26,10 +26,7 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via flask
 colorama==0.4.6
-    # via
-    #   click
-    #   pytest
-    #   tox
+    # via tox
 coloredlogs==15.0.1
     # via -r base.in
 cssselect==1.2.0
@@ -102,12 +99,12 @@ pyproject-api==1.6.1
     # via tox
 pyquery==2.0.0
     # via -r base.in
-pyreadline3==3.4.1
-    # via humanfriendly
 pyright==1.1.366
     # via -r typing.in
 pytest==8.2.2
-    # via -r typing.in
+    # via
+    #   -r tests.in
+    #   -r typing.in
 python-telegram-bot==21.3
     # via -r base.in
 pyyaml==6.0.1
@@ -136,7 +133,7 @@ typing-extensions==4.12.2
     # via
     #   anyio
     #   mypy
-urllib3==2.2.1
+urllib3==2.2.2
     # via requests
 virtualenv==20.26.2
     # via
