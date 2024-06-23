@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import shutil
 import sys
 import time
 from collections import OrderedDict
@@ -36,7 +37,10 @@ logging.getLogger("telegram").setLevel(logging.WARNING)
 
 class TWB:
     def __init__(
-        self, integrity_check: bool = False, config_path: str = "config.json"
+        self,
+        integrity_check: bool = False,
+        config_path: str = "config.json",
+        template_path=None,
     ) -> None:
         self.res = None
         self.villages = []
@@ -48,6 +52,61 @@ class TWB:
             self.integrity_check()
 
         check_update(config_path=config_path)
+        self.create_default_template_path(template_path)
+
+    def create_default_template_path(self, template_path=None):
+        default_files = [
+            {
+                "directory": "builder",
+                "files": [
+                    "basic.txt",
+                    "purple_predator_into_def.txt",
+                    "purple_predator_into_off.txt",
+                    "purple_predator.txt",
+                ],
+            },
+            {"directory": "offensive", "files": ["clear.txt", "scout.txt"]},
+            {
+                "directory": "troops",
+                "files": [
+                    "basic_into_def.txt",
+                    "basic_into_off.txt",
+                    "basic.txt",
+                    "defensive.txt",
+                    "offensive.txt",
+                ],
+            },
+            {"directory": "", "files": ["config.example.json"]},
+        ]
+
+        if template_path is None:
+            template_path = f"{Path.cwd()}/templates"
+
+        dir_path = Path(template_path)
+        parent_dir = Path(__file__).resolve().parent
+
+        if not dir_path.exists():
+            dir_path.mkdir(parents=True)
+            logging.info(f"Directory '{template_path}' created.")
+
+        for item in default_files:
+            if item["directory"]:
+                target_dir_path = Path(f"{template_path}/{item['directory']}")
+
+                source_dir_path = f"{parent_dir}/templates/{item['directory']}"
+                if not target_dir_path.exists():
+                    target_dir_path.mkdir(parents=True)
+                    logging.info(f"Directory '{target_dir_path}' created.")
+            else:
+                target_dir_path = Path(template_path)
+                source_dir_path = f"{parent_dir}/templates"
+
+            for file in item["files"]:
+                source_file_path = Path(f"{source_dir_path}/{file}")
+                target_file_path = Path(f"{target_dir_path}/{file}")
+                if not target_file_path.is_file():
+                    shutil.copy(source_file_path, target_file_path)
+                    logging.info(f"File '{file}' created in '{target_file_path}'.")
 
     def config_test(self, config_path="templates/config.example.json"):
         file_location = config_path
