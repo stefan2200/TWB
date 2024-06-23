@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 # Actual files to hide
+
 config.json
+templates/**
+cache/**
 twb/cache/**
 config.bak
 # C extensions
@@ -132,3 +135,6 @@ dmypy.json
 
 # VSCode project settings
 .vscode/
+twb/bot.py
+twb/core/filemanager.py
+twb/core/templates.py

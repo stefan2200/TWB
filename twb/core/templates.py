@@ -16,7 +16,7 @@ class TemplateManager:
         Reads a specific text file with arguments
         TODO: switch to improved FileManager
         """
-        path = f"templates/{category}/{template}.txt"
+        path = FileManager.get_root() / "templates" / category / f"{template}.txt"
         if output_json:
             return FileManager.load_json_file(path)
         return FileManager.read_file(path).strip().split()
