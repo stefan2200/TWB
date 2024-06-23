@@ -19,8 +19,6 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via flask
-colorama==0.4.6
-    # via click
 coloredlogs==15.0.1
     # via -r base.in
 cssselect==1.2.0
@@ -56,8 +54,6 @@ psutil==5.9.8
     # via -r base.in
 pyquery==2.0.0
     # via -r base.in
-pyreadline3==3.4.1
-    # via humanfriendly
 python-telegram-bot==21.3
     # via -r base.in
 requests==2.32.3
@@ -70,7 +66,7 @@ soupsieve==2.5
     # via beautifulsoup4
 typing-extensions==4.12.2
     # via anyio
-urllib3==2.2.1
+urllib3==2.2.2
     # via requests
 werkzeug==3.0.3
     # via flask
