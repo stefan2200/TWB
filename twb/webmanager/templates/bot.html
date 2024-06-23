@@ -1,0 +1,50 @@
+{% extends "main.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <h4>Reports</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in data.reports %}
+                    <tr>
+                        <td>{{ report }}</td>
+                        <td>{{ data.reports[report].type }}</td>
+                        <td>{{ data.reports[report] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-lg-4">
+        <h4>Bot</h4>
+        Status:
+        {% if data.status %}
+            <button class="btn btn-sm btn-success">Active</button>
+        {% else %}
+            <button class="btn btn-sm btn-warning">Inactive</button>
+            <br />
+            <i>Ignore this if you are running twb.py yourself</i>
+        {% endif %}
+
+        <p>Current session: {{session.endpoint}}</p>
+        <input type="text" id="session_data" class="form-control" value="{{session.raw}}"/>
+        <button class="btn btn-success btn-sm" onclick="set_session_data()">Update</button>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+
+
+</script>
+{% endblock %}
