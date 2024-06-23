@@ -1,0 +1,22 @@
+{
+  "endpoint": "https://en140.tribalwars.net/game.php",
+  "server": "en140",
+  "cookies": {
+    "locale": "en_DK",
+    "cid": "1216251626",
+    "ref": "start",
+    "global_village_id": "35004",
+    "websocket_available": "true",
+    "toggler_embedmap_player": "1",
+    "en_auth": "974f432cbca5:df10d635bbb9ebabe13fa5c50f34421f9f64cff55790b6506850a8312e67b716",
+    "popup_pos_unit_popup_axe": "477x459.296875",
+    "popup_pos_unit_popup_archer": "476x495.296875",
+    "popup_pos_unit_popup_sword": "476x423.296875",
+    "popup_pos_unit_popup_spear": "482x390.296875",
+    "PHPSESSID": "qf95tk27d5nklaj82s2o8rdus9pm7j79dpvmg5gr4lbu5e6t",
+    "popup_pos_unit_popup_marcher": "823.65625x458",
+    "popup_pos_unit_popup_light": "129.65625x430.5",
+    "sid": "0%3A4617292666185b9e43a7816f149e80dd0f8d319ab8097472f1e4f6fea3dc86a18b8593e2ccbae7361a971d67ccb02c97d20d3582d4678fa25d2fc6fff787de12",
+    "io": "R16Kx5N5taf1-IGOBYnU"
+  }
+}

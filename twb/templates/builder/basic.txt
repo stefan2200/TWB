@@ -1,0 +1,17 @@
+wood:5
+stone:5
+iron:3
+storage:3
+main:3
+statue:1
+barracks:1
+wall:3
+market:1
+farm:5
+wood:10
+stone:10
+iron:10
+storage:5
+main:5
+smith:1
+barracks:3

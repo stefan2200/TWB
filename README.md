@@ -1,9 +1,25 @@
 # Tribal Wars Bot (TWB)
 ## An open source bot for the Tribal Wars game
 
-## Update 1.8 notice
-If you experience issues starting the bot you might have to update the dependencies by running the following command in the bot folder:
-` python -m pip install --upgrade requirements.txt`
+## Update 2.0.2 notice
+Simplification of the project. Renamed to TWBot. Find more info and download from [PyPi]
+
+[PyPi]: https://pypi.org/project/TWBot/
+
+## A Simple Example
+
+```python
+# save this as app.py
+from twb.bot import TWB
+
+
+def main():
+    TWB(config_path="config.json").run()
+
+
+if __name__ == "__main__":
+    main()
+```
 
 We also created a [Discord](https://discord.gg/8PuzHjttMy) server so you can seek help from other users.
 
@@ -23,12 +39,11 @@ We also created a [Discord](https://discord.gg/8PuzHjttMy) server so you can see
 - ReCaptcha "bypass" by using browser cookie string (bot works if browser session is valid)
 
 *How To:*
-- Install Python 3.x
-- Install the requirements (pip install -r requirements.txt)
-- Either copy config.example.json to config.json and edit the following things:
+- Install library
+- Run using example above
+- Default config will be created on startup
 	- add at least the endpoint and server
 	- change the village_template configuration section to your needs
-- Or just run `python twb.py` and enter the requested information
 
 
 - Start the bot by running python twb.py and supply the cookie string from your browser
