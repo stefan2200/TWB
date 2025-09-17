@@ -5,6 +5,12 @@ from core.filemanager import FileManager
 
 # Tribalwars simulator class, based on real math stuff I guess
 class Simulator:
+    """A battle simulator for Tribal Wars.
+
+    This class can predict the outcome of a battle based on the attacking and
+    defending units, as well as other factors like the wall level, morale,
+    and luck.
+    """
     pool = {
         "spear": {
             "name": "spear",
@@ -238,12 +244,25 @@ class Simulator:
     }
 
     def attack_sum(self, units):
+        """Calculates the total attack strength of a set of units.
+
+        Args:
+            units (dict): A dictionary of units and their quantities.
+
+        Returns:
+            dict: A dictionary of the total attack strength for each attack type.
+        """
         total = {"attack": 0, "attack_cavalry": 0, "attack_archer": 0}
         for unit in units:
             total[self.attack_pool[unit]] += self.pool[unit]["attack"] * units[unit]
         return total
 
     def update_with_real_levels(self, levels):
+        """Updates the unit data with real levels from the game.
+
+        Args:
+            levels (dict): A dictionary of unit data from the game.
+        """
         if not levels:
             return
         for unit in levels:
@@ -252,12 +271,28 @@ class Simulator:
                     self.pool[unit][item] = levels[unit][item]
 
     def attack_sum_food(self, units):
+        """Calculates the total food consumption of a set of units.
+
+        Args:
+            units (dict): A dictionary of units and their quantities.
+
+        Returns:
+            dict: A dictionary of the total food consumption for each attack type.
+        """
         total = {"attack": 0, "attack_cavalry": 0, "attack_archer": 0}
         for unit in units:
             total[self.attack_pool[unit]] += self.pool[unit]["food"] * units[unit]
         return total
 
     def defense_sum(self, units):
+        """Calculates the total defense strength of a set of units.
+
+        Args:
+            units (dict): A dictionary of units and their quantities.
+
+        Returns:
+            dict: A dictionary of the total defense strength for each defense type.
+        """
         total = {"defense": 0, "defense_cavalry": 0, "defense_archer": 0}
         for unit in units:
             total["defense"] += self.pool[unit]["def_inf"] * units[unit]
@@ -266,12 +301,30 @@ class Simulator:
         return total
 
     def get_sum(self, obj):
+        """Calculates the sum of all values in a dictionary.
+
+        Args:
+            obj (dict): The dictionary to sum.
+
+        Returns:
+            int: The sum of all values in the dictionary.
+        """
         res = 0
         for k in obj:
             res += round(obj[k])
         return res
 
     def pre_wall(self, num_rams=None, wall=None):
+        """Calculates the wall level after the initial ram attack.
+
+        Args:
+            num_rams (int, optional): The number of rams in the attacking army.
+                Defaults to None.
+            wall (int, optional): The initial level of the wall. Defaults to None.
+
+        Returns:
+            int: The resulting wall level.
+        """
         if not num_rams:
             num_rams = 0
         if not wall:
@@ -285,6 +338,16 @@ class Simulator:
             defender,
             wall,
     ):
+        """Calculates the wall level after the battle.
+
+        Args:
+            attacker (dict): A dictionary of the attacking army's data.
+            defender (dict): A dictionary of the defending army's data.
+            wall (int): The initial level of the wall.
+
+        Returns:
+            int: The resulting wall level.
+        """
         rams = attacker["quantity"]["ram"]
         wall = wall if wall else 0
 
@@ -310,6 +373,19 @@ class Simulator:
         return max(0, resulting)
 
     def simulate(self, attackerUnits, defenderUnits, wall, nightbonus, moral, luck):
+        """Simulates a battle.
+
+        Args:
+            attackerUnits (dict): A dictionary of the attacking units and their quantities.
+            defenderUnits (dict): A dictionary of the defending units and their quantities.
+            wall (int): The level of the wall.
+            nightbonus (bool): Whether the night bonus is active.
+            moral (int): The morale of the attacker.
+            luck (int): The luck of the attacker.
+
+        Returns:
+            dict: A dictionary containing the results of the simulation.
+        """
         wall = wall if wall else 0
         moral = moral if moral else 100
         moral /= 100
@@ -404,16 +480,41 @@ class Simulator:
 
 
 class SimCache:
+    """Manages the cache for simulator data."""
     @staticmethod
     def get_cache(world):
+        """Gets the cache entry for a specific world.
+
+        Args:
+            world (str): The world to get the cache for.
+
+        Returns:
+            dict or None: The cache entry as a dictionary, or None if not found.
+        """
         return FileManager.load_json_file(f"cache/stats_{world}.json")
 
     @staticmethod
     def set_cache(world, entry):
+        """Creates or updates a cache entry for a world.
+
+        Args:
+            world (str): The world to set the cache for.
+            entry (dict): The cache entry to save.
+        """
         FileManager.save_json_file(entry, f"cache/stats_{world}.json")
 
     @staticmethod
     def grab_cache(world, session, village_id):
+        """Grabs the cache for a specific world, or fetches it if it doesn't exist.
+
+        Args:
+            world (str): The world to get the cache for.
+            session (WebWrapper): The web wrapper for making requests.
+            village_id (int): The ID of the village.
+
+        Returns:
+            dict or None: The cache entry as a dictionary, or None if not found.
+        """
         current = SimCache.get_cache(world)
         if current:
             return current
@@ -423,6 +524,14 @@ class SimCache:
 
     @staticmethod
     def cache_customize(entry):
+        """Customizes the cache entry.
+
+        Args:
+            entry (dict): The cache entry to customize.
+
+        Returns:
+            dict: The customized cache entry.
+        """
         if not entry:
             return {}
 

@@ -17,8 +17,10 @@ from core.reporter import ReporterObject
 
 
 class WebWrapper:
-    """
-    WebWrapper object for sending HTTP requests
+    """WebWrapper object for sending HTTP requests.
+
+    This class manages a single requests session to emulate a browser tab,
+    handling cookies, headers, and CSRF tokens automatically.
     """
     web = None
     headers = {
@@ -36,8 +38,16 @@ class WebWrapper:
     delay = 1.0
 
     def __init__(self, url, server=None, endpoint=None, reporter_enabled=False, reporter_constr=None):
-        """
-        Construct the session and detect variables
+        """Initializes the WebWrapper.
+
+        Args:
+            url (str): The base URL for the game server.
+            server (str, optional): The server name. Defaults to None.
+            endpoint (str, optional): The game endpoint. Defaults to None.
+            reporter_enabled (bool, optional): Whether the reporter is enabled.
+                Defaults to False.
+            reporter_constr (str, optional): The connection string for the reporter.
+                Defaults to None.
         """
         self.web = requests.session()
         self.auth_endpoint = url
@@ -46,8 +56,10 @@ class WebWrapper:
         self.reporter = ReporterObject(enabled=reporter_enabled, connection_string=reporter_constr)
 
     def post_process(self, response):
-        """
-        Post-processes all requests and stores data used for the next request
+        """Post-processes all requests and stores data used for the next request.
+
+        Args:
+            response (requests.Response): The response object from the request.
         """
         xsrf = re.search('<meta content="(.+?)" name="csrf-token"', response.text)
         if xsrf:
@@ -62,8 +74,15 @@ class WebWrapper:
             self.last_h = get_h.group(1)
 
     def get_url(self, url, headers=None):
-        """
-        Fetches a URL using a basic GET request
+        """Fetches a URL using a basic GET request.
+
+        Args:
+            url (str): The URL to fetch.
+            headers (dict, optional): Custom headers to use for the request.
+                Defaults to None.
+
+        Returns:
+            requests.Response: The response object, or None if the request fails.
         """
         self.headers['Origin'] = (self.endpoint if self.endpoint else self.auth_endpoint).rstrip('/')
         if not self.priority_mode:
@@ -88,8 +107,16 @@ class WebWrapper:
             return None
 
     def post_url(self, url, data, headers=None):
-        """
-        Sends a basic POST request with urlencoded postdata
+        """Sends a basic POST request with urlencoded postdata.
+
+        Args:
+            url (str): The URL to send the POST request to.
+            data (dict): The data to send in the request body.
+            headers (dict, optional): Custom headers to use for the request.
+                Defaults to None.
+
+        Returns:
+            requests.Response: The response object, or None if the request fails.
         """
         if not self.priority_mode:
             time.sleep(
@@ -110,8 +137,10 @@ class WebWrapper:
             return None
 
     def start(self, ):
-        """
-        Start the bot and verify whether the last session is still valid
+        """Starts the bot and verifies whether the last session is still valid.
+
+        Returns:
+            bool: True if the session is valid, False otherwise.
         """
         session_data = FileManager.load_json_file("cache/session.json")
         if session_data:
@@ -144,15 +173,32 @@ class WebWrapper:
         }, "cache/session.json")
 
     def get_action(self, village_id, action):
-        """
-        Runs an action on a specific village
+        """Runs an action on a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The action to perform.
+
+        Returns:
+            requests.Response: The response object.
         """
         url = "game.php?village=%s&screen=%s" % (village_id, action)
         response = self.get_url(url)
         return response
 
     def get_api_data(self, village_id, action, params={}):
+        """Gets data from the game's API.
 
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The API action to call.
+            params (dict, optional): Additional parameters for the request.
+                Defaults to {}.
+
+        Returns:
+            dict or requests.Response: The JSON response from the API, or the
+                full response object if JSON decoding fails.
+        """
         custom = dict(self.headers)
         custom['accept'] = "application/json, text/javascript, */*; q=0.01"
         custom['x-requested-with'] = "XMLHttpRequest"
@@ -173,8 +219,19 @@ class WebWrapper:
                 return res
 
     def post_api_data(self, village_id, action, params={}, data={}):
-        """
-        Simulates an API request
+        """Simulates an API request.
+
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The API action to call.
+            params (dict, optional): Additional parameters for the request URL.
+                Defaults to {}.
+            data (dict, optional): Data to send in the POST request body.
+                Defaults to {}.
+
+        Returns:
+            dict or requests.Response: The JSON response from the API, or the
+                full response object if JSON decoding fails.
         """
         custom = dict(self.headers)
         custom['accept'] = "application/json, text/javascript, */*; q=0.01"
@@ -198,8 +255,19 @@ class WebWrapper:
                 return res
 
     def get_api_action(self, village_id, action, params={}, data={}):
-        """
-        Simulates an API action being triggered
+        """Simulates an API action being triggered.
+
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The API action to call.
+            params (dict, optional): Additional parameters for the request URL.
+                Defaults to {}.
+            data (dict, optional): Data to send in the POST request body.
+                Defaults to {}.
+
+        Returns:
+            dict or None: The JSON response from the API, or None if the
+                request fails.
         """
         custom = dict(self.headers)
         custom['Accept'] = "application/json, text/javascript, */*; q=0.01"

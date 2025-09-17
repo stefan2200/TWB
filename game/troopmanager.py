@@ -11,8 +11,10 @@ from game.resources import ResourceManager
 
 
 class TroopManager:
-    """
-    Troopmanager class
+    """Manages troops in a village.
+
+    This class handles recruiting new troops, upgrading them in the smithy,
+    and sending them to gather resources.
     """
     can_recruit = True
     can_attack = True
@@ -64,8 +66,12 @@ class TroopManager:
     template = None
 
     def __init__(self, wrapper=None, village_id=None):
-        """
-        Create the troop manager
+        """Initializes the TroopManager.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
@@ -76,9 +82,7 @@ class TroopManager:
             )
 
     def update_totals(self):
-        """
-        Updates the total amount of recruited units
-        """
+        """Updates the total number of troops in the village."""
         main_data = self.wrapper.get_action(
             action="overview", village_id=self.village_id
         )
@@ -118,8 +122,16 @@ class TroopManager:
         self.logger.debug("Village units total: %s", str(self.total_troops))
 
     def start_update(self, building="barracks", disabled_units=[]):
-        """
-        Starts the unit update for a building
+        """Starts the troop recruitment update for a specific building.
+
+        Args:
+            building (str, optional): The building to recruit from.
+                Defaults to "barracks".
+            disabled_units (list, optional): A list of units that should not be
+                recruited. Defaults to [].
+
+        Returns:
+            bool: True if a recruitment action was started, False otherwise.
         """
         if self.wait_for[self.village_id][building] > time.time():
             human_ts = self.readable_ts(self.wait_for[self.village_id][building])
@@ -157,9 +169,13 @@ class TroopManager:
         return False
 
     def get_min_possible(self, entry):
-        """
-        Calculates which units are needed the most
-        To get some balance of the total amount
+        """Calculates the minimum number of units that can be recruited.
+
+        Args:
+            entry (dict): A dictionary of the unit's resource costs.
+
+        Returns:
+            int: The minimum number of units that can be recruited.
         """
         return min(
             [
@@ -177,8 +193,14 @@ class TroopManager:
         )
 
     def get_template_action(self, levels):
-        """
-        Read data from templates and determine the troops based op building progression
+        """Gets the next troop recruitment action from the template.
+
+        Args:
+            levels (dict): A dictionary of the current building levels.
+
+        Returns:
+            dict or None: The next action from the template, or None if no
+                action is available.
         """
         last = None
         wanted_upgrades = {}
@@ -202,16 +224,19 @@ class TroopManager:
         return last
 
     def research_time(self, time_str):
-        """
-        Calculates unit research time
+        """Calculates the research time in seconds from a time string.
+
+        Args:
+            time_str (str): The time string (e.g., "01:23:45").
+
+        Returns:
+            int: The research time in seconds.
         """
         parts = [int(x) for x in time_str.split(":")]
         return parts[2] + (parts[1] * 60) + (parts[0] * 60 * 60)
 
     def attempt_upgrade(self):
-        """
-        Attempts to upgrade or research a (new) unit type
-        """
+        """Attempts to upgrade a unit in the smithy."""
         self.logger.debug("Managing Upgrades")
         if self._research_wait > time.time():
             self.logger.debug(
@@ -285,6 +310,15 @@ class TroopManager:
         return False
 
     def attempt_research(self, unit_type, smith_data=None):
+        """Attempts to research a unit.
+
+        Args:
+            unit_type (str): The type of unit to research.
+            smith_data (dict, optional): The smithy data. Defaults to None.
+
+        Returns:
+            bool: True if the research was started successfully, False otherwise.
+        """
         if not smith_data:
             result = self.wrapper.get_action(village_id=self.village_id, action="smith")
             smith_data = Extractor.smith_data(result)
@@ -349,10 +383,14 @@ class TroopManager:
         self.logger.info("Research of %s not yet possible", unit_type)
 
     def gather(self, selection=1, disabled_units=[], advanced_gather=True):
-        """
-        Used for the gather resources functionality where it uses two options:
-        - Basic: all troops gather on the selected gather level
-        - Advanced: troops are split
+        """Sends troops to gather resources.
+
+        Args:
+            selection (int, optional): The gather selection. Defaults to 1.
+            disabled_units (list, optional): A list of units that should not be
+                sent to gather. Defaults to [].
+            advanced_gather (bool, optional): Whether to use the advanced
+                gathering logic. Defaults to True.
         """
         if not self.can_gather:
             return False
@@ -513,8 +551,11 @@ class TroopManager:
         return True
 
     def cancel(self, building, id):
-        """
-        Cancel a troop recruiting action
+        """Cancels a troop recruitment action.
+
+        Args:
+            building (str): The building where the recruitment is taking place.
+            id (int): The ID of the recruitment order to cancel.
         """
         self.wrapper.get_api_action(
             action="cancel",
@@ -524,8 +565,18 @@ class TroopManager:
         )
 
     def recruit(self, unit_type, amount=10, wait_for=False, building="barracks"):
-        """
-        Recruit x amount of x from a certain building
+        """Recruits a specified number of units.
+
+        Args:
+            unit_type (str): The type of unit to recruit.
+            amount (int, optional): The number of units to recruit. Defaults to 10.
+            wait_for (bool, optional): Whether to wait for the recruitment to
+                finish before continuing. Defaults to False.
+            building (str, optional): The building to recruit from.
+                Defaults to "barracks".
+
+        Returns:
+            bool: True if the recruitment was successful, False otherwise.
         """
         data = self.wrapper.get_action(action=building, village_id=self.village_id)
 
@@ -641,8 +692,14 @@ class TroopManager:
         return False
 
     def reserve_resources(self, resources, wanted_times, has_times, unit_type):
-        """
-        Reserve resources for a certain recruiting action
+        """Reserves resources for a specific recruitment action.
+
+        Args:
+            resources (dict): A dictionary of the unit's resource costs.
+            wanted_times (int): The number of units to recruit.
+            has_times (int): The number of units that can be recruited with the
+                current resources.
+            unit_type (str): The type of unit to recruit.
         """
         # Resources per unit, batch wanted, batch already recruiting
         create_amount = wanted_times - has_times
@@ -652,8 +709,13 @@ class TroopManager:
             self.resman.request(source=f"recruitment_{unit_type}", resource=res, amount=req)
 
     def readable_ts(self, seconds):
-        """
-        Human readable timestamp
+        """Converts a timestamp to a human-readable time string.
+
+        Args:
+            seconds (int): The timestamp in seconds.
+
+        Returns:
+            str: The formatted time string (H:MM:SS).
         """
         seconds -= time.time()
         seconds = seconds % (24 * 3600)

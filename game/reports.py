@@ -11,8 +11,11 @@ from core.filemanager import FileManager
 
 
 class ReportManager:
-    """
-    Class to "efficiently" manage reports
+    """Manages reading and parsing battle reports.
+
+    This class can determine if a village is safe to attack based on previous
+    reports, and it can also check if there are resources left in a farmed
+    village.
     """
     wrapper = None
     village_id = None
@@ -21,16 +24,25 @@ class ReportManager:
     last_reports = {}
 
     def __init__(self, wrapper=None, village_id=None):
-        """
-        Creates the report manager
+        """Initializes the ReportManager.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def has_resources_left(self, vid):
-        """
-        Checks if there are any resources left after farm
-        Used by the farm manager script
+        """Checks if there are any resources left in a farmed village.
+
+        Args:
+            vid (int): The ID of the village to check.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating if resources are left
+                and a dictionary of the remaining resources.
         """
         possible_reports = []
         for repid in self.last_reports:
@@ -54,9 +66,17 @@ class ReportManager:
         return False, {}
 
     def safe_to_engage(self, vid):
-        """
-        Calculates if a village is safe to engage without custom interaction
-        Just sending a 0 losses attack overrides this behaviour
+        """Calculates if a village is safe to engage without custom interaction.
+
+        This method checks the latest reports for a given village to determine
+        if it is safe to attack.
+
+        Args:
+            vid (int): The ID of the village to check.
+
+        Returns:
+            int: 1 if it is safe to engage, 0 if it is not, and -1 if there is
+                no information.
         """
         for repid in self.last_reports:
             entry = self.last_reports[repid]
@@ -93,8 +113,11 @@ class ReportManager:
         return -1
 
     def read(self, page=0, full_run=False):
-        """
-        Read some (or all if you like) reports
+        """Reads and processes reports.
+
+        Args:
+            page (int, optional): The page number of reports to read. Defaults to 0.
+            full_run (bool, optional): Whether to read all reports. Defaults to False.
         """
         if not self.logger:
             self.logger = logging.getLogger("Reports")
@@ -137,9 +160,14 @@ class ReportManager:
             return self.read(page, full_run=full_run)
 
     def re_unit(self, inp):
-        """
-        No idea why I made this and what it does
-        Guessing reading a line of units?
+        """Parses a line of units from a report.
+
+        Args:
+            inp (list): A list of tuples, where each tuple contains the unit
+                name and quantity.
+
+        Returns:
+            dict: A dictionary of units and their quantities.
         """
         output = {}
         for row in inp:
@@ -149,8 +177,14 @@ class ReportManager:
         return output
 
     def re_building(self, inp):
-        """
-        Read building levels from a report entry
+        """Parses building levels from a report.
+
+        Args:
+            inp (list): A list of dictionaries, where each dictionary contains
+                the building ID and level.
+
+        Returns:
+            dict: A dictionary of building levels.
         """
         output = {}
         for row in inp:
@@ -161,8 +195,14 @@ class ReportManager:
         return output
 
     def attack_report(self, report, report_id):
-        """
-        A report where we attacked a village
+        """Parses an attack report.
+
+        Args:
+            report (str): The HTML content of the report.
+            report_id (int): The ID of the report.
+
+        Returns:
+            bool: True if the report was parsed successfully, False otherwise.
         """
         from_village = None
         from_player = None
@@ -277,8 +317,20 @@ class ReportManager:
             losses={},
             data={},
     ):
-        """
-        Creates a report file
+        """Creates a report file in the cache.
+
+        Args:
+            report_id (int): The ID of the report.
+            report_type (str): The type of the report (e.g., 'attack', 'scout').
+            origin_village (int, optional): The ID of the origin village.
+                Defaults to None.
+            dest_village (int, optional): The ID of the destination village.
+                Defaults to None.
+            losses (dict, optional): A dictionary of lost units. Defaults to {}.
+            data (dict, optional): A dictionary of extra data. Defaults to {}.
+
+        Returns:
+            dict: The report data that was saved to the cache.
         """
         output = {
             "type": report_type,
@@ -295,27 +347,35 @@ class ReportManager:
 
 
 class ReportCache:
-    """
-    File cache for local reports
-    """
+    """Manages the cache for report data."""
     @staticmethod
     def get_cache(report_id):
-        """
-        Reads a report entry
+        """Gets the cache entry for a specific report.
+
+        Args:
+            report_id (int): The ID of the report.
+
+        Returns:
+            dict or None: The cache entry as a dictionary, or None if not found.
         """
         return FileManager.load_json_file(f"cache/reports/{report_id}.json")
 
     @staticmethod
     def set_cache(report_id, entry):
-        """
-        Creates a report entry
+        """Creates or updates a cache entry for a report.
+
+        Args:
+            report_id (int): The ID of the report.
+            entry (dict): The cache entry to save.
         """
         FileManager.save_json_file(entry, f"cache/reports/{report_id}.json")
 
     @staticmethod
     def cache_grab():
-        """
-        Reads all locally stored reports
+        """Grabs all cache entries.
+
+        Returns:
+            dict: A dictionary of all cache entries, where the keys are report IDs.
         """
         output = {}
 

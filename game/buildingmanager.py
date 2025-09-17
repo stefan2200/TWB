@@ -10,8 +10,12 @@ from core.extractors import Extractor
 
 
 class BuildingManager:
-    """
-    Core class for building management
+    """Manages the construction of buildings in a village.
+
+    This class uses a template to determine the order in which buildings should
+    be upgraded, and it checks for available resources before starting
+    construction. It also manages the building queue and can automatically
+    complete buildings if the world settings allow it.
     """
     logger = None
     levels = {}
@@ -38,15 +42,23 @@ class BuildingManager:
     can_build_three_min = False
 
     def __init__(self, wrapper, village_id):
-        """
-        Create the building manager
+        """Initializes the BuildingManager.
+
+        Args:
+            wrapper (WebWrapper): The web wrapper for making requests.
+            village_id (int): The ID of the village.
         """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def create_update_links(self, extracted_buildings):
-        """
-        Creates update links for a building
+        """Creates update links for a building.
+
+        Args:
+            extracted_buildings (dict): A dictionary of extracted building data.
+
+        Returns:
+            dict: The extracted building data with added build links.
         """
         link = self.game_state["link_base_pure"] + "main&action=upgrade_building"
 
@@ -59,8 +71,18 @@ class BuildingManager:
         return extracted_buildings
 
     def start_update(self, build=False, set_village_name=None):
-        """
-        Start a building manager run
+        """Starts a building manager run.
+
+        This method updates the building levels, checks the queue, and starts
+        new construction if possible.
+
+        Args:
+            build (bool, optional): Whether to start new construction. Defaults to False.
+            set_village_name (str, optional): The name to set for the village.
+                Defaults to None.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
         """
         main_data = self.wrapper.get_action(village_id=self.village_id, action="main")
         self.game_state = Extractor.game_state(main_data)
@@ -134,9 +156,14 @@ class BuildingManager:
         return True
 
     def complete_actions(self, text):
-        """
-        Automatically finish a building if the world allows it
-        TODO: add premium options to lower build costs
+        """Automatically finishes a building if the world allows it.
+
+        Args:
+            text (str): The HTML content of the page.
+
+        Returns:
+            requests.Response or bool: The response from the quick build action,
+                or False if no action was taken.
         """
         res = re.search(
             r'(?s)(\d+),\s*\'BuildInstantFree.+?data-available-from="(\d+)"', text
@@ -150,9 +177,15 @@ class BuildingManager:
         return False
 
     def put_wait(self, wait_time):
-        """
-        Puts an item in the active building queue
-        Blocking entries until the building is completed
+        """Puts an item in the active building queue.
+
+        This method blocks entries until the building is completed.
+
+        Args:
+            wait_time (int): The time in seconds to wait for the building to complete.
+
+        Returns:
+            float: The timestamp when the building will be completed.
         """
         self.is_queued()
         if len(self.waits) == 0:
@@ -167,8 +200,10 @@ class BuildingManager:
             return f_time
 
     def is_queued(self):
-        """
-        Checks if a building is already queued
+        """Checks if the building queue is full.
+
+        Returns:
+            bool: True if the queue is full, False otherwise.
         """
         if len(self.waits) == 0:
             return False
@@ -178,8 +213,13 @@ class BuildingManager:
         return len(self.waits) >= self.max_queue_len
 
     def has_enough(self, build_item):
-        """
-        Checks if there are enough resources to queue a building
+        """Checks if there are enough resources to queue a building.
+
+        Args:
+            build_item (dict): A dictionary of the building's resource costs.
+
+        Returns:
+            bool: True if there are enough resources, False otherwise.
         """
         if (
                 build_item["iron"] > self.resman.storage
@@ -225,16 +265,26 @@ class BuildingManager:
         return r
 
     def get_level(self, building):
-        """
-        Gets a building level
+        """Gets the level of a building.
+
+        Args:
+            building (str): The name of the building.
+
+        Returns:
+            int: The level of the building.
         """
         if building not in self.levels:
             return 0
         return self.levels[building]
 
     def readable_ts(self, seconds):
-        """
-        Makes stuff more human
+        """Converts a timestamp to a human-readable format.
+
+        Args:
+            seconds (float): The timestamp in seconds.
+
+        Returns:
+            str: The formatted time string (H:MM:SS).
         """
         seconds -= time.time()
         seconds = seconds % (24 * 3600)
@@ -246,8 +296,13 @@ class BuildingManager:
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def get_next_building_action(self, index=0):
-        """
-        Calculates the next best possible building action
+        """Calculates the next best possible building action.
+
+        Args:
+            index (int, optional): The index in the queue to check. Defaults to 0.
+
+        Returns:
+            bool: True if a building action was taken, False otherwise.
         """
         if index >= len(self.queue) or index >= self.max_lookahead:
             self.logger.debug("Not building anything because insufficient resources or index out of range")

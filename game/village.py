@@ -20,6 +20,12 @@ from core.exceptions import *
 
 
 class Village:
+    """Represents a single village in the game.
+
+    This class brings together all the other manager classes to perform all
+    the actions required to manage a village, such as building, recruiting,
+    and farming.
+    """
     village_id = None
     builder = None
     units = None
@@ -47,10 +53,28 @@ class Village:
     twp = TwStats()
 
     def __init__(self, village_id=None, wrapper=None):
+        """Initializes the Village.
+
+        Args:
+            village_id (int, optional): The ID of the village. Defaults to None.
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+        """
         self.village_id = village_id
         self.wrapper = wrapper
 
     def get_config(self, section, parameter, default=None):
+        """Gets a configuration value from the main config file.
+
+        Args:
+            section (str): The section of the config file.
+            parameter (str): The parameter to get.
+            default (any, optional): The default value to return if the
+                parameter is not found. Defaults to None.
+
+        Returns:
+            any: The value of the configuration parameter, or the default value.
+        """
         if section not in self.config:
             self.logger.warning("Configuration section %s does not exist!" % section)
             return default
@@ -62,6 +86,17 @@ class Village:
         return self.config[section][parameter]
 
     def get_village_config(self, village_id, parameter, default=None):
+        """Gets a configuration value for a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+            parameter (str): The parameter to get.
+            default (any, optional): The default value to return if the
+                parameter is not found. Defaults to None.
+
+        Returns:
+            any: The value of the configuration parameter, or the default value.
+        """
         if village_id not in self.config["villages"]:
             return default
         vdata = self.config["villages"][village_id]
@@ -74,8 +109,10 @@ class Village:
         return vdata[parameter]
 
     def village_init(self):
-        """
-        Init the village entry and send first request
+        """Initializes the village and sends the first request to get game data.
+
+        Returns:
+            requests.Response: The response from the server.
         """
         if not self.village_id:
             data = self.wrapper.get_url("game.php?screen=overview&intro")
@@ -110,9 +147,7 @@ class Village:
         return data
 
     def set_world_config(self):
-        """
-        Sets basic world options
-        """
+        """Sets the world configuration options for the village."""
         self.disabled_units = []
         if not self.get_config(
                 section="world", parameter="archers_enabled", default=True
@@ -130,9 +165,7 @@ class Village:
             self.twp.run(world=self.get_config(section="server", parameter="server"))
 
     def update_pre_run(self):
-        """
-        Manage defence, resources and reports
-        """
+        """Updates the managers before the main run."""
         if not self.resman:
             self.resman = ResourceManager(
                 wrapper=self.wrapper, village_id=self.village_id
@@ -159,8 +192,10 @@ class Village:
             self.def_man.units = self.units
 
     def setup_defence_manager(self, data):
-        """
-        Set-up the defence manager
+        """Sets up the defence manager.
+
+        Args:
+            data (requests.Response): The response from the server.
         """
         self.def_man.manage_flags_enabled = self.get_config(
             section="world", parameter="flags_enabled", default=False
@@ -194,6 +229,11 @@ class Village:
         self.last_attack = self.def_man.under_attack
 
     def run_quest_actions(self, config):
+        """Runs quest actions.
+
+        Args:
+            config (dict): The configuration for the bot.
+        """
         if self.get_config(section="world", parameter="quests_enabled", default=False):
             if self.get_quests():
                 self.logger.info("There where completed quests, re-running function")
@@ -208,9 +248,7 @@ class Village:
                 )
 
     def units_get_template(self):
-        """
-        Fetches the unit template
-        """
+        """Gets the unit template for the village."""
         if not self.units:
             self.units = TroopManager(wrapper=self.wrapper, village_id=self.village_id)
             self.units.resman = self.resman
@@ -240,9 +278,7 @@ class Village:
             raise InvalidUnitTemplateException
 
     def run_builder(self):
-        """
-        Run building construction actions
-        """
+        """Runs the building construction logic."""
         if not self.builder:
             self.builder = BuildingManager(
                 wrapper=self.wrapper, village_id=self.village_id
@@ -288,9 +324,7 @@ class Village:
         )
 
     def run_snob_recruit(self):
-        """
-        Uses the snob to mint coins, store resources and recruit snobs
-        """
+        """Runs the snob recruitment logic."""
         if (
                 self.get_village_config(self.village_id, parameter="snobs", default=None)
                 and self.builder.levels["snob"] > 0
@@ -308,9 +342,7 @@ class Village:
             self.snobman.run()
 
     def check_forced_peace(self):
-        """
-        Checks if farming is disabled for the current time
-        """
+        """Checks if there is a forced peace time active."""
         # Set timeslots in order to prevent farming during events like national holidays
         forced_peace_times = self.get_config(section="farms", parameter="forced_peace_times", default=[])
         self.forced_peace = False
@@ -329,9 +361,7 @@ class Village:
                 break
 
     def set_unit_wanted_levels(self):
-        """
-        Fetches wanted units for the current buildings
-        """
+        """Sets the wanted unit levels based on the current building levels."""
         self.current_unit_entry = self.units.get_template_action(self.builder.levels)
 
         if self.current_unit_entry and self.units.wanted != self.current_unit_entry["build"]:
@@ -350,9 +380,7 @@ class Village:
             )
 
     def run_unit_upgrades(self):
-        """
-        Uses smith to research or upgrade units
-        """
+        """Runs the unit upgrade logic."""
         if (
                 self.get_config(section="units", parameter="upgrade", default=False)
                 and self.units.wanted_levels != {}
@@ -360,9 +388,7 @@ class Village:
             self.units.attempt_upgrade()
 
     def do_recruit(self):
-        """
-        Recruits new units
-        """
+        """Runs the troop recruitment logic."""
         if self.get_config(section="units", parameter="recruit", default=False):
             self.units.can_fix_queue = self.get_config(
                 section="units", parameter="remove_manual_queued", default=False
@@ -406,6 +432,7 @@ class Village:
                     self.units.start_update(building, self.disabled_units)
 
     def manage_local_resources(self):
+        """Manages the local resources."""
         to_dell = []
         for x in self.resman.requested:
             if all(res == 0 for res in self.resman.requested[x].values()):
@@ -419,9 +446,7 @@ class Village:
         self.logger.debug("Requested resources: %s", str(self.resman.requested))
 
     def set_farm_options(self):
-        """
-        Sets various options for farming management
-        """
+        """Sets the farming options."""
         self.attack.target_high_points = self.get_config(
             section="farms", parameter="attack_higher_points", default=False
         )
@@ -450,9 +475,7 @@ class Village:
             self.attack.template = self.current_unit_entry["farm"]
 
     def run_farming(self):
-        """
-        Runs the farming logic
-        """
+        """Runs the farming logic."""
         if not self.forced_peace and self.units.can_attack:
             if not self.area:
                 self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
@@ -493,9 +516,7 @@ class Village:
                     self.attack.run()
 
     def do_gather(self):
-        """
-        Runs gathering if unlocked and active
-        """
+        """Runs the resource gathering logic."""
         self.units.can_gather = self.get_village_config(
             self.village_id, parameter="gather_enabled", default=False
         )
@@ -509,9 +530,7 @@ class Village:
             )
 
     def go_manage_market(self):
-        """
-        Manages the market
-        """
+        """Manages the market."""
         if self.get_config(
                 section="market", parameter="auto_trade", default=False
         ) and self.builder.get_level("market"):
@@ -547,6 +566,13 @@ class Village:
             self.resman.do_premium_stuff()
 
     def run(self, config=None, first_run=False):
+        """Runs the main logic for the village.
+
+        Args:
+            config (dict, optional): The configuration for the bot. Defaults to None.
+            first_run (bool, optional): Whether this is the first run for the
+                village. Defaults to False.
+        """
         # setup and check if village still exists / is accessible
         self.config = config
         self.wrapper.delay = self.get_config(
@@ -619,6 +645,11 @@ class Village:
         )
 
     def get_quests(self):
+        """Gets and completes quests.
+
+        Returns:
+            bool: True if a quest was completed, False otherwise.
+        """
         result = Extractor.get_quests(self.wrapper.last_response)
         if result:
             qres = self.wrapper.get_api_action(
@@ -633,6 +664,11 @@ class Village:
         return False
 
     def get_quest_rewards(self):
+        """Gets and claims quest rewards.
+
+        Returns:
+            bool: True if a reward was claimed, False otherwise.
+        """
         result = self.wrapper.get_api_data(
             action="quest_popup",
             village_id=self.village_id,
@@ -666,6 +702,7 @@ class Village:
         return len(rewards) > 0
 
     def set_cache_vars(self):
+        """Sets the cache variables for the village."""
         village_entry = {
             "name": self.game_data["village"]["name"],
             "public": self.area.in_cache(self.village_id) if self.area else None,

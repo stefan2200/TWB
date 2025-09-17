@@ -10,8 +10,11 @@ from core.filemanager import FileManager
 
 
 class Map:
-    """
-    Class to manage the world around you
+    """Manages the in-game map and data about surrounding villages.
+
+    This class fetches and parses map data to extract information about
+    villages, such as their location, points, and owner. It also caches this
+    data to avoid repeated requests.
     """
     wrapper = None
     village_id = None
@@ -23,15 +26,25 @@ class Map:
     fetch_delay = 8
 
     def __init__(self, wrapper=None, village_id=None):
-        """
-        Creates the map files
+        """Initializes the Map.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def get_map(self):
-        """
-        Fetch the map every 24ish hours and update the cache entries
+        """Fetches and updates the map data.
+
+        This method fetches the map every 24ish hours and updates the cache
+        entries for all visible villages.
+
+        Returns:
+            bool: True if the map was fetched and parsed successfully, False
+                otherwise.
         """
         if self.last_fetch + (self.fetch_delay * 3600) > time.time():
             return
@@ -78,8 +91,16 @@ class Map:
         return True
 
     def get_map_old(self, game_state):
-        """
-        Old method of parsing the map, might work, might not, who knows
+        """Fetches and updates the map data using an older parsing method.
+
+        This method is a fallback for when the primary `get_map` method fails.
+
+        Args:
+            game_state (dict): The current game state.
+
+        Returns:
+            bool: True if the map was fetched and parsed successfully, False
+                otherwise.
         """
         if self.map_data:
             for tile in self.map_data:
@@ -112,8 +133,11 @@ class Map:
         return True
 
     def build_cache_entry(self, location, entry):
-        """
-        Builds a cache entry based on their weird data structure
+        """Builds a cache entry for a village.
+
+        Args:
+            location (list): The coordinates of the village.
+            entry (list): The raw data for the village.
         """
         vid = entry[0]
         name = entry[2]
@@ -147,15 +171,25 @@ class Map:
         self.villages[vid] = structure
 
     def in_cache(self, vid):
-        """
-        Checks if a village is already in the village cache
+        """Checks if a village is already in the cache.
+
+        Args:
+            vid (int): The ID of the village.
+
+        Returns:
+            dict or None: The cache entry if found, otherwise None.
         """
         entry = MapCache.get_cache(village_id=vid)
         return entry
 
     def get_dist(self, ext_loc):
-        """
-        Calculates distance from current village to coords
+        """Calculates the distance from the current village to a set of coordinates.
+
+        Args:
+            ext_loc (list): The coordinates of the external location.
+
+        Returns:
+            float: The distance to the external location.
         """
         distance = math.sqrt(
             ((self.my_location[0] - ext_loc[0]) ** 2)
@@ -165,19 +199,25 @@ class Map:
 
 
 class MapCache:
-    """
-    Holds a cache of all found villages within a certain distance
-    """
+    """Manages the cache for map data."""
     @staticmethod
     def get_cache(village_id):
-        """
-        Get data from the cache
+        """Gets the cache entry for a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+
+        Returns:
+            dict or None: The cache entry as a dictionary, or None if not found.
         """
         return FileManager.load_json_file(f"cache/villages/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
-        """
-        Creates or updates a cache entry
+        """Creates or updates a cache entry for a village.
+
+        Args:
+            village_id (int): The ID of the village.
+            entry (dict): The cache entry to save.
         """
         FileManager.save_json_file(entry, f"cache/villages/{village_id}.json")

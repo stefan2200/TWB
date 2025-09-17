@@ -7,6 +7,11 @@ from game.simulator import Simulator
 
 
 class Hunter:
+    """Manages coordinated attacks, also known as 'attack chains' or 'nukes'.
+
+    This class allows for the scheduling and precise timing of multiple attacks
+    to land simultaneously on a target village.
+    """
     game_map = None
     schedule = {}
     target_villages = {}
@@ -24,12 +29,27 @@ class Hunter:
     """
 
     def nearing_schedule_window(self):
+        """Checks if any scheduled attacks are nearing their launch window.
+
+        Returns:
+            float or None: The timestamp of the nearest scheduled attack, or None
+                if no attacks are within the window.
+        """
         for item in self.schedule:
             wait = time.time() - item
             if wait < self.window:
                 return item
 
     def nearing_window_in_sleep(self, sleep):
+        """Checks if any scheduled attacks will be within their launch window after a sleep period.
+
+        Args:
+            sleep (int): The duration of the sleep period in seconds.
+
+        Returns:
+            float or None: The timestamp of the nearest scheduled attack, or None
+                if no attacks will be within the window.
+        """
         lowest = None
         for item in self.schedule:
             wait = time.time() + sleep
@@ -39,6 +59,18 @@ class Hunter:
         return lowest
 
     def troops_in_village(self, source=None, troops={}):
+        """Checks if there are enough troops in a village for a given attack.
+
+        Args:
+            source (Village, optional): The source village to check. If not provided,
+                all villages will be checked. Defaults to None.
+            troops (dict, optional): A dictionary of required troops and their quantities.
+                Defaults to {}.
+
+        Returns:
+            Village or None: The village object if enough troops are available,
+                otherwise None.
+        """
         if source:
             if self.villages[source].attack.has_troops_available(troops):
                 return source
@@ -49,6 +81,16 @@ class Hunter:
     def send_attack_chain(
             self, source, item, exact_send_time=0, min_sleep_amount_millis=100
     ):
+        """Sends a chain of attacks.
+
+        Args:
+            source (Village): The source village for the attacks.
+            item (float): The timestamp of the scheduled attack.
+            exact_send_time (int, optional): The exact time to send the attacks.
+                Defaults to 0.
+            min_sleep_amount_millis (int, optional): The minimum sleep time in
+                milliseconds between attacks. Defaults to 100.
+        """
         data = self.schedule[item]
         attack_set = []
         self.logger.info("Nearing timing window, preparing %d attacks" % len(data))
@@ -73,6 +115,17 @@ class Hunter:
         self.wrapper.priority_mode = False
 
     def attack(self, source, vid, troops=None):
+        """Prepares an attack.
+
+        Args:
+            source (Village): The source village for the attack.
+            vid (int): The ID of the target village.
+            troops (dict, optional): A dictionary of troops to send. Defaults to None.
+
+        Returns:
+            tuple or bool: A tuple containing the confirmation data and duration of
+                the attack, or False if the attack fails.
+        """
         url = "game.php?village=%s&screen=place&target=%s" % (source, vid)
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}
@@ -111,6 +164,15 @@ class Hunter:
         return confirm_data, duration
 
     def send_attack(self, source, data):
+        """Sends a prepared attack.
+
+        Args:
+            source (Village): The source village for the attack.
+            data (dict): The confirmation data for the attack.
+
+        Returns:
+            dict: The JSON response from the API.
+        """
         return self.wrapper.get_api_action(
             village_id=source,
             action="popup_command",
@@ -119,6 +181,15 @@ class Hunter:
         )
 
     def prepare(self, vid, troops=None):
+        """Prepares and sends an attack.
+
+        Args:
+            vid (int): The ID of the target village.
+            troops (dict, optional): A dictionary of troops to send. Defaults to None.
+
+        Returns:
+            dict or bool: The result of the API action, or False if the attack fails.
+        """
         url = "game.php?village=%s&screen=place&target=%s" % (self.village_id, vid)
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}

@@ -13,8 +13,10 @@ from core.filemanager import FileManager
 
 
 class AttackManager:
-    """
-    Attackmanager class
+    """Manages farming attacks on other villages.
+
+    This class is responsible for selecting targets, sending troops, and
+    managing the timing of attacks to avoid detection.
     """
     map = None
     village_id = None
@@ -46,8 +48,15 @@ class AttackManager:
     farm_low_prio_wait = 7200
 
     def __init__(self, wrapper=None, village_id=None, troopmanager=None, map=None):
-        """
-        Create the attack manager
+        """Initializes the AttackManager.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
+            troopmanager (TroopManager, optional): The troop manager for the village.
+                Defaults to None.
+            map (Map, optional): The map object. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
@@ -55,8 +64,14 @@ class AttackManager:
         self.map = map
 
     def enough_in_village(self, units):
-        """
-        Checks if there are enough troops in a village
+        """Checks if there are enough troops in the village for a given template.
+
+        Args:
+            units (dict): A dictionary of required units and their quantities.
+
+        Returns:
+            str or bool: A string with the missing unit and its quantity if not enough
+                troops are available, otherwise False.
         """
         for unit in units:
             if unit not in self.troopmanager.troops:
@@ -66,8 +81,13 @@ class AttackManager:
         return False
 
     def run(self):
-        """
-        Run the farming logic
+        """Runs the farming logic.
+
+        This method gets targets, checks for available troops, and sends attacks.
+
+        Returns:
+            bool: False if farming is disabled or no troops are available,
+                otherwise None.
         """
         if not self.troopmanager.can_attack or self.troopmanager.troops == {}:
             # Disable farming is disabled in config or no troops available
@@ -95,8 +115,15 @@ class AttackManager:
                     break
 
     def send_farm(self, target, template):
-        """
-        Send a farming run
+        """Sends a farming attack to a target.
+
+        Args:
+            target (dict): The target village information.
+            template (dict): The troop template to use for the attack.
+
+        Returns:
+            int: 1 if the attack was sent successfully, 0 if there was a forced
+                peace, and -1 if there are not enough troops.
         """
         target, _ = target
         missing = self.enough_in_village(template)
@@ -145,9 +172,7 @@ class AttackManager:
         return 0
 
     def get_targets(self):
-        """
-        Gets all possible farming targets based on distance
-        """
+        """Gets all possible farming targets based on distance and other criteria."""
         output = []
         my_village = (
             self.map.villages[self.village_id]
@@ -220,8 +245,18 @@ class AttackManager:
         self.targets = sorted(output, key=lambda x: x[1])
 
     def attacked(self, vid, scout=False, high_profile=False, safe=True, low_profile=False):
-        """
-        The farm was sent and this is a callback on what happened
+        """Callback function that is called after an attack is sent.
+
+        This method updates the cache with information about the attack.
+
+        Args:
+            vid (int): The ID of the attacked village.
+            scout (bool, optional): Whether the attack was a scout. Defaults to False.
+            high_profile (bool, optional): Whether the target is a high-profile target.
+                Defaults to False.
+            safe (bool, optional): Whether the attack was considered safe. Defaults to True.
+            low_profile (bool, optional): Whether the target is a low-profile target.
+                Defaults to False.
         """
         cache_entry = {
             "scout": scout,
@@ -233,8 +268,13 @@ class AttackManager:
         AttackCache.set_cache(vid, cache_entry)
 
     def scout(self, vid):
-        """
-        Attempt to send scouts to a farm
+        """Sends scouts to a village.
+
+        Args:
+            vid (int): The ID of the village to scout.
+
+        Returns:
+            bool: True if the scout was sent successfully, False otherwise.
         """
         if "spy" not in self.troopmanager.troops or int(self.troopmanager.troops["spy"]) < self.scout_farm_amount:
             self.logger.debug(
@@ -246,9 +286,14 @@ class AttackManager:
             self.attacked(vid, scout=True, safe=False)
 
     def can_attack(self, vid, clear=False):
-        """
-        Checks if it is safe en engage
-        If not an amount of 5 scouts will be sent
+        """Checks if it is safe to attack a village.
+
+        Args:
+            vid (int): The ID of the village to check.
+            clear (bool, optional): Whether to clear the cache. Defaults to False.
+
+        Returns:
+            dict or bool: The cache entry if it is safe to attack, False otherwise.
         """
         cache_entry = AttackCache.get_cache(vid)
 
@@ -329,6 +374,14 @@ class AttackManager:
         return cache_entry
 
     def has_troops_available(self, troops):
+        """Checks if there are enough troops available for a given template.
+
+        Args:
+            troops (dict): A dictionary of required units and their quantities.
+
+        Returns:
+            bool: True if enough troops are available, False otherwise.
+        """
         for t in troops:
             if (
                     t not in self.troopmanager.troops
@@ -338,8 +391,17 @@ class AttackManager:
         return True
 
     def attack(self, vid, troops=None):
-        """
-        Send a TW attack
+        """Sends an attack to a village.
+
+        Args:
+            vid (int): The ID of the village to attack.
+            troops (dict, optional): A dictionary of troops to send. If not provided,
+                all available troops will be sent. Defaults to None.
+
+        Returns:
+            dict or str or bool: The result of the API action, "forced_peace" if the
+                attack would arrive after the forced peace timer, or False if the
+                attack fails.
         """
         url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_attack = self.wrapper.get_url(url)
@@ -397,16 +459,36 @@ class AttackManager:
 
 
 class AttackCache:
+    """Manages the cache for attack data."""
     @staticmethod
     def get_cache(village_id):
+        """Gets the cache entry for a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+
+        Returns:
+            dict or None: The cache entry as a dictionary, or None if not found.
+        """
         return FileManager.load_json_file(f"cache/attacks/{village_id}.json")
 
     @staticmethod
     def set_cache(village_id, entry):
+        """Sets the cache entry for a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+            entry (dict): The cache entry to save.
+        """
         return FileManager.save_json_file(entry, f"cache/attacks/{village_id}.json")
 
     @staticmethod
-    def cache_grab():
+def cache_grab():
+        """Grabs all cache entries.
+
+        Returns:
+            dict: A dictionary of all cache entries, where the keys are village IDs.
+        """
         output = {}
 
         for existing in FileManager.list_directory("cache/attacks", ends_with=".json"):

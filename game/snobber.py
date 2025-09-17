@@ -9,8 +9,10 @@ from core.extractors import Extractor
 
 
 class SnobManager:
-    """
-    Create the snob manager
+    """Manages the recruitment of nobles (snobs) in a village.
+
+    This class can handle both coin-based and resource-based recruitment
+    systems, and it will automatically store resources or mint coins as needed.
     """
     wrapper = None
     village_id = None
@@ -23,23 +25,34 @@ class SnobManager:
     using_coin_system = False
 
     def level_system(self):
-        """
-        Just return 0, that's what it does
-        Just that, nothing more
+        """Returns the level of the snob recruitment system.
+
+        Returns:
+            int: The level of the snob recruitment system.
         """
         return 0
 
     def __init__(self, wrapper=None, village_id=None):
-        """
-        Create the snob manager class
+        """Initializes the SnobManager.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
         self.logger = logging.getLogger(f"Snob:{self.village_id}")
 
     def need_reserve(self, text):
-        """
-        Checks in a weird way if there is enough gold coins or stored resources
+        """Checks if there are enough resources or gold coins to recruit a snob.
+
+        Args:
+            text (str): The HTML content of the snob recruitment page.
+
+        Returns:
+            int: The amount of resources or gold coins needed, or 0 if enough
+                are available.
         """
         if not self.using_coin_system:
             need_amount = re.search(
@@ -60,8 +73,13 @@ class SnobManager:
         return 0
 
     def attempt_recruit(self, amount):
-        """
-        Tries to recruit a new snob
+        """Attempts to recruit a new snob.
+
+        Args:
+            amount (int): The number of snobs to recruit.
+
+        Returns:
+            bool: True if the recruitment was successful, False otherwise.
         """
         result = self.wrapper.get_action(action="snob", village_id=self.village_id)
         if '"id":"coin"' in result.text:
@@ -100,8 +118,13 @@ class SnobManager:
         return True
 
     def storage_item(self, result):
-        """
-        Tries to store resources for future snob creation
+        """Stores resources for future snob creation.
+
+        Args:
+            result (str): The HTML content of the snob recruitment page.
+
+        Returns:
+            bool: True if the resources were stored successfully, False otherwise.
         """
         storage_re = re.search(r"train\.storage_item = (\{.+?})", result)
         if not storage_re:
@@ -122,8 +145,13 @@ class SnobManager:
             return False
 
     def coin_item(self, result):
-        """
-        Tries to create a new gold coin
+        """Mints a new gold coin.
+
+        Args:
+            result (str): The HTML content of the snob recruitment page.
+
+        Returns:
+            bool: True if the coin was minted successfully, False otherwise.
         """
         storage_re = re.search(r"train\.storage_item = (\{.+?})", result)
         if not storage_re:
@@ -144,9 +172,15 @@ class SnobManager:
             return False
 
     def has_enough(self, build_item):
-        """
-        Checks if there are enough resources available
-        If not, they will be requested from resources
+        """Checks if there are enough resources to recruit a snob.
+
+        If not, it will request the missing resources from the resource manager.
+
+        Args:
+            build_item (dict): A dictionary of the required resources.
+
+        Returns:
+            bool: True if there are enough resources, False otherwise.
         """
         r = True
         if build_item["wood"] > self.resman.actual["wood"]:
@@ -164,8 +198,10 @@ class SnobManager:
         return r
 
     def run(self):
-        """
-        Run the snob updater
+        """Runs the snob recruitment logic.
+
+        This method checks if new snobs are needed and attempts to recruit them
+        if all conditions are met.
         """
         if not self.can_snob:
             return False

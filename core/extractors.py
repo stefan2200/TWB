@@ -7,14 +7,20 @@ import re
 
 
 class Extractor:
-    """
-    Defines various non-compiled regexes for data retrieval
-    TODO: use compiled various for CPU efficiency
+    """A collection of static methods for extracting data from HTML responses.
+
+    This class uses regular expressions to parse HTML and extract specific
+    information from the game's web pages.
     """
     @staticmethod
     def village_data(res):
-        """
-        Detects village data on a page
+        """Extracts village data from a page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing village data, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -25,8 +31,13 @@ class Extractor:
 
     @staticmethod
     def game_state(res):
-        """
-        Detects the game state that is available on most pages
+        """Extracts the game state from a page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing the game state, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -37,8 +48,13 @@ class Extractor:
 
     @staticmethod
     def building_data(res):
-        """
-        Fetches building data from the main building
+        """Extracts building data from the main building page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing building data, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -50,8 +66,13 @@ class Extractor:
 
     @staticmethod
     def get_quests(res):
-        """
-        Gets quest data on almost any page
+        """Extracts quest data from a page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            str or None: The ID of the completed quest, or None if no completed quests are found.
         """
         if type(res) != str:
             res = res.text
@@ -66,8 +87,13 @@ class Extractor:
 
     @staticmethod
     def get_quest_rewards(res):
-        """
-        Detects if there are rewards available for quests
+        """Extracts available quest rewards from a page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of available quest rewards.
         """
         if type(res) != str:
             res = res.text
@@ -83,8 +109,13 @@ class Extractor:
 
     @staticmethod
     def map_data(res):
-        """
-        Detects other villages on the map page
+        """Extracts map data from the map page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list or None: A list of villages on the map, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -95,8 +126,13 @@ class Extractor:
 
     @staticmethod
     def smith_data(res):
-        """
-        Gets smith data
+        """Extracts smithy data from a page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing smithy data, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -108,8 +144,13 @@ class Extractor:
 
     @staticmethod
     def premium_data(res):
-        """
-        Detects data on the premium exchange page
+        """Extracts data from the premium exchange page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing premium exchange data, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -121,8 +162,13 @@ class Extractor:
 
     @staticmethod
     def recruit_data(res):
-        """
-        Fetches recruit data for the current building
+        """Extracts recruitment data for the current building.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            dict or None: A dictionary containing recruitment data, or None if not found.
         """
         if type(res) != str:
             res = res.text
@@ -136,8 +182,13 @@ class Extractor:
 
     @staticmethod
     def units_in_village(res):
-        """
-        Detects all units in the village
+        """Extracts the units in the current village.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of tuples, where each tuple contains the unit name and quantity.
         """
         if type(res) != str:
             res = res.text
@@ -156,8 +207,13 @@ class Extractor:
 
     @staticmethod
     def active_building_queue(res):
-        """
-        Detects queued building entries
+        """Extracts the number of active building queue entries.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            int: The number of active building queue entries.
         """
         if type(res) != str:
             res = res.text
@@ -169,8 +225,13 @@ class Extractor:
 
     @staticmethod
     def active_recruit_queue(res):
-        """
-        Detects active recruitment entries
+        """Extracts the active recruitment queue entries.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of recruitment order IDs.
         """
         if type(res) != str:
             res = res.text
@@ -179,8 +240,13 @@ class Extractor:
 
     @staticmethod
     def village_ids_from_overview(res):
-        """
-        Fetches villages from the overview page
+        """Extracts village IDs from the overview page.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of village IDs.
         """
         if type(res) != str:
             res = res.text
@@ -189,8 +255,13 @@ class Extractor:
 
     @staticmethod
     def units_in_total(res):
-        """
-        Gets total amount of units in a village
+        """Extracts the total number of units in a village.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of tuples, where each tuple contains the unit name and quantity.
         """
         if type(res) != str:
             res = res.text
@@ -201,9 +272,13 @@ class Extractor:
 
     @staticmethod
     def attack_form(res):
-        """
-        Detects input fiels in the attack form
-        ... because there are many :)
+        """Extracts input fields from the attack form.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of tuples, where each tuple contains the input name and value.
         """
         if type(res) != str:
             res = res.text
@@ -211,9 +286,14 @@ class Extractor:
         return data
 
     @staticmethod
-    def attack_duration(res):
-        """
-        Detects the duration of an attack
+    def attack_duration(.text, res):
+        """Extracts the duration of an attack.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            int: The duration of the attack in seconds, or 0 if not found.
         """
         if type(res) != str:
             res = res.text
@@ -224,8 +304,13 @@ class Extractor:
 
     @staticmethod
     def report_table(res):
-        """
-        Fetches information from a report
+        """Extracts report IDs from a report table.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            list: A list of report IDs.
         """
         if type(res) != str:
             res = res.text
@@ -234,8 +319,13 @@ class Extractor:
 
     @staticmethod
     def get_daily_reward(res):
-        """
-        Detects if there are unopened daily rewards
+        """Detects if there are unopened daily rewards.
+
+        Args:
+            res (requests.Response or str): The HTTP response or HTML content.
+
+        Returns:
+            str or None: The ID of the unlocked reward, or None if no rewards are found.
         """
         if type(res) != str:
             res = res.text

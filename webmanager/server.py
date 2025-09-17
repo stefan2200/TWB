@@ -19,6 +19,16 @@ app.config["DEBUG"] = True
 
 
 def pre_process_bool(key, value, village_id=None):
+    """Pre-processes a boolean value for display in the web interface.
+
+    Args:
+        key (str): The configuration key.
+        value (bool): The boolean value.
+        village_id (int, optional): The ID of the village. Defaults to None.
+
+    Returns:
+        str: The HTML for a toggle button.
+    """
     if village_id:
         if value:
             return '<button class="btn btn-sm btn-block btn-success" data-village-id="%s" data-type-option="%s" data-type="toggle">Enabled</button>' % (
@@ -33,6 +43,17 @@ def pre_process_bool(key, value, village_id=None):
 
 
 def preprocess_select(key, value, templates, village_id=None):
+    """Pre-processes a select input for display in the web interface.
+
+    Args:
+        key (str): The configuration key.
+        value (str): The current value.
+        templates (str): The path to the templates directory.
+        village_id (int, optional): The ID of the village. Defaults to None.
+
+    Returns:
+        str: The HTML for a select input.
+    """
     output = '<select data-type-option="%s" data-type="select" class="form-control">' % key
     if village_id:
         output = '<select data-type-option="%s" data-village-id="%s" data-type="select" class="form-control">' % (
@@ -45,6 +66,16 @@ def preprocess_select(key, value, templates, village_id=None):
 
 
 def pre_process_string(key, value, village_id=None):
+    """Pre-processes a string value for display in the web interface.
+
+    Args:
+        key (str): The configuration key.
+        value (str): The string value.
+        village_id (int, optional): The ID of the village. Defaults to None.
+
+    Returns:
+        str: The HTML for a text input or a select input.
+    """
     templates = {
         'units.default': 'templates.troops',
         'village.units': 'templates.troops',
@@ -64,6 +95,16 @@ def pre_process_string(key, value, village_id=None):
 
 
 def pre_process_number(key, value, village_id=None):
+    """Pre-processes a number value for display in the web interface.
+
+    Args:
+        key (str): The configuration key.
+        value (number): The number value.
+        village_id (int, optional): The ID of the village. Defaults to None.
+
+    Returns:
+        str: The HTML for a number input.
+    """
     if village_id:
         return '<input type="number" data-type="number" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (
         village_id, value, key)
@@ -72,6 +113,16 @@ def pre_process_number(key, value, village_id=None):
 
 
 def pre_process_list(key, value, village_id=None):
+    """Pre-processes a list value for display in the web interface.
+
+    Args:
+        key (str): The configuration key.
+        value (list): The list value.
+        village_id (int, optional): The ID of the village. Defaults to None.
+
+    Returns:
+        str: The HTML for a text input.
+    """
     if village_id:
         return '<input type="text" data-type="list" class="form-control" data-village-id="%s" value="%s" data-type-option="%s" />' % (
         village_id, ', '.join(value), key)
@@ -80,6 +131,14 @@ def pre_process_list(key, value, village_id=None):
 
 
 def fancy(key):
+    """Makes a configuration key more human-readable.
+
+    Args:
+        key (str): The configuration key.
+
+    Returns:
+        str: The formatted key with a help text if available.
+    """
     name = key
     if '.' in name:
         name = name.split('.')[1]
@@ -96,6 +155,11 @@ def fancy(key):
 
 
 def pre_process_config():
+    """Pre-processes the main configuration for display in the web interface.
+
+    Returns:
+        dict: A dictionary of HTML strings for each configuration section.
+    """
     # TODO get generic config
     config = sync()['config']
     to_hide = ["build", "villages"]
@@ -120,6 +184,14 @@ def pre_process_config():
 
 
 def pre_process_village_config(village_id):
+    """Pre-processes the configuration for a specific village.
+
+    Args:
+        village_id (int): The ID of the village.
+
+    Returns:
+        str: The HTML for the village configuration.
+    """
     config = sync()['config']['villages']
     if village_id in config:
         config = config[village_id]
@@ -141,6 +213,11 @@ def pre_process_village_config(village_id):
 
 
 def sync():
+    """Synchronizes the data from the bot's cache.
+
+    Returns:
+        dict: A dictionary of all the data from the cache.
+    """
     reports = DataReader.cache_grab("reports")
     villages = DataReader.cache_grab("villages")
     attacks = DataReader.cache_grab("attacks")
@@ -164,28 +241,53 @@ def sync():
 
 @app.route('/api/get', methods=['GET'])
 def get_vars():
+    """API endpoint to get all the data from the cache.
+
+    Returns:
+        JSON: A JSON object of all the data from the cache.
+    """
     return jsonify(sync())
 
 
 @app.route('/bot/start')
 def start_bot():
+    """API endpoint to start the bot.
+
+    Returns:
+        JSON: A JSON object with the status of the bot.
+    """
     bm.start()
     return jsonify(bm.is_running())
 
 
 @app.route('/bot/stop')
 def stop_bot():
+    """API endpoint to stop the bot.
+
+    Returns:
+        JSON: A JSON object with the status of the bot.
+    """
     bm.stop()
     return jsonify(not bm.is_running())
 
 
 @app.route('/config', methods=['GET'])
 def get_config():
+    """Renders the configuration page.
+
+    Returns:
+        HTML: The rendered configuration page.
+    """
     return render_template('config.html', data=sync(), config=pre_process_config(), helpfile=help_file)
 
 
 @app.route('/village', methods=['GET'])
 def get_village_config():
+    """Renders the village configuration page.
+
+    Returns:
+        HTML: The rendered village configuration page.
+    """
     data = sync()
     vid = request.args.get("id", None)
     return render_template('village.html', data=data, config=pre_process_village_config(village_id=vid),
@@ -194,6 +296,11 @@ def get_village_config():
 
 @app.route('/map', methods=['GET'])
 def get_map():
+    """Renders the map page.
+
+    Returns:
+        HTML: The rendered map page.
+    """
     sync_data = sync()
     center_id = request.args.get("center", None)
     center = next(iter(sync_data['bot'])) if not center_id else center_id
@@ -203,11 +310,21 @@ def get_map():
 
 @app.route('/villages', methods=['GET'])
 def get_village_overview():
+    """Renders the village overview page.
+
+    Returns:
+        HTML: The rendered village overview page.
+    """
     return render_template('villages.html', data=sync())
 
 
 @app.route('/building_templates', methods=['GET', 'POST'])
 def get_building_templates():
+    """Renders the building templates page.
+
+    Returns:
+        HTML: The rendered building templates page.
+    """
     if request.form.get('new', None):
         plain = os.path.basename(request.form.get('new'))
         if not plain.endswith('.txt'):
@@ -225,18 +342,33 @@ def get_building_templates():
 
 @app.route('/', methods=['GET'])
 def get_home():
+    """Renders the home page.
+
+    Returns:
+        HTML: The rendered home page.
+    """
     session = DataReader.get_session()
     return render_template('bot.html', data=sync(), session=session)
 
 
 @app.route('/app/js', methods=['GET'])
 def get_js():
+    """Serves the main JavaScript file.
+
+    Returns:
+        File: The JavaScript file.
+    """
     urlpath = os.path.join(os.path.dirname(__file__), "public")
     return send_from_directory(urlpath, "js.v2.js")
 
 
 @app.route('/app/config/set', methods=['GET'])
 def config_set():
+    """API endpoint to set a configuration value.
+
+    Returns:
+        JSON: A JSON object of all the data from the cache.
+    """
     vid = request.args.get("village_id", None)
     if not vid:
         DataReader.config_set(parameter=request.args.get("parameter"), value=request.args.get("value", None))

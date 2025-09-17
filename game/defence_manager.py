@@ -7,6 +7,11 @@ from core.extractors import Extractor
 
 
 class DefenceManager:
+    """Manages the defense of a village.
+
+    This class handles defensive actions such as evacuating troops, sending
+    support to other villages, and managing flags to provide bonuses.
+    """
     wrapper = None
     village_id = None
     units = None
@@ -48,12 +53,26 @@ class DefenceManager:
     supported = []
 
     def __init__(self, village_id=None, wrapper=None):
+        """Initializes the DefenceManager.
+
+        Args:
+            village_id (int, optional): The ID of the village. Defaults to None.
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+        """
         self.village_id = village_id
         self.wrapper = wrapper
         self.logger = logging.getLogger("Defence Manager")
 
     def support_other(self, requesting_village):
+        """Sends support to another village.
 
+        Args:
+            requesting_village (int): The ID of the village requesting support.
+
+        Returns:
+            bool: True if support was sent successfully, False otherwise.
+        """
         if self.under_attack or not self.allow_support_send:
             return False
         if not self.units:
@@ -69,6 +88,16 @@ class DefenceManager:
         return self.support(requesting_village, troops=send_support)
 
     def update(self, main, with_defence=False):
+        """Updates the defense status of the village.
+
+        This method checks for incoming attacks, manages flags, and sends
+        support to other villages if needed.
+
+        Args:
+            main (str): The HTML content of the main page.
+            with_defence (bool, optional): Whether to perform defensive actions.
+                Defaults to False.
+        """
         ok = True
         self.manage_flags()
         self.runs += 1
@@ -110,6 +139,7 @@ class DefenceManager:
             # All is well
 
     def evacuate(self):
+        """Evacuates troops from the village to a safe location."""
         if not self.units:
             return False
         to_hide = {}
@@ -131,6 +161,11 @@ class DefenceManager:
                 return True
 
     def flag_logic(self, set_flag):
+        """Manages the logic for setting flags.
+
+        Args:
+            set_flag (int): The ID of the flag to set.
+        """
         if not self.manage_flags_enabled:
             return
 
@@ -160,6 +195,15 @@ class DefenceManager:
             )
 
     def flag_upgrade(self, flag, level):
+        """Upgrades a flag to the next level.
+
+        Args:
+            flag (int): The ID of the flag to upgrade.
+            level (int): The current level of the flag.
+
+        Returns:
+            dict: The JSON response from the API.
+        """
         return self.wrapper.get_api_action(
             self.village_id,
             action="upgrade_flag",
@@ -168,6 +212,15 @@ class DefenceManager:
         )
 
     def flag_set(self, flag, level):
+        """Sets a flag for the village.
+
+        Args:
+            flag (int): The ID of the flag to set.
+            level (int): The level of the flag to set.
+
+        Returns:
+            dict: The JSON response from the API.
+        """
         return self.wrapper.get_api_action(
             self.village_id,
             action="assign_flag",
@@ -180,11 +233,24 @@ class DefenceManager:
         )
 
     def get_highest_flag_possible(self, flag_id=1):
+        """Gets the highest possible level for a given flag.
+
+        Args:
+            flag_id (int, optional): The ID of the flag. Defaults to 1.
+
+        Returns:
+            int or None: The highest possible level, or None if the flag is not available.
+        """
         if flag_id not in self.flags:
             return None
         return self.flags[flag_id]
 
     def manage_flags(self):
+        """Manages the flags for the village.
+
+        This method checks for available flags, upgrades them if possible, and
+        sets the appropriate flag based on the current situation.
+        """
         if not self.manage_flags_enabled:
             return
         # Randomize flag runs
@@ -237,6 +303,17 @@ class DefenceManager:
             return self.manage_flags()
 
     def support(self, vid, troops=None):
+        """Sends support to a village.
+
+        Args:
+            vid (int): The ID of the village to support.
+            troops (dict, optional): A dictionary of troops to send. If not provided,
+                all available defensive troops will be sent. Defaults to None.
+
+        Returns:
+            dict or bool: The result of the API action, or False if the support
+                fails.
+        """
         url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_support = self.wrapper.get_url(url)
         pre_data = {}

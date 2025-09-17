@@ -14,74 +14,93 @@ except ImportError:
 
 
 class RemoteReporter:
-    """
-    Base class for a reporter object
-    """
+    """Base class for a reporter object."""
     def report(self, connection, village_id, action, data):
-        """
-        Sets report data
+        """Sets report data.
+
+        Args:
+            connection: The connection object.
+            village_id (int): The ID of the village.
+            action (str): The action being reported.
+            data (str): The data associated with the action.
         """
         return
 
     def add_data(self, connection, village_id, data_type, data):
-        """
-        Sets type-specific data
+        """Sets type-specific data.
+
+        Args:
+            connection: The connection object.
+            village_id (int): The ID of the village.
+            data_type (str): The type of data being added.
+            data (str): The data to add.
         """
         return
 
     def get_config(self, connection, village_id, action, data):
-        """
-        Gets the configuration from reporter
+        """Gets the configuration from reporter.
+
+        Args:
+            connection: The connection object.
+            village_id (int): The ID of the village.
+            action (str): The action being requested.
+            data (str): The data associated with the action.
         """
         return
 
     def setup(self, connection):
-        """
-        Set-up the reporter
+        """Set-up the reporter.
+
+        Args:
+            connection: The connection object.
         """
         return
 
 
 class FileReporter:
-    """
-    Reporter that writes data to a text file
-    """
+    """Reporter that writes data to a text file."""
     def report(self, connection, village_id, action, data):
-        """
-        Writes an entry to a report file
+        """Writes an entry to a report file.
+
+        Args:
+            connection (str): The path to the report file.
+            village_id (int): The ID of the village.
+            action (str): The action being reported.
+            data (str): The data associated with the action.
         """
         with open(connection, 'a', encoding="utf-8") as f:
             f.write("%d - %s - %s - %s\n" % (time.time(), village_id, action, data))
         return
 
     def add_data(self, connection, village_id, data_type, data):
-        """
-        Unused for this type
-        """
+        """Unused for this type."""
         return
 
     def get_config(self, connection, village_id, action, data):
-        """
-        Unused for this type
-        """
+        """Unused for this type."""
         return
 
     def setup(self, connection):
-        """
-        Make sure the logfile exists
+        """Make sure the logfile exists.
+
+        Args:
+            connection (str): The path to the log file.
         """
         with open(connection, 'w', encoding="utf-8") as f:
             f.write("Starting bot at %d\n" % time.time())
 
 
 class MySQLReporter(RemoteReporter):
-    """
-    Uses a (remote) MySQL server for logging
-    """
+    """Uses a (remote) MySQL server for logging."""
     @staticmethod
     def connection_from_object(cobj):
-        """
-        Fetches variables from a connection config
+        """Fetches variables from a connection config.
+
+        Args:
+            cobj (dict): The connection configuration object.
+
+        Returns:
+            pymysql.connections.Connection: The MySQL connection object.
         """
         return pymysql.connect(
             host=cobj['host'],
@@ -91,8 +110,13 @@ class MySQLReporter(RemoteReporter):
             database=cobj['database'])
 
     def report(self, connection, village_id, action, data):
-        """
-        Add a report entry
+        """Add a report entry.
+
+        Args:
+            connection (dict): The MySQL connection configuration.
+            village_id (int): The ID of the village.
+            action (str): The action being reported.
+            data (str): The data associated with the action.
         """
         con = MySQLReporter.connection_from_object(connection)
         cur = con.cursor()
@@ -103,8 +127,13 @@ class MySQLReporter(RemoteReporter):
         con.close()
 
     def add_data(self, connection, village_id, data_type, data):
-        """
-        Saves data to a remote MySQL server
+        """Saves data to a remote MySQL server.
+
+        Args:
+            connection (dict): The MySQL connection configuration.
+            village_id (int): The ID of the village.
+            data_type (str): The type of data being added.
+            data (str): The data to add.
         """
         con = self.connection_from_object(connection)
         cur = con.cursor()
@@ -127,8 +156,13 @@ class MySQLReporter(RemoteReporter):
         con.close()
 
     def setup(self, connection):
-        """
-        Creates the initial database tables
+        """Creates the initial database tables.
+
+        Args:
+            connection (dict): The MySQL connection configuration.
+
+        Returns:
+            bool: True if setup was successful, False otherwise.
         """
         try:
             con = self.connection_from_object(connection)
@@ -163,25 +197,29 @@ class MySQLReporter(RemoteReporter):
 
 
 class ReporterObject:
-    """
-    Base reporting object for a remote/local logger
-    """
+    """Base reporting object for a remote/local logger."""
     enabled = False
     object = None
     logger = logging.getLogger("RemoteLogger")
     connection = None
 
     def __init__(self, enabled=False, connection_string=None):
-        """
-        Detects reporter configuration
+        """Initializes the reporter based on the provided configuration.
+
+        Args:
+            enabled (bool, optional): Whether reporting is enabled. Defaults to False.
+            connection_string (str, optional): The connection string for the reporter.
+                Defaults to None.
         """
         if enabled and connection_string:
             self.enabled = True
             self.setup(connection_string=connection_string)
 
     def setup(self, connection_string):
-        """
-        Fetchers the used reporter
+        """Configures the reporter based on the connection string.
+
+        Args:
+            connection_string (str): The connection string for the reporter.
         """
         if connection_string.startswith('mysql://'):
             if not HAS_PYMYSQL:
@@ -214,24 +252,36 @@ class ReporterObject:
             self.object = RemoteReporter()
 
     def report(self, village_id, action, data):
-        """
-        Run the report function on the installed reporter
+        """Runs the report function on the installed reporter.
+
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The action being reported.
+            data (str): The data associated with the action.
         """
         if self.enabled:
             return self.object.report(self.connection, village_id, action, data)
         return
 
     def add_data(self, village_id, data_type, data):
-        """
-        Run the add_data function on the installed reporter
+        """Runs the add_data function on the installed reporter.
+
+        Args:
+            village_id (int): The ID of the village.
+            data_type (str): The type of data being added.
+            data (str): The data to add.
         """
         if self.enabled:
             return self.object.add_data(self.connection, village_id, data_type, data)
         return
 
     def get_config(self, village_id, action, data):
-        """
-        Run the get_config function on the installed reporter
+        """Runs the get_config function on the installed reporter.
+
+        Args:
+            village_id (int): The ID of the village.
+            action (str): The action being requested.
+            data (str): The data associated with the action.
         """
         if self.enabled:
             return self.object.get_config(self.connection, village_id, action, data)

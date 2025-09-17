@@ -10,9 +10,13 @@ import logging
 
 
 def check_update():
-    """
-    If enabled, check whether the config template version matches the one on github
-    Notify and 5 seconds sleep if update is available
+    """Checks for new versions of the bot on GitHub.
+
+    This function compares the version in the local `config.example.json` file
+    with the version in the remote repository. If the versions do not match,
+    it prints a warning to the console, notifying the user that a new version
+    is available. The update check can be disabled by setting `check_update`
+    to `false` in the `config.json` file.
     """
     get_local_config_template_version = os.path.join(
         os.path.dirname(__file__),

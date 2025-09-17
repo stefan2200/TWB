@@ -9,11 +9,24 @@ from core.extractors import Extractor
 
 
 class PremiumExchange:
-    """
-    Logic for interaction with the premium exchange
+    """Handles interactions with the premium exchange.
+
+    This class provides methods for calculating trade costs, optimizing trades,
+    and executing trades on the premium exchange.
     """
 
     def __init__(self, wrapper, stock: dict, capacity: dict, tax: dict, constants: dict, duration: int, merchants: int):
+        """Initializes the PremiumExchange.
+
+        Args:
+            wrapper (WebWrapper): The web wrapper for making requests.
+            stock (dict): The current stock of resources on the exchange.
+            capacity (dict): The capacity of the exchange for each resource.
+            tax (dict): The tax rates for buying and selling.
+            constants (dict): A dictionary of constants used in calculations.
+            duration (int): The duration of trades.
+            merchants (int): The number of available merchants.
+        """
         self.wrapper = wrapper
         self.stock = stock
         self.capacity = capacity
@@ -24,8 +37,14 @@ class PremiumExchange:
 
     # do not call this anihilation (calculate_cost) - i dechipered it from tribalwars js
     def calculate_cost(self, item, a):
-        """
-        Stock exchange cost calculation
+        """Calculates the cost of a trade on the premium exchange.
+
+        Args:
+            item (str): The resource to trade.
+            a (int): The amount of the resource to trade.
+
+        Returns:
+            float: The calculated cost of the trade.
         """
         t = self.stock[item]
         n = self.capacity[item]
@@ -36,15 +55,26 @@ class PremiumExchange:
         return (1 + tax) * (self.calculate_marginal_price(t, n) + self.calculate_marginal_price(t - a, n)) * a / 2
 
     def calculate_marginal_price(self, e, a):
-        """
-        Math magic
+        """Calculates the marginal price of a resource.
+
+        Args:
+            e (int): The current stock of the resource.
+            a (int): The capacity of the exchange for the resource.
+
+        Returns:
+            float: The marginal price of the resource.
         """
         c = self.constants
         return c["resource_base_price"] - c["resource_price_elasticity"] * e / (a + c["stock_size_modifier"])
 
     def calculate_rate_for_one_point(self, item: str):
-        """
-        Math magic
+        """Calculates the exchange rate for one premium point.
+
+        Args:
+            item (str): The resource to calculate the rate for.
+
+        Returns:
+            int: The amount of the resource required for one premium point.
         """
         a = self.stock[item]
         t = self.capacity[item]
@@ -62,8 +92,16 @@ class PremiumExchange:
 
     @staticmethod
     def optimize_n(amount, sell_price, merchants, size=1000):
-        """
-        Math magic
+        """Optimizes the number of offers to make on the premium exchange.
+
+        Args:
+            amount (int): The total amount of the resource to sell.
+            sell_price (int): The price per unit of the resource.
+            merchants (int): The number of available merchants.
+            size (int, optional): The size of the offers. Defaults to 1000.
+
+        Returns:
+            dict: A dictionary containing the optimized trade parameters.
         """
         def _ratio(a, b, size=1000):
             a = (size * b) - a
@@ -89,8 +127,10 @@ class PremiumExchange:
 
 
 class ResourceManager:
-    """
-    Class to calculate, store and reserve resources for actions
+    """Manages the resources of a village.
+
+    This class tracks the current resource levels, handles resource requests
+    from other modules, and manages trades on the market.
     """
     actual = {}
 
@@ -110,16 +150,21 @@ class ResourceManager:
     do_premium_trade = False
 
     def __init__(self, wrapper=None, village_id=None):
-        """
-        Create the resource manager
-        Preferably used by anything that builds/recruits/sends/whatever
+        """Initializes the ResourceManager.
+
+        Args:
+            wrapper (WebWrapper, optional): The web wrapper for making requests.
+                Defaults to None.
+            village_id (int, optional): The ID of the village. Defaults to None.
         """
         self.wrapper = wrapper
         self.village_id = village_id
 
     def update(self, game_state):
-        """
-        Update the current resources based on the game state
+        """Updates the current resource levels based on the game state.
+
+        Args:
+            game_state (dict): The current game state.
         """
         self.actual["wood"] = game_state["village"]["wood"]
         self.actual["stone"] = game_state["village"]["stone"]
@@ -133,9 +178,7 @@ class ResourceManager:
         self.logger = logging.getLogger(f"Resource Manager: {store_state}")
 
     def do_premium_stuff(self):
-        """
-        Does premium stuff
-        """
+        """Performs trades on the premium exchange."""
         gpl = self.get_plenty_off()
         self.logger.debug(
             "Trying premium trade: gpl %s do? %s", gpl, self.do_premium_trade
@@ -230,18 +273,20 @@ class ResourceManager:
                     self.logger.info("Trade failed!")
 
     def check_state(self):
-        """
-        Removes resource requests when the amount is met
-        """
+        """Removes resource requests when the amount is met."""
         for source in self.requested:
             for res in self.requested[source]:
                 if self.requested[source][res] <= self.actual[res]:
                     self.requested[source][res] = 0
 
     def request(self, source="building", resource="wood", amount=1):
-        """
-        When called, resources can be taken from other actions
+        """Requests resources for a specific action.
 
+        Args:
+            source (str, optional): The source of the request. Defaults to "building".
+            resource (str, optional): The resource being requested. Defaults to "wood".
+            amount (int, optional): The amount of the resource being requested.
+                Defaults to 1.
         """
         if source in self.requested:
             self.requested[source][resource] = amount
@@ -249,8 +294,10 @@ class ResourceManager:
             self.requested[source] = {resource: amount}
 
     def can_recruit(self):
-        """
-        Checks of population is sufficient for recruitment
+        """Checks if there is enough population to recruit new troops.
+
+        Returns:
+            bool: True if there is enough population, False otherwise.
         """
         if self.actual["pop"] == 0:
             self.logger.info("Can't recruit, no room for pops!")
@@ -269,8 +316,11 @@ class ResourceManager:
         return True
 
     def get_plenty_off(self):
-        """
-        Checks of there is overcapacity in a village
+        """Checks if there is an overcapacity of any resource.
+
+        Returns:
+            str or None: The name of the resource with the most overcapacity,
+                or None if no resource has overcapacity.
         """
         most_of = 0
         most = None
@@ -294,8 +344,13 @@ class ResourceManager:
         return most
 
     def in_need_of(self, obj_type):
-        """
-        Checks if the village lacks a certain resource
+        """Checks if the village is in need of a certain resource.
+
+        Args:
+            obj_type (str): The type of resource to check.
+
+        Returns:
+            bool: True if the village is in need of the resource, False otherwise.
         """
         for x in self.requested:
             types = self.requested[x]
@@ -304,8 +359,13 @@ class ResourceManager:
         return False
 
     def in_need_amount(self, obj_type):
-        """
-        Checks what would be needed in order to match requirements
+        """Checks the amount of a resource that is needed.
+
+        Args:
+            obj_type (str): The type of resource to check.
+
+        Returns:
+            int: The amount of the resource that is needed.
         """
         amount = 0
         for x in self.requested:
@@ -315,8 +375,11 @@ class ResourceManager:
         return amount
 
     def get_needs(self):
-        """
-        All of the above
+        """Gets the resource that is needed the most.
+
+        Returns:
+            tuple or None: A tuple containing the name of the resource and the
+                amount needed, or None if no resources are needed.
         """
         needed_the_most = None
         needed_amount = 0
@@ -334,8 +397,16 @@ class ResourceManager:
         return None
 
     def trade(self, me_item, me_amount, get_item, get_amount):
-        """
-        Creates a new trading offer
+        """Creates a new trade offer on the market.
+
+        Args:
+            me_item (str): The resource to sell.
+            me_amount (int): The amount of the resource to sell.
+            get_item (str): The resource to buy.
+            get_amount (int): The amount of the resource to buy.
+
+        Returns:
+            bool: True if the trade was created successfully, False otherwise.
         """
         url = f"game.php?village={self.village_id}&screen=market&mode=own_offer"
         res = self.wrapper.get_url(url=url)
@@ -357,9 +428,7 @@ class ResourceManager:
         return True
 
     def drop_existing_trades(self):
-        """
-        Removes an existing trade if resources are needed elsewhere or it expired
-        """
+        """Removes all existing trades from the market."""
         url = f"game.php?village={self.village_id}&screen=market&mode=all_own_offer"
         data = self.wrapper.get_url(url)
         existing = re.findall(r'data-id="(\d+)".+?data-village="(\d+)"', data.text)
@@ -378,8 +447,13 @@ class ResourceManager:
                 )
 
     def readable_ts(self, seconds):
-        """
-        Human readable timestamp
+        """Converts a timestamp to a human-readable time string.
+
+        Args:
+            seconds (int): The timestamp in seconds.
+
+        Returns:
+            str: The formatted time string (H:MM:SS).
         """
         seconds -= int(time.time())
         seconds = seconds % (24 * 3600)
@@ -391,8 +465,11 @@ class ResourceManager:
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
     def manage_market(self, drop_existing=True):
-        """
-        Manages the market for you
+        """Manages the market by creating and accepting trade offers.
+
+        Args:
+            drop_existing (bool, optional): Whether to drop existing trades.
+                Defaults to True.
         """
         last = self.last_trade + int(3600 * self.trade_max_per_hour)
         if last > int(time.time()):
@@ -464,8 +541,15 @@ class ResourceManager:
                 self.trade(plenty, biased, item, how_many)
 
     def check_other_offers(self, item, how_many, sell):
-        """
-        Checks if there are offers that match our needs
+        """Checks for other offers on the market that match the village's needs.
+
+        Args:
+            item (str): The resource to buy.
+            how_many (int): The amount of the resource to buy.
+            sell (str): The resource to sell.
+
+        Returns:
+            bool: True if a matching offer was found and accepted, False otherwise.
         """
         url = f"game.php?village={self.village_id}&screen=market&mode=other_offer"
         res = self.wrapper.get_url(url=url)
@@ -533,8 +617,15 @@ class ResourceManager:
         return False
 
     def parse_res_offer(self, res_offer, id):
-        """
-        Parse an offer
+        """Parses a resource offer from the market.
+
+        Args:
+            res_offer (list): A list of tuples containing the offered and wanted
+                resources and their amounts.
+            id (int): The ID of the offer.
+
+        Returns:
+            dict: A dictionary containing the parsed offer data.
         """
         off, want, ratio = res_offer
         res_offer, res_offer_amount = off

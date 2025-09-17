@@ -7,8 +7,17 @@ import psutil
 
 
 class DataReader:
+    """Provides methods for reading data from the cache and configuration files."""
     @staticmethod
     def cache_grab(cache_location):
+        """Grabs all cache entries from a specific location.
+
+        Args:
+            cache_location (str): The name of the cache directory.
+
+        Returns:
+            dict: A dictionary of all cache entries.
+        """
         output = {}
         c_path = os.path.join(
             os.path.dirname(__file__),
@@ -33,6 +42,14 @@ class DataReader:
 
     @staticmethod
     def template_grab(template_location):
+        """Grabs all template files from a specific location.
+
+        Args:
+            template_location (str): The path to the templates directory.
+
+        Returns:
+            list: A list of all template names.
+        """
         output = []
         template_location = template_location.replace('.', '/')
         c_path = os.path.join(os.path.dirname(__file__), "..", template_location)
@@ -45,11 +62,25 @@ class DataReader:
 
     @staticmethod
     def config_grab():
+        """Grabs the main configuration file.
+
+        Returns:
+            dict: The configuration data.
+        """
         with open(os.path.join(os.path.dirname(__file__), "..", "config.json"), 'r') as f:
             return json.load(f)
 
     @staticmethod
     def config_set(parameter, value):
+        """Sets a configuration value in the main config file.
+
+        Args:
+            parameter (str): The configuration parameter to set.
+            value (any): The value to set.
+
+        Returns:
+            bool: True if the configuration was set successfully, False otherwise.
+        """
         try:
             value = json.loads(value)
         except:
@@ -69,6 +100,16 @@ class DataReader:
 
     @staticmethod
     def village_config_set(village_id, parameter, value):
+        """Sets a configuration value for a specific village.
+
+        Args:
+            village_id (int): The ID of the village.
+            parameter (str): The configuration parameter to set.
+            value (any): The value to set.
+
+        Returns:
+            bool: True if the configuration was set successfully, False otherwise.
+        """
         config_file_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
         with open(config_file_path, 'r') as config_file:
             template = json.load(config_file, object_pairs_hook=collections.OrderedDict)
@@ -85,6 +126,11 @@ class DataReader:
 
     @staticmethod
     def get_session():
+        """Gets the current session data.
+
+        Returns:
+            dict: The session data.
+        """
         c_path = os.path.join(os.path.dirname(__file__), "..", "cache", "session.json")
         if not os.path.exists(c_path):
             return {"raw": "", "endpoint": "None", "server": "None", "world": "None"}
@@ -98,9 +144,14 @@ class DataReader:
 
 
 class BuildingTemplateManager:
-
+    """Manages building templates."""
     @staticmethod
     def template_cache_list():
+        """Gets a list of all building templates.
+
+        Returns:
+            dict: A dictionary of all building templates.
+        """
         c_path = os.path.join(os.path.dirname(__file__), "..", "templates", "builder")
         output = {}
         for existing in os.listdir(c_path):
@@ -114,6 +165,14 @@ class BuildingTemplateManager:
 
     @staticmethod
     def template_to_dict(t_list):
+        """Converts a building template list to a dictionary.
+
+        Args:
+            t_list (list): A list of strings from a building template file.
+
+        Returns:
+            dict: A dictionary representation of the building template.
+        """
         out_data = {}
         rows = []
 
@@ -132,9 +191,20 @@ class BuildingTemplateManager:
 
 
 class MapBuilder:
-
+    """Builds the map data for display in the web interface."""
     @staticmethod
     def build(villages, current_village=None, size=None):
+        """Builds the map data.
+
+        Args:
+            villages (dict): A dictionary of all villages.
+            current_village (int, optional): The ID of the current village.
+                Defaults to None.
+            size (int, optional): The size of the map to build. Defaults to None.
+
+        Returns:
+            dict: A dictionary of the map data.
+        """
         out_map = {}
         min_x = 999
         max_x = 0
@@ -185,9 +255,15 @@ class MapBuilder:
 
 
 class BotManager:
+    """Provides methods for starting and stopping the bot."""
     pid = None
 
     def is_running(self):
+        """Checks if the bot is running.
+
+        Returns:
+            bool: True if the bot is running, False otherwise.
+        """
         if not self.pid:
             return False
         if psutil.pid_exists(self.pid):
@@ -196,12 +272,14 @@ class BotManager:
         return False
 
     def start(self):
+        """Starts the bot."""
         wd = os.path.join(os.path.dirname(__file__), "..")
         proc = subprocess.Popen("python twb.py", cwd=wd, shell=True)
         self.pid = proc.pid
         print("Bot started successfully")
 
     def stop(self):
+        """Stops the bot."""
         if self.is_running():
             os.kill(self.pid, sig=0)
             print("Bot stopped successfully")

@@ -1,41 +1,26 @@
 class VillageInitException(Exception):
-    """
-    Error when village init does not happen correctly
-    """
+    """Raised when village initialization fails."""
 
 
 class VillageNotExists(Exception):
-    """
-    A village is added to the bot that is not configured in the config file
-    """
+    """Raised when a village is not found in the configuration file."""
 
 
 class InvalidGameStateException(Exception):
-    """
-    There was an error reading the game state of the village
-    """
+    """Raised when there is an error reading the game state of a village."""
 
 
 class InvalidUnitTemplateException(Exception):
-    """
-    The selected unit template for the village is either missing or corrupted
-    """
+    """Raised when the selected unit template for a village is missing or corrupted."""
 
 
 class InvalidJSONException(Exception):
-    """
-    The JSON file I'm trying to read is corrupted and cannot be parsed
-    """
+    """Raised when a JSON file is corrupted and cannot be parsed."""
 
 
 class FileNotFoundException(Exception):
-    """
-    The file I'm trying to read does not exist and is expected to be there
-    """
+    """Raised when a required file is not found."""
 
 
 class UnsupportedPythonVersion(Exception):
-    """
-    You are trying run the bot with an outdated python version
-    Updating to Python3 fixes this issue
-    """
+    """Raised when the bot is run with an unsupported Python version."""
